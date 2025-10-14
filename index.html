@@ -580,10 +580,11 @@ Write ONLY the story segment, no meta-commentary. Make it exciting and match the
         // Use Puter Chat API for story generation
        
         var storyText;
-         puter.ai.chat("Explain quantum computing in simple terms", {model: 'claude-sonnet-4'})
+         puter.ai.chat(prompt, {model: 'claude-sonnet-4'})
             .then(response => {
                 storyText = response.message.content[0].text;
-            });
+            }); 
+            setTimeout(()=>{
         const newSegment = {
           segment: segmentNumber,
           text: storyText,
@@ -604,6 +605,7 @@ Write ONLY the story segment, no meta-commentary. Make it exciting and match the
       
       isGenerating = false;
       renderAll();
+      },100)
     }
 
     async function speakText(text) {
