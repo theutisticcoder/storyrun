@@ -234,7 +234,7 @@
     let speedHistory = [];
 
     let currentAudio = null;
-
+    var storyText;
     // DOM references
     const setupPanel = document.getElementById('setup-panel');
     const distanceDisplay = document.getElementById('distance-display');
@@ -579,10 +579,10 @@ Write ONLY the story segment, no meta-commentary. Make it exciting and match the
 
         // Use Puter Chat API for story generation
        
-        var storyText;
+
          puter.ai.chat(prompt, {model: 'claude-sonnet-4'})
             .then(response => {
-                storyText = response.message.content[0].text;
+                storyText = response.message.content;
             }); 
             setTimeout(()=>{
         const newSegment = {
