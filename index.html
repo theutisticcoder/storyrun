@@ -377,7 +377,8 @@ Write ONLY the story segment, no meta-commentary. Make it exciting and match the
         React.createElement('div', { className: "max-w-4xl mx-auto" },
           React.createElement('div', { className: "bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl p-6 mb-6" },
             React.createElement('div', { className: "flex items-center gap-3 mb-6" },
-              React.createElement(Book, { className: "w-8 h-8 text-yellow-300" }),
+              // FIXED ICON USAGE: Use icon as a function and place result directly
+              Book({ class: "w-8 h-8 text-yellow-300" }),
               React.createElement('h1', { className: "text-3xl font-bold text-white" }, 'Running Story Tracker')
             ),
 
@@ -398,8 +399,9 @@ Write ONLY the story segment, no meta-commentary. Make it exciting and match the
                   React.createElement('div', { className: "flex items-center justify-between" },
                     React.createElement('div', { className: "flex items-center gap-2 text-white/90" },
                       notificationsEnabled ?
-                        React.createElement(Bell, { className: "w-5 h-5 text-green-300" }) :
-                        React.createElement(BellOff, { className: "w-5 h-5 text-white/50" }),
+                        Bell({ class: "w-5 h-5 text-green-300" }) :
+                        BellOff({ class: "w-5 h-5 text-white/50" }),
+
                       React.createElement('span', null, 'Story Notifications')
                     ),
                     !notificationsEnabled && React.createElement('button', {
@@ -440,7 +442,7 @@ Write ONLY the story segment, no meta-commentary. Make it exciting and match the
                     : 'bg-red-500/30 text-red-300 hover:bg-red-500/40'
                 }`
               },
-                isTTSEnabled ? React.createElement(Volume2, { className: "w-5 h-5" }) : React.createElement(VolumeX, { className: "w-5 h-5" }),
+                isTTSEnabled ? Volume2({ class: "w-5 h-5" }) : VolumeX({ class: "w-5 h-5" }),
                 isTTSEnabled ? 'Audio Narration ON' : 'Audio Narration OFF'
               )
             ),
@@ -467,21 +469,21 @@ Write ONLY the story segment, no meta-commentary. Make it exciting and match the
                   onClick: startTracking,
                   className: "flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition-colors"
                 },
-                  React.createElement(Play, { className: "w-5 h-5" }),
+                  Play({ class: "w-5 h-5" }),
                   hasStarted ? 'Resume' : 'Start Running'
                 ) :
                 React.createElement('button', {
                   onClick: pauseTracking,
                   className: "flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition-colors"
                 },
-                  React.createElement(Pause, { className: "w-5 h-5" }),
+                  Pause({ class: "w-5 h-5" }),
                   'Pause'
                 ),
               React.createElement('button', {
                 onClick: reset,
                 className: "bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition-colors"
               },
-                React.createElement(RotateCcw, { className: "w-5 h-5" }),
+                RotateCcw({ class: "w-5 h-5" }),
                 'Reset'
               )
             ),
@@ -504,7 +506,7 @@ Write ONLY the story segment, no meta-commentary. Make it exciting and match the
                         className: "text-white/70 hover:text-white transition-colors",
                         title: "Play audio"
                       },
-                        React.createElement(Volume2, { className: "w-4 h-4" })
+                        Volume2({ class: "w-4 h-4" })
                       ),
                       React.createElement('span', { className: "text-white/70 text-sm" },
                         `${segment.speed.toFixed(1)} mph • ${segment.timestamp}`
