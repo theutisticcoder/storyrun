@@ -13,7 +13,22 @@
     <div id="root"></div>
     <script>
     const { useState, useEffect, useRef } = React;
-    const { Play, Pause, RotateCcw, Book, Volume2, VolumeX, Bell, BellOff } = lucide;
+
+    // Create lucide icons once using UMD API
+    const BookIcon = lucide.createIcon("Book");
+    const PlayIcon = lucide.createIcon("Play");
+    const PauseIcon = lucide.createIcon("Pause");
+    const RotateCcwIcon = lucide.createIcon("RotateCcw");
+    const Volume2Icon = lucide.createIcon("Volume2");
+    const VolumeXIcon = lucide.createIcon("VolumeX");
+    const BellIcon = lucide.createIcon("Bell");
+    const BellOffIcon = lucide.createIcon("BellOff");
+
+    // Helper to render Lucide icon SVG as HTML inside React
+    function Icon({ icon, className }) {
+      const svg = icon({ class: className });
+      return React.createElement('span', { dangerouslySetInnerHTML: { __html: svg.outerHTML } });
+    }
 
     function RunningStoryApp() {
       const [genre, setGenre] = useState('');
@@ -370,15 +385,13 @@ Write ONLY the story segment, no meta-commentary. Make it exciting and match the
         speedHistoryRef.current = [];
       };
 
-      // Fix: Protect progress bar from negative values
       const progressToNextSegment = Math.max(0, ((distance - lastStoryDistance) / 0.5) * 100);
 
       return React.createElement('div', { className: "min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 p-4" },
         React.createElement('div', { className: "max-w-4xl mx-auto" },
           React.createElement('div', { className: "bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl p-6 mb-6" },
             React.createElement('div', { className: "flex items-center gap-3 mb-6" },
-              // FIXED ICON USAGE: Use icon as a function and place result directly
-              Book({ class: "w-8 h-8 text-yellow-300" }),
+              React.createElement(Icon, { icon: BookIcon, className: "w-8 h-8 text-yellow-300" }),
               React.createElement('h1', { className: "text-3xl font-bold text-white" }, 'Running Story Tracker')
             ),
 
@@ -399,8 +412,8 @@ Write ONLY the story segment, no meta-commentary. Make it exciting and match the
                   React.createElement('div', { className: "flex items-center justify-between" },
                     React.createElement('div', { className: "flex items-center gap-2 text-white/90" },
                       notificationsEnabled ?
-                        Bell({ class: "w-5 h-5 text-green-300" }) :
-                        BellOff({ class: "w-5 h-5 text-white/50" }),
+                        React.createElement(Icon, { icon: BellIcon, className: "w-5 h-5 text-green-300" }) :
+                        React.createElement(Icon, { icon: BellOffIcon, className: "w-5 h-5 text-white/50" }),
                       React.createElement('span', null, 'Story Notifications')
                     ),
                     !notificationsEnabled && React.createElement('button', {
@@ -441,7 +454,9 @@ Write ONLY the story segment, no meta-commentary. Make it exciting and match the
                     : 'bg-red-500/30 text-red-300 hover:bg-red-500/40'
                 }`
               },
-                isTTSEnabled ? Volume2({ class: "w-5 h-5" }) : VolumeX({ class: "w-5 h-5" }),
+                isTTSEnabled
+                  ? React.createElement(Icon, { icon: Volume2Icon, className: "w-5 h-5" })
+                  : React.createElement(Icon, { icon: VolumeXIcon, className: "w-5 h-5" }),
                 isTTSEnabled ? 'Audio Narration ON' : 'Audio Narration OFF'
               )
             ),
@@ -468,21 +483,21 @@ Write ONLY the story segment, no meta-commentary. Make it exciting and match the
                   onClick: startTracking,
                   className: "flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition-colors"
                 },
-                  Play({ class: "w-5 h-5" }),
+                  React.createElement(Icon, { icon: PlayIcon, className: "w-5 h-5" }),
                   hasStarted ? 'Resume' : 'Start Running'
                 ) :
                 React.createElement('button', {
                   onClick: pauseTracking,
                   className: "flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition-colors"
                 },
-                  Pause({ class: "w-5 h-5" }),
+                  React.createElement(Icon, { icon: PauseIcon, className: "w-5 h-5" }),
                   'Pause'
                 ),
               React.createElement('button', {
                 onClick: reset,
                 className: "bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition-colors"
               },
-                RotateCcw({ class: "w-5 h-5" }),
+                React.createElement(Icon, { icon: RotateCcwIcon, className: "w-5 h-5" }),
                 'Reset'
               )
             ),
@@ -505,7 +520,7 @@ Write ONLY the story segment, no meta-commentary. Make it exciting and match the
                         className: "text-white/70 hover:text-white transition-colors",
                         title: "Play audio"
                       },
-                        Volume2({ class: "w-4 h-4" })
+                        React.createElement(Icon, { icon: Volume2Icon, className: "w-4 h-4" })
                       ),
                       React.createElement('span', { className: "text-white/70 text-sm" },
                         `${segment.speed.toFixed(1)} mph • ${segment.timestamp}`
@@ -523,7 +538,6 @@ Write ONLY the story segment, no meta-commentary. Make it exciting and match the
       );
     }
 
-    // Use ReactDOM.render (not createRoot) for UMD build
     ReactDOM.render(
       React.createElement(RunningStoryApp),
       document.getElementById('root')
