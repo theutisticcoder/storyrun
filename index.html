@@ -88,22 +88,22 @@ Previous segments summary: ${storySegments.slice(-2).map(s => s.text.slice(0, 10
 Write ONLY the story segment, no meta-commentary. Make it exciting and match the running pace!`;
 
         try {
-          const response = await fetch("https://api.anthropic.com/v1/messages", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              model: "claude-sonnet-4-20250514",
-              max_tokens: 1000,
-              messages: [
-                { role: "user", content: prompt }
-              ]
-            })
-          });
+          const response = await fetch("https://api.puter.com/ai/chat", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    model: "openai/gpt-4o-mini", // or another available Puter model
+    messages: [
+      { role: "system", content: "You are a creative storyteller that writes immersive running stories." },
+      { role: "user", content: prompt }
+    ]
+  })
+});
 
           const data = await response.json();
-          const storyText = data.content[0].text;
+          const storyText = data.output?.[0]?.content || "Error: No story generated.";
           
           const newSegment = {
             segment: segmentNumber,
