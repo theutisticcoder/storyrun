@@ -577,7 +577,6 @@ Previous segments summary: ${prevSummary}`
 }
 Write ONLY the story segment, no meta-commentary. Make it exciting and match the running pace!`;
 
-      try {
         // Use Puter Chat API for story generation
        
         var storyText;
@@ -593,31 +592,16 @@ Write ONLY the story segment, no meta-commentary. Make it exciting and match the
         };
         storySegments.push(newSegment);
         // Send notification
-        if (notificationsEnabled && 'Notification' in window && Notification.permission === 'granted') {
-          const preview = storyText.slice(0, 100) + '...';
-          new Notification(`📖 Story Segment ${segmentNumber} Ready!`, {
-            body: preview,
-            vibrate: [200, 100, 200],
-            tag: 'story-segment'
-          });
-        }
+       
         // Auto-play TTS if enabled and tracking
         if (isTTSEnabled && isTracking) {
           speakText(storyText);
         }
-      } catch (error) {
-        console.error("Error generating story:", error);
-        const errorSegment = {
-          segment: segmentNumber,
-          text: "Connection error. Keep running, the story will continue when reconnected!",
-          speed: avgSpeed,
-          timestamp: new Date().toLocaleTimeString()
-        };
-        storySegments.push(errorSegment);
+       
         if (isTTSEnabled && isTracking) {
           speakText(errorSegment.text);
         }
-      }
+      
       isGenerating = false;
       renderAll();
     }
