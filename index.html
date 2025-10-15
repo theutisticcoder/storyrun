@@ -267,7 +267,7 @@
         <button id="start-btn"><span id="play-icon">▶️</span> <span id="start-label">Start Running</span></button>
         <button id="pause-btn" class="pause" style="display:none;"><span>⏸</span> Pause</button>
         <button id="reset-btn" class="reset"><span>⟲</span> Reset</button>
-        <button class="reset" onclick="generateStorySegment(1,5)"><span>⟲</span>test code</button>
+        <button class="reset" onclick="generateStorySegment(1,5 )"><span>⟲</span>test code</button>
       </div>
       <div id="generating-indicator" style="text-align:center; color:#fde68a; margin-top:1rem; display:none;"
         class="animate-pulse">✨ Generating your story segment...</div>
@@ -636,72 +636,79 @@
     }
 
     async function generateStorySegment(segmentNumber, avgSpeed) {
-    isGenerating = true;
-    renderAll();
-    const paceDescription = avgSpeed > 4 ? 'fast-paced and intense'
-      : avgSpeed > 3 ? 'moderate tension'
-        : 'reflective and atmospheric';
-    const prevSummary = storySegments.slice(-2).map(s => s.text.slice(0, 100)).join(' ... ');
-    const prompt = `You are writing segment ${segmentNumber} of an ongoing ${genre} story. This is a story for a runner, and they've been running at ${avgSpeed.toFixed(1)} mph, so make this segment ${paceDescription}.
+      isGenerating = true;
+      renderAll();
+      const paceDescription = avgSpeed > 4 ? 'fast-paced and intense'
+        : avgSpeed > 3 ? 'moderate tension'
+          : 'reflective and atmospheric';
+      const prevSummary = storySegments.slice(-2).map(s => s.text.slice(0, 100)).join(' ... ');
+      const prompt = `You are writing segment ${segmentNumber} of an ongoing ${genre} story. This is a story for a runner, and they've been running at ${avgSpeed.toFixed(1)} mph, so make this segment ${paceDescription}.
 ${segmentNumber === 1
-      ? `This is the BEGINNING of the story. Introduce the main character and setting in an engaging way. End with a hook that makes them want to keep running for the next part. Write 7-8 paragraphs.`
-      : `This is segment ${segmentNumber}. Continue the story with rising action. Reference what happened before naturally. End with a cliffhanger or exciting moment. Write 7-8 paragraphs.
+          ? `This is the BEGINNING of the story. Introduce the main character and setting in an engaging way. End with a hook that makes them want to keep running for the next part. Write 7-8 paragraphs.`
+          : `This is segment ${segmentNumber}. Continue the story with rising action. Reference what happened before naturally. End with a cliffhanger or exciting moment. Write 7-8 paragraphs.
 Previous segments summary: ${prevSummary}`
-    }
+        }
 Write ONLY the story segment, no meta-commentary. Make it exciting and match the running pace!`;
 
-    // Use DeepSeek via OpenRouter for story generation
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer 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`, // <-- put your free key here!
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: "tngtech/deepseek-r1t2-chimera:free",
-        messages: [{content:prompt}],
-        max_tokens: 512
-      })
-    });
-    const data = await response.json();
-    console.log(data)
-    const storyText = data.choices[0].message.content;
-    const newSegment = {
-      segment: segmentNumber,
-      text: storyText,
-      speed: avgSpeed,
-      timestamp: new Date().toLocaleTimeString()
-    };
-    storySegments.push(newSegment);
+      // Use DeepSeek via OpenRouter for story generation
+      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer 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`, // <-- put your free key here!
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.0-flash-exp:free",
+          messages: [{
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": prompt
+              }
+            ],
+          }]
+        })
+      });
+      const data = await response.json();
+      console.log(data)
+      const storyText = data.choices[0].message.content;
+      const newSegment = {
+        segment: segmentNumber,
+        text: storyText,
+        speed: avgSpeed,
+        timestamp: new Date().toLocaleTimeString()
+      };
+      storySegments.push(newSegment);
 
-    // Auto-play TTS if enabled and tracking
-    if (isTTSEnabled && isTracking) {
-      speakText(storyText);
+      // Auto-play TTS if enabled and tracking
+      if (isTTSEnabled && isTracking) {
+        speakText(storyText);
+      }
+
+      isGenerating = false;
+      renderAll();
     }
 
-    isGenerating = false;
-    renderAll();
-  }
-
-  // Keep Puter TTS for speech
-  async function speakText(text) {
-    stopSpeaking();
-    isSpeaking = true;
-    renderAll();
-    // Puter TTS API
-    puter.ai.txt2speech(text, {voice: "Arthur", engine: "neural"}).then(audio => { audio.play() })
-    renderAll();
-  }
-
-  function stopSpeaking() {
-    if (currentAudio) {
-      currentAudio.pause();
-      currentAudio = null;
+    // Keep Puter TTS for speech
+    async function speakText(text) {
+      stopSpeaking();
+      isSpeaking = true;
+      renderAll();
+      // Puter TTS API
+      puter.ai.txt2speech(text, { voice: "Arthur", engine: "neural" }).then(audio => { audio.play() })
+      renderAll();
     }
-    window.speechSynthesis.cancel();
-    isSpeaking = false;
-    renderAll();
-  }
+
+    function stopSpeaking() {
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio = null;
+      }
+      window.speechSynthesis.cancel();
+      isSpeaking = false;
+      renderAll();
+    }
 
     // Initial render
     renderAll();
