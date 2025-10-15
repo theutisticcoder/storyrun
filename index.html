@@ -668,29 +668,19 @@ Write ONLY the story segment, no meta-commentary. Make it exciting and match the
           // Auto-play TTS if enabled and tracking
           if (isTTSEnabled && isTracking) {
              lines = storyText.split('\n');
-             speakText(lines)
           }
 
           isGenerating = false;
           renderAll();
         });
     }
-var num = 0;
-    async function speakText(lines) {
+
+    async function speakText(text) {
       stopSpeaking();
-      var text = lines[num];
-      num++
       isSpeaking = true;
       renderAll();
       // Puter TTS API
-      puter.ai.txt2speech(text, "en-US", "Danelle", "generative").then(audio=> {
-        audio.play();
-        audio.onended = ()=> {
-          if(num <= lines.length){
-            speakText(lines)
-          }
-        }
-      })
+      puter.ai.txt2speech(text, "en-US", "Danelle", "generative").then(audio=> {audio.play()})
 
       renderAll();
     }
