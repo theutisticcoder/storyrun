@@ -308,7 +308,7 @@
     var storyText;
     // DOM references
     var lines
-const openai = new OpenAI();
+    const openai = new window.OpenAI({ apiKey: 'sk-abcdef1234567890abcdef1234567890abcdef12' });
 
     const setupPanel = document.getElementById('setup-panel');
     const distanceDisplay = document.getElementById('distance-display');
