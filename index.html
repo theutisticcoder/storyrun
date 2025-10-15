@@ -652,7 +652,7 @@ Write ONLY the story segment, no meta-commentary. Make it exciting and match the
       // Use Puter Chat API for story generation
 
 
-      puter.ai.chat(prompt, { model: 'gpt-5-nano' })
+      puter.ai.chat(prompt, { model: 'claude-opus-4' })
         .then(response => {
           console.log(response)
           storyText = response.message.content[0].text;
