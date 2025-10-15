@@ -659,7 +659,7 @@
       model: "deepseek-r1" // Verified model name for Puter.js
     });
 
-    alert("Puter API Response:", response); // Inspect this in console
+    alert("Puter API Response:", JSON.stringify(response)); // Inspect this in console
     
     // Extract text from response (structure might vary by model)
     let storyText = "";
@@ -690,7 +690,7 @@
     
   } catch (error) {
     console.error("Story Generation Failed:", error);
-    alert(`Couldn't generate story: ${error}`);
+    alert(`Couldn't generate story: ${JSON.stringify(error)}`);
   }
   
   isGenerating = false;
