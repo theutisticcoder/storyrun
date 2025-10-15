@@ -645,11 +645,7 @@
             : 'reflective and atmospheric';
 
         const prevSummary = storySegments.slice(-2).map(s => s.text.slice(0, 100)).join(' ... ');
-        var prompt = `Write segment ${segmentNumber} of a ${genre} story for a runner maintaining ${avgSpeed.toFixed(1)} mph (${paceDescription}). `
-          + (segmentNumber === 1
-            ? ` Introduce character/setting in English (7-8 paragarphs). End with hook.`
-            : ` Continue with rising action using: "${prevSummary}". End on cliffhanger (7-8 paragraphs).`)
-          + ` Rules: ONLY story, no commentary, match pace excitement.`
+        var prompt = "you are an author writing a(n) " + genre +" epic. We are on part " + segmentNumber + ". Please write a chapter for the runner, who is on the journey, running " + avgSpeed + "mph and is another half mile in. if on part one, introduce the setting based on the run speed. Otherwise, the summary is:" + prevSummary;
         alert(prompt)
         // PROPER Puter.js implementation
         const response = await puter.ai.chat([
