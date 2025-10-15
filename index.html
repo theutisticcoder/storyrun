@@ -652,7 +652,7 @@ Write ONLY the story segment, no meta-commentary. Make it exciting and match the
 
       // Use DeepSeek via OpenRouter for story generation
 
-      puter.ai.chat(prompt, { model: "claude-sonnet-4" })
+      puter.ai.chat(prompt)
         .then(response => {
           storyText = response.message.content[0].text;
           const newSegment = {
