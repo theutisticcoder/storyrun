@@ -635,65 +635,71 @@
     }
 
     async function generateStorySegment(segmentNumber, avgSpeed) {
-      isGenerating = true;
-      renderAll();
-      const paceDescription = avgSpeed > 4 ? 'fast-paced and intense'
-        : avgSpeed > 3 ? 'moderate tension'
-          : 'reflective and atmospheric';
-      const prevSummary = storySegments.slice(-2).map(s => s.text.slice(0, 100)).join(' ... ');
-      const prompt = `You are writing segment ${segmentNumber} of an ongoing ${genre} story. This is a story for a runner, and they've been running at ${avgSpeed.toFixed(1)} mph, so make this segment ${paceDescription}.
+    isGenerating = true;
+    renderAll();
+    const paceDescription = avgSpeed > 4 ? 'fast-paced and intense'
+      : avgSpeed > 3 ? 'moderate tension'
+        : 'reflective and atmospheric';
+    const prevSummary = storySegments.slice(-2).map(s => s.text.slice(0, 100)).join(' ... ');
+    const prompt = `You are writing segment ${segmentNumber} of an ongoing ${genre} story. This is a story for a runner, and they've been running at ${avgSpeed.toFixed(1)} mph, so make this segment ${paceDescription}.
 ${segmentNumber === 1
-          ? `This is the BEGINNING of the story. Introduce the main character and setting in an engaging way. End with a hook that makes them want to keep running for the next part. Write 7-8 paragraphs.`
-          : `This is segment ${segmentNumber}. Continue the story with rising action. Reference what happened before naturally. End with a cliffhanger or exciting moment. Write 7-8 paragraphs.
+      ? `This is the BEGINNING of the story. Introduce the main character and setting in an engaging way. End with a hook that makes them want to keep running for the next part. Write 7-8 paragraphs.`
+      : `This is segment ${segmentNumber}. Continue the story with rising action. Reference what happened before naturally. End with a cliffhanger or exciting moment. Write 7-8 paragraphs.
 Previous segments summary: ${prevSummary}`
-        }
+    }
 Write ONLY the story segment, no meta-commentary. Make it exciting and match the running pace!`;
 
-      // Use Puter Chat API for story generation
+    // Use DeepSeek via OpenRouter for story generation
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer YOUR_OPENROUTER_API_KEY`, // <-- put your free key here!
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "deepseek-ai/deepseek-llm-7b-base",
+        messages: [{role:"user",content:prompt}],
+        max_tokens: 512
+      })
+    });
+    const data = await response.json();
+    const storyText = data.choices[0].message.content;
+    const newSegment = {
+      segment: segmentNumber,
+      text: storyText,
+      speed: avgSpeed,
+      timestamp: new Date().toLocaleTimeString()
+    };
+    storySegments.push(newSegment);
 
-
-      puter.ai.chat(prompt, { model: 'gpt-5' })
-        .then(response => {
-          console.log(response)
-          storyText = response.message.content[0].text;
-          const newSegment = {
-            segment: segmentNumber,
-            text: response.message.content[0].text,
-            speed: avgSpeed,
-            timestamp: new Date().toLocaleTimeString()
-          };
-          storySegments.push(newSegment);
-          // Send notification
-
-          // Auto-play TTS if enabled and tracking
-          if (isTTSEnabled && isTracking) {
-            speakText(response.message.content[0].text);
-          }
-
-          isGenerating = false;
-          renderAll();
-        });
+    // Auto-play TTS if enabled and tracking
+    if (isTTSEnabled && isTracking) {
+      speakText(storyText);
     }
 
-    async function speakText(text) {
-      stopSpeaking();
-      isSpeaking = true;
-      renderAll();
-      // Puter TTS API
-      puter.ai.txt2speech(text, {voice: "Arthur", engine: "neural"}).then(audio => { audio.play() })
+    isGenerating = false;
+    renderAll();
+  }
 
-      renderAll();
-    }
+  // Keep Puter TTS for speech
+  async function speakText(text) {
+    stopSpeaking();
+    isSpeaking = true;
+    renderAll();
+    // Puter TTS API
+    puter.ai.txt2speech(text, {voice: "Arthur", engine: "neural"}).then(audio => { audio.play() })
+    renderAll();
+  }
 
-    function stopSpeaking() {
-      if (currentAudio) {
-        currentAudio.pause();
-        currentAudio = null;
-      }
-      window.speechSynthesis.cancel();
-      isSpeaking = false;
-      renderAll();
+  function stopSpeaking() {
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio = null;
     }
+    window.speechSynthesis.cancel();
+    isSpeaking = false;
+    renderAll();
+  }
 
     // Initial render
     renderAll();
