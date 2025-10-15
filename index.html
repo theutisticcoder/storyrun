@@ -582,7 +582,7 @@ Write ONLY the story segment, no meta-commentary. Make it exciting and match the
 
          puter.ai.chat(prompt, {model: 'claude-sonnet-4'})
             .then(response => {
-                storyText = response.message.content;
+                storyText = response.message.content[0].text;
             }); 
             setTimeout(()=>{
         const newSegment = {
