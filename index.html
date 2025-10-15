@@ -680,7 +680,7 @@ Write ONLY the story segment, no meta-commentary. Make it exciting and match the
       isSpeaking = true;
       renderAll();
       // Puter TTS API
-      puter.ai.txt2speech(text, {voice: "Arthur"}).then(audio => { audio.play() })
+      puter.ai.txt2speech(text, {voice: "Arthur", engine: "neural"}).then(audio => { audio.play() })
 
       renderAll();
     }
