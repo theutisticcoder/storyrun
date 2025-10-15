@@ -307,7 +307,7 @@
     let currentAudio = null;
     var storyText;
     // DOM references
-var lines
+    var lines
 
     const setupPanel = document.getElementById('setup-panel');
     const distanceDisplay = document.getElementById('distance-display');
@@ -667,7 +667,7 @@ Write ONLY the story segment, no meta-commentary. Make it exciting and match the
 
           // Auto-play TTS if enabled and tracking
           if (isTTSEnabled && isTracking) {
-             lines = storyText.split('\n');
+            speakText(storyText);
           }
 
           isGenerating = false;
@@ -680,7 +680,7 @@ Write ONLY the story segment, no meta-commentary. Make it exciting and match the
       isSpeaking = true;
       renderAll();
       // Puter TTS API
-      puter.ai.txt2speech(text, "en-US", "Danelle", "generative").then(audio=> {audio.play()})
+      puter.ai.txt2speech(text, "en-US", "Danelle", "generative").then(audio => { audio.play() })
 
       renderAll();
     }
