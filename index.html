@@ -659,12 +659,7 @@
         alert("Puter API Response:" + JSON.stringify(response)); // Inspect this in console
 
         // Extract text from response (structure might vary by model)
-        let storyText = "";
-        if (response?.message?.content) { // Common structure
-          storyText = response.message.content[0].text;
-        } else if (response?.content) {
-          storyText = response.content[0].text;
-        }
+       storyText = response.message.content[0].text;
 
         if (!storyText || storyText.length < 50) {
           throw new Error("Invalid story response from API");
