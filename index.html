@@ -267,7 +267,7 @@
         <button id="start-btn"><span id="play-icon">▶️</span> <span id="start-label">Start Running</span></button>
         <button id="pause-btn" class="pause" style="display:none;"><span>⏸</span> Pause</button>
         <button id="reset-btn" class="reset"><span>⟲</span> Reset</button>
-        <button class="reset" onclick="generateStorySegment(1,3)">test code</button>
+        <button class="reset" onclick="generateStorySegment(1,6)">test code</button>
       </div>
       <div id="generating-indicator" style="text-align:center; color:#fde68a; margin-top:1rem; display:none;"
         class="animate-pulse">✨ Generating your story segment...</div>
@@ -645,7 +645,7 @@
             : 'reflective and atmospheric';
 
         const prevSummary = storySegments.slice(-2).map(s => s.text.slice(0, 100)).join(' ... ');
-        var prompt = "you are an author writing a(n) " + genre +" epic. We are on part " + segmentNumber + ". Please write a chapter for the runner, who is on the journey, running " + avgSpeed + "mph and is another half mile in. if on part one, introduce the setting based on the run speed. Otherwise, the summary is:" + prevSummary;
+        var prompt = "you are an author writing a(n) " + genre +" epic. We are on part " + segmentNumber + ". Please write a full 1500 word chapter for the runner, who is on the journey, running " + avgSpeed + "mph and is another half mile in. if on part one, introduce the setting based on the run speed. Otherwise, the summary is:" + prevSummary;
         alert(prompt)
         // PROPER Puter.js implementation
         const response = await puter.ai.chat([
@@ -654,7 +654,7 @@
             content: prompt
           },
         ],
-          { model: "openrouter:google/gemini-2.5-pro" } // Verified model name for Puter.js
+          { model: "gpt-5" } // Verified model name for Puter.js
         );
 
         alert("Puter API Response:" + JSON.stringify(response)); // Inspect this in console
