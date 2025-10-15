@@ -642,13 +642,7 @@
         : avgSpeed > 3 ? 'moderate tension'
           : 'reflective and atmospheric';
       const prevSummary = storySegments.slice(-2).map(s => s.text.slice(0, 100)).join(' ... ');
-      const prompt = `You are a creative author and you are writing segment ${segmentNumber} of an ongoing ${genre} story. This is a story for a runner, and they've been running at ${avgSpeed.toFixed(1)} mph, so make this segment ${paceDescription}.
-${segmentNumber === 1
-          ? `This is the BEGINNING of the story. It should be written in English. Introduce the main character and setting in an engaging way. End with a hook that makes them want to keep running for the next part. Write 7-8 paragraphs.`
-          : `This is segment ${segmentNumber}. Continue the story with rising action. Reference what happened before naturally. End with a cliffhanger or exciting moment. Write 7-8 paragraphs.
-Previous segments summary: ${prevSummary}`
-        }
-Write ONLY the story segment, no meta-commentary. Make it exciting and match the running pace!`;
+     const prompt = `Write segment ${segmentNumber} of a ${genre} story for a runner maintaining ${avgSpeed.toFixed(1)} mph (${paceDescription}). ${segmentNumber === 1 ? `[BEGINNING] Introduce character/setting in English (7-8 paras). End with hook.` : `[SEGMENT ${segmentNumber}] Continue with rising action using: "${prevSummary}". End on cliffhanger (7-8 paras).`} Rules: ONLY story, no commentary, match pace excitement.`;
 
       // Use DeepSeek via OpenRouter for story generation
 
