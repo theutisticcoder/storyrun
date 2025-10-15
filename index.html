@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>Running Story Tracker</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
-      <script src="https://js.puter.com/v2/"></script>
+  <script src="https://js.puter.com/v2/"></script>
 
   <style>
     body {
@@ -13,34 +14,41 @@
       margin: 0;
       font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
     }
+
     .container {
       max-width: 820px;
       margin: 0 auto;
       padding: 1.5rem;
     }
+
     .card {
-      background: rgba(255,255,255,0.08);
+      background: rgba(255, 255, 255, 0.08);
       backdrop-filter: blur(12px);
       border-radius: 1.5rem;
-      box-shadow: 0 8px 32px rgba(0,0,0,.2);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, .2);
       padding: 2rem 1.5rem;
       margin-bottom: 2rem;
     }
-    h1, h2 {
+
+    h1,
+    h2 {
       color: #fff;
       font-weight: bold;
       margin: 0 0 1rem 0;
     }
-    .genre-select, select {
+
+    .genre-select,
+    select {
       width: 100%;
       padding: .75rem;
-      background: rgba(255,255,255,0.15);
+      background: rgba(255, 255, 255, 0.15);
       border-radius: .75rem;
-      border: 2px solid rgba(255,255,255,0.25);
+      border: 2px solid rgba(255, 255, 255, 0.25);
       color: #fff;
       font-size: 1rem;
       margin-bottom: 1rem;
     }
+
     label {
       color: #fff;
       font-size: 1rem;
@@ -48,38 +56,45 @@
       margin-bottom: .5rem;
       display: block;
     }
+
     .stats {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 1rem;
       margin-bottom: 1rem;
     }
+
     .stat {
-      background: rgba(255,255,255,0.15);
+      background: rgba(255, 255, 255, 0.15);
       padding: 1rem;
       border-radius: .75rem;
       color: #fff;
       text-align: left;
     }
+
     .stat-title {
       color: #cbd5e1;
       font-size: .95rem;
     }
+
     .stat-value {
       font-size: 2rem;
       font-weight: bold;
     }
+
     .status {
       text-align: center;
       color: #cbd5e1;
       font-size: 1rem;
       margin-bottom: 1rem;
     }
+
     .controls {
       display: flex;
       gap: 1rem;
       margin-bottom: 2rem;
     }
+
     button {
       background: #10b981;
       color: #fff;
@@ -94,32 +109,52 @@
       align-items: center;
       gap: .5rem;
     }
-    button.pause { background: #f59e42; }
-    button.reset { background: #ef4444; }
-    button.tts-on { background: #22c55e; }
-    button.tts-off { background: #ef4444; }
-    button:disabled { opacity: .6; cursor: not-allowed; }
+
+    button.pause {
+      background: #f59e42;
+    }
+
+    button.reset {
+      background: #ef4444;
+    }
+
+    button.tts-on {
+      background: #22c55e;
+    }
+
+    button.tts-off {
+      background: #ef4444;
+    }
+
+    button:disabled {
+      opacity: .6;
+      cursor: not-allowed;
+    }
+
     .progress {
       width: 100%;
-      background: rgba(255,255,255,0.15);
+      background: rgba(255, 255, 255, 0.15);
       border-radius: 1rem;
       height: 1.1rem;
       margin-bottom: .5rem;
       position: relative;
     }
+
     .progress-bar {
       background: linear-gradient(90deg, #fde68a 0%, #db2777 100%);
       height: 100%;
       border-radius: 1rem;
       transition: width .4s;
     }
+
     .story-card {
-      background: rgba(255,255,255,0.15);
+      background: rgba(255, 255, 255, 0.15);
       border-radius: .75rem;
       padding: 1rem;
       margin-bottom: 1rem;
       color: #fff;
     }
+
     .story-segment-head {
       display: flex;
       justify-content: space-between;
@@ -129,6 +164,7 @@
       color: #fde68a;
       font-weight: bold;
     }
+
     .story-segment-body {
       color: #fff;
       white-space: pre-line;
@@ -136,22 +172,32 @@
       margin-bottom: .25rem;
       line-height: 1.5;
     }
+
     .setup {
-      background: rgba(59,130,246,0.14);
-      border: 1px solid rgba(59,130,246,0.22);
+      background: rgba(59, 130, 246, 0.14);
+      border: 1px solid rgba(59, 130, 246, 0.22);
       border-radius: .75rem;
       padding: 1rem;
       margin-bottom: 1rem;
       color: #fff;
       font-size: .95rem;
     }
+
     .notification-status {
       display: flex;
       align-items: center;
       gap: .5rem;
     }
-    .bell-enabled { color: #22c55e; }
-    .bell-disabled { color: #fff; opacity: .5; }
+
+    .bell-enabled {
+      color: #22c55e;
+    }
+
+    .bell-disabled {
+      color: #fff;
+      opacity: .5;
+    }
+
     .audio-btn {
       background: none;
       border: none;
@@ -161,12 +207,36 @@
       margin-left: .5rem;
       padding: 0 .25rem;
     }
-    .audio-btn:hover { color: #fde68a; }
-    .small-text { color: #cbd5e1; font-size: .85rem; }
-    .animate-pulse { animation: pulse 1s infinite; }
-    @keyframes pulse { 0%{opacity:1}50%{opacity:.5}100%{opacity:1} }
+
+    .audio-btn:hover {
+      color: #fde68a;
+    }
+
+    .small-text {
+      color: #cbd5e1;
+      font-size: .85rem;
+    }
+
+    .animate-pulse {
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: .5
+      }
+
+      100% {
+        opacity: 1
+      }
+    }
   </style>
 </head>
+
 <body>
   <div class="container">
     <div class="card">
@@ -198,7 +268,8 @@
         <button id="pause-btn" class="pause" style="display:none;"><span>⏸</span> Pause</button>
         <button id="reset-btn" class="reset"><span>⟲</span> Reset</button>
       </div>
-      <div id="generating-indicator" style="text-align:center; color:#fde68a; margin-top:1rem; display:none;" class="animate-pulse">✨ Generating your story segment...</div>
+      <div id="generating-indicator" style="text-align:center; color:#fde68a; margin-top:1rem; display:none;"
+        class="animate-pulse">✨ Generating your story segment...</div>
     </div>
     <div id="story-panel"></div>
   </div>
@@ -270,14 +341,14 @@
         <div class="setup">
           <div class="notification-status">
             ${notificationsEnabled
-              ? '<span class="bell-enabled">🔔</span>'
-              : '<span class="bell-disabled">🔕</span>'
-            }
+          ? '<span class="bell-enabled">🔔</span>'
+          : '<span class="bell-disabled">🔕</span>'
+        }
             <span>Story Notifications</span>
             ${!notificationsEnabled
-              ? `<button id="enable-notifications" style="background:#3b82f6;color:#fff;padding:.3rem .8rem;border-radius:.4rem;border:none; font-size:.95rem;">Enable</button>`
-              : '<span style="color:#34d399;font-size:.95rem;">✓ Enabled</span>'
-            }
+          ? `<button id="enable-notifications" style="background:#3b82f6;color:#fff;padding:.3rem .8rem;border-radius:.4rem;border:none; font-size:.95rem;">Enable</button>`
+          : '<span style="color:#34d399;font-size:.95rem;">✓ Enabled</span>'
+        }
           </div>
           <p class="small-text" style="margin-top:.5rem;">Location permission will be requested when you start running</p>
         </div>
@@ -391,7 +462,7 @@
     }
 
     // Audio playback for story segments
-    window.playStoryAudio = function(segmentNum) {
+    window.playStoryAudio = function (segmentNum) {
       const segment = storySegments.find(s => s.segment === segmentNum);
       if (segment) speakText(segment.text);
     };
@@ -499,10 +570,10 @@
       const R = 3958.8;
       const dLat = (lat2 - lat1) * Math.PI / 180;
       const dLon = (lon2 - lon1) * Math.PI / 180;
-      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                Math.sin(dLon/2) * Math.sin(dLon/2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
       return R * c;
     }
 
@@ -525,7 +596,7 @@
           if (currentSpeed > 0 && currentSpeed < 25) {
             speedHistory.push(currentSpeed);
             if (speedHistory.length > 10) speedHistory.shift();
-            const avgSpeed = speedHistory.reduce((a,b)=>a+b,0) / speedHistory.length;
+            const avgSpeed = speedHistory.reduce((a, b) => a + b, 0) / speedHistory.length;
             speed = avgSpeed;
           }
         }
@@ -554,7 +625,7 @@
       if (isTracking && distanceSinceLastStory >= 0.5 && !isGenerating) {
         const segmentNumber = Math.floor(totalDistance / 0.5);
         const avgSpeed = speedHistory.length > 0
-          ? speedHistory.reduce((a,b)=>a+b,0) / speedHistory.length
+          ? speedHistory.reduce((a, b) => a + b, 0) / speedHistory.length
           : 3;
         generateStorySegment(segmentNumber, avgSpeed);
         lastStoryDistance = totalDistance;
@@ -567,51 +638,49 @@
       renderAll();
       const paceDescription = avgSpeed > 4 ? 'fast-paced and intense'
         : avgSpeed > 3 ? 'moderate tension'
-        : 'reflective and atmospheric';
-      const prevSummary = storySegments.slice(-2).map(s => s.text.slice(0,100)).join(' ... ');
+          : 'reflective and atmospheric';
+      const prevSummary = storySegments.slice(-2).map(s => s.text.slice(0, 100)).join(' ... ');
       const prompt = `You are writing segment ${segmentNumber} of an ongoing ${genre} story. This is a story for a runner, and they've been running at ${avgSpeed.toFixed(1)} mph, so make this segment ${paceDescription}.
 ${segmentNumber === 1
-  ? `This is the BEGINNING of the story. Introduce the main character and setting in an engaging way. End with a hook that makes them want to keep running for the next part. Write 3-4 paragraphs.`
-  : `This is segment ${segmentNumber}. Continue the story with rising action. Reference what happened before naturally. End with a cliffhanger or exciting moment. Write 3-4 paragraphs.
+          ? `This is the BEGINNING of the story. Introduce the main character and setting in an engaging way. End with a hook that makes them want to keep running for the next part. Write 3-4 paragraphs.`
+          : `This is segment ${segmentNumber}. Continue the story with rising action. Reference what happened before naturally. End with a cliffhanger or exciting moment. Write 3-4 paragraphs.
 Previous segments summary: ${prevSummary}`
-}
+        }
 Write ONLY the story segment, no meta-commentary. Make it exciting and match the running pace!`;
 
-        // Use Puter Chat API for story generation
-       
+      // Use Puter Chat API for story generation
 
-         puter.ai.chat(prompt, {model: 'claude-sonnet-4'})
-            .then(response => {
-              console.log(response)
-                storyText = response.message.content[0].text;
-            }); 
-            setTimeout(()=>{
-        const newSegment = {
-          segment: segmentNumber,
-          text: storyText,
-          speed: avgSpeed,
-          timestamp: new Date().toLocaleTimeString()
-        };
-        storySegments.push(newSegment);
-        // Send notification
-       
-        // Auto-play TTS if enabled and tracking
-        if (isTTSEnabled && isTracking) {
-          speakText(storyText);
-        }
-       
-      isGenerating = false;
-      renderAll();
-      },100)
+
+      puter.ai.chat(prompt, { model: 'claude-sonnet-4' })
+        .then(response => {
+          console.log(response)
+          storyText = response.message.content[0].text;
+          const newSegment = {
+            segment: segmentNumber,
+            text: storyText,
+            speed: avgSpeed,
+            timestamp: new Date().toLocaleTimeString()
+          };
+          storySegments.push(newSegment);
+          // Send notification
+
+          // Auto-play TTS if enabled and tracking
+          if (isTTSEnabled && isTracking) {
+            speakText(storyText);
+          }
+
+          isGenerating = false;
+          renderAll();
+        });
     }
 
     async function speakText(text) {
       stopSpeaking();
       isSpeaking = true;
       renderAll();
-        // Puter TTS API
-       puter.ai.txt2speech(text, "en-US", "Danelle","generative")
-        
+      // Puter TTS API
+      puter.ai.txt2speech(text, "en-US", "Danelle", "generative")
+
       renderAll();
     }
 
@@ -629,4 +698,5 @@ Write ONLY the story segment, no meta-commentary. Make it exciting and match the
     renderAll();
   </script>
 </body>
+
 </html>
