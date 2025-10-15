@@ -647,13 +647,13 @@
         const prevSummary = storySegments.slice(-2).map(s => s.text.slice(0, 100)).join(' ... ');
         var prompt = `Write segment ${segmentNumber} of a ${genre} story for a runner maintaining ${avgSpeed.toFixed(1)} mph (${paceDescription}). `
           + (segmentNumber === 1
-            ? `[BEGINNING] Introduce character/setting in English (7-8 paras). End with hook.`
-            : `[SEGMENT ${segmentNumber}] Continue with rising action using: "${prevSummary}". End on cliffhanger (7-8 paras).`)
+            ? `[BEGINNING] Introduce character/setting in English (7-8 paragarphs). End with hook.`
+            : `[SEGMENT ${segmentNumber}] Continue with rising action using: "${prevSummary}". End on cliffhanger (7-8 paragraphs).`)
           + ` Rules: ONLY story, no commentary, match pace excitement.`
           alert(prompt)
         // PROPER Puter.js implementation
         const response = await puter.ai.chat(prompt,
-          { model: "gpt-5" } // Verified model name for Puter.js
+          { model: "gpt-5-nano" } // Verified model name for Puter.js
         );
 
         alert("Puter API Response:" + JSON.stringify(response)); // Inspect this in console
