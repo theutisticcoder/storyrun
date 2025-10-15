@@ -635,62 +635,63 @@
       }
     }
 
-   async function generateStorySegment(segmentNumber, avgSpeed) {
-  isGenerating = true;
-  renderAll();
-  
-  try {
-    const paceDescription = avgSpeed > 4 ? 'fast-paced and intense'
-      : avgSpeed > 3 ? 'moderate tension'
-        : 'reflective and atmospheric';
-    
-    const prevSummary = storySegments.slice(-2).map(s => s.text.slice(0, 100)).join(' ... ');
-    
-    // PROPER Puter.js implementation
-    const response = await puter.ai.chat((`Write segment ${segmentNumber} of a ${genre} story for a runner maintaining ${avgSpeed.toFixed(1)} mph (${paceDescription}). `
-          + (segmentNumber === 1 
-              ? `[BEGINNING] Introduce character/setting in English (7-8 paras). End with hook.` 
-              : `[SEGMENT ${segmentNumber}] Continue with rising action using: "${prevSummary}". End on cliffhanger (7-8 paras).`)
-          + ` Rules: ONLY story, no commentary, match pace excitement.`),
-      {model: "gpt-5"} // Verified model name for Puter.js
-    );
+    async function generateStorySegment(segmentNumber, avgSpeed) {
+      isGenerating = true;
+      renderAll();
 
-    alert("Puter API Response:" + JSON.stringify(response)); // Inspect this in console
-    
-    // Extract text from response (structure might vary by model)
-    let storyText = "";
-    if (response?.message?.content) { // Common structure
-      storyText = response.message.content;
-    } else if (response?.content) {
-      storyText = response.content;
+      try {
+        const paceDescription = avgSpeed > 4 ? 'fast-paced and intense'
+          : avgSpeed > 3 ? 'moderate tension'
+            : 'reflective and atmospheric';
+
+        const prevSummary = storySegments.slice(-2).map(s => s.text.slice(0, 100)).join(' ... ');
+        var prompt = `Write segment ${segmentNumber} of a ${genre} story for a runner maintaining ${avgSpeed.toFixed(1)} mph (${paceDescription}). `
+          + (segmentNumber === 1
+            ? `[BEGINNING] Introduce character/setting in English (7-8 paras). End with hook.`
+            : `[SEGMENT ${segmentNumber}] Continue with rising action using: "${prevSummary}". End on cliffhanger (7-8 paras).`)
+          + ` Rules: ONLY story, no commentary, match pace excitement.`
+          alert(prompt)
+        // PROPER Puter.js implementation
+        const response = await puter.ai.chat(prompt,
+          { model: "gpt-5" } // Verified model name for Puter.js
+        );
+
+        alert("Puter API Response:" + JSON.stringify(response)); // Inspect this in console
+
+        // Extract text from response (structure might vary by model)
+        let storyText = "";
+        if (response?.message?.content) { // Common structure
+          storyText = response.message.content;
+        } else if (response?.content) {
+          storyText = response.content;
+        }
+
+        if (!storyText || storyText.length < 50) {
+          throw new Error("Invalid story response from API");
+        }
+
+        storySegments.push({
+          segment: segmentNumber,
+          text: storyText.trim(),
+          speed: avgSpeed,
+          timestamp: new Date().toLocaleTimeString()
+        });
+
+        if (isTTSEnabled && isTracking) speakText(storyText);
+
+        if (notificationsEnabled) {
+          new Notification(`🚀 New Story Segment ${segmentNumber}`, {
+            body: "Continue running to unlock more!"
+          });
+        }
+
+      } catch (error) {
+        console.error("Story Generation Failed:", error);
+      }
+
+      isGenerating = false;
+      renderAll();
     }
-
-    if (!storyText || storyText.length < 50) {
-      throw new Error("Invalid story response from API");
-    }
-
-    storySegments.push({
-      segment: segmentNumber,
-      text: storyText.trim(),
-      speed: avgSpeed,
-      timestamp: new Date().toLocaleTimeString()
-    });
-
-    if (isTTSEnabled && isTracking) speakText(storyText);
-    
-    if (notificationsEnabled) {
-      new Notification(`🚀 New Story Segment ${segmentNumber}`, {
-        body: "Continue running to unlock more!"
-      });
-    }
-    
-  } catch (error) {
-    console.error("Story Generation Failed:", error);
-  }
-  
-  isGenerating = false;
-  renderAll();
-}
 
     // Keep Puter TTS for speech
     async function speakText(text) {
