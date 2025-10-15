@@ -6,7 +6,13 @@
   <title>Running Story Tracker</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <script src="https://js.puter.com/v2/"></script>
-
+  <script type="importmap">
+        {
+          "imports": {
+            "@google/generative-ai": "https://esm.run/@google/generative-ai"
+          }
+        }
+      </script>
   <style>
     body {
       min-height: 100vh;
@@ -274,8 +280,11 @@
     </div>
     <div id="story-panel"></div>
   </div>
-  <script>
+  <script type="module">
+  import { GoogleGenerativeAI } from "@google/generative-ai";
     // State variables
+const genAI = new GoogleGenerativeAI("AIzaSyB9xg-rKXIrKFJSrj9Yxr4B-8_8-y_vyPE");
+const model = genAI.getGenerativeModel({ model: "gemini-2.0(-flash" });
     const genres = [
       'Fantasy Adventure',
       'Sci-Fi Thriller',
@@ -648,19 +657,12 @@
         var prompt = "you are an author writing a(n) " + genre +" epic. We are on part " + segmentNumber + ". Please write a full 1500 word chapter for the runner, who is on the journey, running " + avgSpeed + "mph and is another half mile in. if on part one, introduce the setting based on the run speed. Otherwise, the summary is:" + prevSummary;
         alert(prompt)
         // PROPER Puter.js implementation
-        const response = await puter.ai.chat([
-          {
-            role: 'user',
-            content: prompt
-          },
-        ],
-          { model: "gpt-5" } // Verified model name for Puter.js
-        );
+        var result = await model.generateContent(prompt)
 
-        alert("Puter API Response:" + JSON.stringify(response)); // Inspect this in console
+
 
         // Extract text from response (structure might vary by model)
-        storyText = response.message.content[0].text;
+        storyText = result.response.text()
 
         if (!storyText || storyText.length < 50) {
           throw new Error("Invalid story response from API");
