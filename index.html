@@ -658,7 +658,7 @@ Write ONLY the story segment, no meta-commentary. Make it exciting and match the
           storyText = response.message.content[0].text;
           const newSegment = {
             segment: segmentNumber,
-            text: storyText,
+            text: response.message.content[0].text,
             speed: avgSpeed,
             timestamp: new Date().toLocaleTimeString()
           };
@@ -667,7 +667,7 @@ Write ONLY the story segment, no meta-commentary. Make it exciting and match the
 
           // Auto-play TTS if enabled and tracking
           if (isTTSEnabled && isTracking) {
-            speakText(storyText);
+            speakText(response.message.content[0].text);
           }
 
           isGenerating = false;
