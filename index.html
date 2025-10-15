@@ -599,10 +599,6 @@ Write ONLY the story segment, no meta-commentary. Make it exciting and match the
           speakText(storyText);
         }
        
-        if (isTTSEnabled && isTracking) {
-          speakText(errorSegment.text);
-        }
-      
       isGenerating = false;
       renderAll();
       },100)
