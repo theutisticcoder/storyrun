@@ -647,17 +647,13 @@
     const prevSummary = storySegments.slice(-2).map(s => s.text.slice(0, 100)).join(' ... ');
     
     // PROPER Puter.js implementation
-    const response = await puter.ai.chat({
-      messages: [{ 
-        role: "user", 
-        content: `Write segment ${segmentNumber} of a ${genre} story for a runner maintaining ${avgSpeed.toFixed(1)} mph (${paceDescription}). `
+    const response = await puter.ai.chat((`Write segment ${segmentNumber} of a ${genre} story for a runner maintaining ${avgSpeed.toFixed(1)} mph (${paceDescription}). `
           + (segmentNumber === 1 
               ? `[BEGINNING] Introduce character/setting in English (7-8 paras). End with hook.` 
               : `[SEGMENT ${segmentNumber}] Continue with rising action using: "${prevSummary}". End on cliffhanger (7-8 paras).`)
-          + ` Rules: ONLY story, no commentary, match pace excitement.`
-      }],
-      model: "deepseek-r1" // Verified model name for Puter.js
-    });
+          + ` Rules: ONLY story, no commentary, match pace excitement.`),
+      {model: "gpt-5"} // Verified model name for Puter.js
+    );
 
     alert("Puter API Response:", JSON.stringify(response)); // Inspect this in console
     
