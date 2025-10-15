@@ -664,6 +664,7 @@ Write ONLY the story segment, no meta-commentary. Make it exciting and match the
       })
     });
     const data = await response.json();
+    console.log(data)
     const storyText = data.choices[0].message.content;
     const newSegment = {
       segment: segmentNumber,
