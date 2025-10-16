@@ -7,7 +7,7 @@
   <title>Running Story Tracker</title>
   <script src="https://js.puter.com/v2/"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
-    <script src="https://code.responsivevoice.org/responsivevoice.js?key=Qa0t9Y6n"></script>
+  <script src="https://code.responsivevoice.org/responsivevoice.js?key=Qa0t9Y6n"></script>
   <style>
     * {
       margin: 0;
@@ -416,7 +416,6 @@
 
   <script>
     // Configure LocalForage
-    responsiveVoice.setDefaultVoice("US English Male");
 
     localforage.config({
       name: 'RunningStoryTracker',
@@ -754,7 +753,7 @@
       state.isGenerating = false;
       generatingIndicator.style.display = 'none';
     }
-    
+
 
     async function speakText(text) {
       if (state.currentAudio) {
@@ -766,7 +765,7 @@
         state.isSpeaking = true;
         speakingStatus.style.display = 'inline';
 
-        responsiveVoice.speak(text);
+        responsiveVoice.speak(text, "UK English Male");
       } catch (error) {
         console.error('TTS Error:', error);
         state.isSpeaking = false;
