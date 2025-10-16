@@ -762,26 +762,7 @@
         state.isSpeaking = true;
         speakingStatus.style.display = 'inline';
 
-        puter.ai.txt2speech(text).then(audio => {
-
-
-          audio.onended = () => {
-            state.isSpeaking = false;
-            speakingStatus.style.display = 'none';
-            URL.revokeObjectURL(audioUrl);
-            state.currentAudio = null;
-          };
-
-          audio.onerror = () => {
-            state.isSpeaking = false;
-            speakingStatus.style.display = 'none';
-            URL.revokeObjectURL(audioUrl);
-            state.currentAudio = null;
-          };
-
-          audio.play();
-        })
-
+        responsiveVoice.speak(text);
       } catch (error) {
         console.error('TTS Error:', error);
         state.isSpeaking = false;
