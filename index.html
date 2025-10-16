@@ -751,10 +751,11 @@
       state.isGenerating = false;
       generatingIndicator.style.display = 'none';
     }
+    
 
     async function speakText(text) {
       if (state.currentAudio) {
-        state.currentAudio.pause();
+        responsiveVoice.cancel();
         state.currentAudio = null;
       }
 
@@ -934,7 +935,9 @@
         document.getElementById('audioIcon').textContent = '🔊';
         document.getElementById('audioText').textContent = 'Audio Narration ON';
         toggleAudioBtn.style.background = 'rgba(16, 185, 129, 0.3)';
+        responsiveVoice.cancel();
       } else {
+        responsiveVoice.speak(storyText);
         document.getElementById('audioIcon').textContent = '🔇';
         document.getElementById('audioText').textContent = 'Audio Narration OFF';
         toggleAudioBtn.style.background = 'rgba(239, 68, 68, 0.3)';
