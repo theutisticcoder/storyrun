@@ -1,8 +1,0 @@
-{
-    "rewrites": [
-        {
-            "source": "/generate-speech",
-            "destination": "index.js"
-        }
-    ]
-}
