@@ -2,8 +2,7 @@
 <html lang="en">
 
 <head>
-  <script src="https://cdn.jsdelivr.net/npm/@elevenlabs/elevenlabs-js@2.19.0/index.min.js"></script>
-  <meta charset="UTF-8">
+<script src="https://cdn.jsdelivr.net/npm/openai@6.5.0/index.min.js"></script>  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Running Story Tracker</title>
   <script src="https://js.puter.com/v2/"></script>
@@ -762,15 +761,14 @@
 
 
     async function speakText(text) {
-      const key = "sk_b61fdc5029a6d4d8552891048f6100400aec06c7e1c3494d";
-      const elevenlabs = new ElevenLabsClient({
-        apiKey: key, // Defaults to process.env.ELEVENLABS_API_KEY
+      const openai = new OpenAI();
+
+      const mp3 = await openai.audio.speech.create({
+        model: "gpt-4o-mini-tts",
+        voice: "alloy",
+        input: text,
       });
-      const audio = await elevenlabs.textToSpeech.convert("Xb7hH8MSUJpSbSDYk0k2", {
-        text: text,
-        modelId: "eleven_multilingual_v2",
-      });
-     console.log(audio)
+      console.log(audio)
 
     }
 
