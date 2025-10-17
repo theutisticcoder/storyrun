@@ -1,11 +1,4 @@
 {
-    "routes": [
-    {
-      "src": "/(.*)",
-      "generate-speech": "/generate-speech",
-      "dest": "index.js"
-     }
-    ],
     "dependencies": {
         "cors": "^2.8.5",
         "express": "^5.1.0",
