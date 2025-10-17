@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+  <script type="module" src='https://unpkg.com/edge-tts-universal/dist/browser.js'></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Running Story Tracker</title>
@@ -762,18 +763,14 @@
 
     async function speakText(text) {
 
-      const response = await fetch('/generate-speech', { // This endpoint will be handled by your backend
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: text
-      })
-      console.log(response)
-        var url = URL.createObjectURL(response.blob());
-         au = document.createElement("audio");
-        au.src = url;
-        au.play();
+      const tts = new UniversalEdgeTTS('Hello, world!', 'en-US-EmmaMultilingualNeural');
+      const result = await tts.synthesize();
+      const audioBuffer = AudioBuffer.from(await result.audio);
+
+      var url = URL.createObjectURL(audioBuffer);
+      au = document.createElement("audio");
+      au.src = url;
+      au.play();
 
     }
 
