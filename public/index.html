@@ -760,7 +760,7 @@ var key;
 
 
     async function speakText(text) {
-         key = await fetch("/key")
+         await fetch("/key").then(k=>k.text()).then(data=>key = data);
 
         const response = await fetch('https://api.openai.com/v1/audio/speech', {
                 method: 'POST',
