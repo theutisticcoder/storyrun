@@ -1,5 +1,6 @@
 const express = require('express');
 const OpenAI = require('openai');
+const fs = require('fs');
 const app = express();
 const port = 3000;
 
