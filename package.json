@@ -2,7 +2,31 @@
     "routes": [
     {
       "src": "/(.*)",
+      "generate-speech": "/generate-speech",
       "dest": "index.js"
-    }
-  ]
- }
+     }
+    ],
+    "dependencies": {
+        "cors": "^2.8.5",
+        "express": "^5.1.0",
+        "universal-edge-tts": "^1.3.2"
+    },
+    "name": "storyrun",
+    "version": "1.0.0",
+    "main": "index.js",
+    "devDependencies": {},
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/theutisticcoder/storyrun.git"
+    },
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/theutisticcoder/storyrun/issues"
+    },
+    "homepage": "https://github.com/theutisticcoder/storyrun#readme",
+    "description": ""
+}
