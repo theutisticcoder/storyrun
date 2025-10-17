@@ -13,7 +13,7 @@ app.use(express.json());
 app.use(express.static("public")); // Serve your HTML file from a 'public' directory
 
 
-app.get('/generate-speech', async (req, res) => {
+app.post('/generate-speech', async (req, res) => {
     const { text } = req.body;
 
     try {

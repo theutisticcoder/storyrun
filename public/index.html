@@ -763,7 +763,7 @@
     async function speakText(text) {
 
       const response = await fetch('/generate-speech', { // This endpoint will be handled by your backend
-        method: 'GET',
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
