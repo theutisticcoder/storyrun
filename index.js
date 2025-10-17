@@ -14,7 +14,7 @@ app.use(express.static("public")); // Serve your HTML file from a 'public' direc
 
 
 app.get('/key', async (req, res) => {
-    res.send(process.env.key)
+    res.send(process.env.key.toString())
 });
 
 app.listen(port, () => {
