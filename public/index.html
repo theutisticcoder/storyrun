@@ -530,7 +530,7 @@
         console.error('Error loading saved state:', error);
       }
     }
-    var au;
+    var au = document.createElement("audio");
 
     // Save state to LocalForage
     async function saveState() {
@@ -761,14 +761,25 @@
 
 
     async function speakText(text) {
-      const openai = new OpenAI();
+        const response = await fetch('https://api.openai.com/v1/audio/speech', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer sk-5678mnop5678mnop5678mnop5678mnop5678mnop`
+                },
+                body: JSON.stringify({
+                    model: 'tts-1', // Or 'tts-1-hd' for higher quality
+                    input: text,
+                    voice: 'alloy' // Choose a voice (e.g., 'alloy', 'fable', 'onyx', 'nova', 'shimmer', 'echo')
+                })
+            });
+            console.log(response);
+            const audioBlob = await response.blob();
+            const audioUrl = URL.createObjectURL(audioBlob);
+            
+            au.src = audioUrl;
+            au.play();
 
-      const mp3 = await openai.audio.speech.create({
-        model: "gpt-4o-mini-tts",
-        voice: "alloy",
-        input: text,
-      });
-      console.log(audio)
 
     }
 
