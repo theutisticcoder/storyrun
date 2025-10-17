@@ -13,20 +13,8 @@ app.use(express.json());
 app.use(express.static("public")); // Serve your HTML file from a 'public' directory
 
 
-app.post('/generate-speech', async (req, res) => {
-    const { text } = req.body;
-
-    try {
-
-        const tts = new EdgeTTS(text, 'en-US-EmmaMultilingualNeural');
-        var buffer = await tts.synthesize();
-        res.set('Content-Type', 'audio/mp3');
-        res.send(buffer);
-
-    } catch (error) {
-        console.error('Error calling TTS API:', error);
-        res.status(500).send('Error generating speech.');
-    }
+app.get('/key', async (req, res) => {
+    res.send(process.env.key)
 });
 
 app.listen(port, () => {
