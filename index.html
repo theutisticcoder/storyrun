@@ -405,7 +405,7 @@
         <button id="resetBtn" class="btn btn-reset">
           🔄 Reset
         </button>
-                <button class="btn btn-reset" onclick='generateStorySegment(1,5)'>
+        <button class="btn btn-reset" onclick='generateStorySegment(1,5)'>
           test app
         </button>
       </div>
@@ -530,6 +530,7 @@
         console.error('Error loading saved state:', error);
       }
     }
+    var au;
 
     // Save state to LocalForage
     async function saveState() {
@@ -765,16 +766,18 @@
         state.currentAudio = null;
       }
 
-      try {
-        state.isSpeaking = true;
-        speakingStatus.style.display = 'inline';
+      const response = await fetch('/generate-speech', { // This endpoint will be handled by your backend
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: text
+      })
+        var url = URL.createObjectURL(response.blob());
+         au = document.createElement("audio");
+        au.src = url;
+        au.play();
 
-        responsiveVoice.speak(text, "US English Male");
-      } catch (error) {
-        console.error('TTS Error:', error);
-        state.isSpeaking = false;
-        speakingStatus.style.display = 'none';
-      }
     }
 
     function displayStorySegment(segment) {
