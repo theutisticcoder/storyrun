@@ -405,8 +405,8 @@
         <button id="resetBtn" class="btn btn-reset">
           🔄 Reset
         </button>
-        <button class="btn btn-reset" onclick='generateStorySegment(1,5)'>
-          test app
+        <button id="test" class="btn btn-reset">
+          Test App
         </button>
       </div>
 
@@ -584,7 +584,9 @@
         enableNotificationsBtn.style.display = 'none';
       }
     }
-
+    document.querySelector("#test").onclick = ()=> {
+      generateStorySegment(1,5)
+    }
     enableNotificationsBtn.addEventListener('click', async () => {
       if ('Notification' in window) {
         const permission = await Notification.requestPermission();
