@@ -13,7 +13,7 @@ app.post('/generate-speech', async (req, res) => {
 
     try {
 
-        const tts = new EdgeTTS('Hello, world!', 'en-US-EmmaMultilingualNeural');
+        const tts = new EdgeTTS(text, 'en-US-EmmaMultilingualNeural');
         var buffer = await tts.synthesize();
         res.set('Content-Type', 'audio/mp3');
         res.send(buffer);
