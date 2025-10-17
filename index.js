@@ -5,7 +5,7 @@ const cors = require('cors');
 const app = express();
 const port = 3000;
 app.use(cors({
-        origin: 'https://storyrun.vercel.app/generate-speech', // Or '*' for all origins (use with caution)
+        origin: 'https://storyrun.vercel.app/', // Or '*' for all origins (use with caution)
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
         credentials: true,
     }));
@@ -32,3 +32,4 @@ app.post('/generate-speech', async (req, res) => {
 app.listen(port, () => {
     console.log(`Server listening at http://localhost:${port}`);
 });
+export default app

@@ -1,0 +1,8 @@
+ {
+          "rewrites": [
+            {
+              "source": "/generate-speech/(.*)",
+              "destination": "/generate-speech"
+            }
+          ]
+        }
