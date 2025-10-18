@@ -764,9 +764,6 @@
       
       const response = await fetch('/generate-speech', { // This endpoint will be handled by your backend
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({text: text})
       })
       console.log(response)
