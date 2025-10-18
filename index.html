@@ -765,14 +765,10 @@
         method: 'POST',
         body: text,
       });
-      blob = await response.blob()
-      console.log(blob)
-      const dataurl = await new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result);
-        reader.readAsDataURL(blob);
-      });
-      console.log(dataurl)
+      var data = await response.json()
+      var dataurl = data.dataUrl;
+      console.log(response)
+      
       au.src = dataurl;
       document.body.appendChild(au);
       au.play();
