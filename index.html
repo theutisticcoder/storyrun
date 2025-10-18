@@ -530,7 +530,7 @@
         console.error('Error loading saved state:', error);
       }
     }
-    var au;
+    var au= document.createElement("audio");
 
     // Save state to LocalForage
     async function saveState() {
@@ -779,8 +779,8 @@
         console.log(chunks)
         var blob = new Blob(chunks, {type: "audio/mp3"})
         var url = URL.createObjectURL(blob);
-         au = document.createElement("audio");
         au.src = url;
+        document.body.appendChild(au);
         au.play();
 
     }
