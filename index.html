@@ -767,7 +767,7 @@
       });
       blob = await response.blob()
       console.log(blob)
-      const dataUrl = await new Promise((resolve) => {
+      const dataurl = await new Promise((resolve) => {
         const reader = new FileReader();
         reader.onloadend = () => resolve(reader.result);
         reader.readAsDataURL(blob);
