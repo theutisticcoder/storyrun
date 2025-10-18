@@ -1,5 +1,5 @@
 const express = require('express');
-const { Communicate } = require('universal-edge-tts');
+const { UniversalCommunicate } = require('universal-edge-tts');
 const fs = require('fs');
 const app = express();
 const port = 3000;
@@ -16,10 +16,11 @@ app.post('/generate-speech', async (req, res) => {
     const text = req.body;
     console.log(text);
     try {
-        const audioStream = new Communicate({
-            text: text.toString(),
-            voice: 'en-US-JennyNeural', // Specify a voice
-        });
+        const audioStream = new UniversalCommunicate(text,
+            {
+                voice: 'en-US-AndrewNeural', // Specify a voice
+            }
+        );
 
         // Collect all the audio data chunks
         const buffers = [];
@@ -28,11 +29,11 @@ app.post('/generate-speech', async (req, res) => {
                 buffers.push(chunk.data);
             }
         }
-        var blob = new Blob(buffers, {type: "audio/mp3"})
+        var blob = new Blob(buffers, { type: "audio/mp3" })
         console.log(blob)
         var url = URL.createObjectURL(blob);
         console.log(url);
-        res.json({url: url})
+        res.json({ url: url })
 
     } catch (error) {
         console.error('Error calling TTS API:', error);
