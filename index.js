@@ -3,7 +3,7 @@ const { Communicate } = require('universal-edge-tts');
 const fs = require('fs');
 const app = express();
 const port = 3000;
-app.use(express.json());
+app.use(express.text());
 app.use(express.static(__dirname)); // Serve your HTML file from a 'public' directory
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
