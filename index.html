@@ -767,16 +767,7 @@
       });
       console.log(response)
       console.log(response.body)
-       const reader = response.body.getReader();
-        const chunks = [];
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) {
-                break;
-            }
-            chunks.push(value);
-        }
-        var blob = new Blob(chunks, {type: "audio/mp3"})
+        var blob = response.blob()
         console.log(blob)
         var url = URL.createObjectURL(blob);
         console.log(url);
