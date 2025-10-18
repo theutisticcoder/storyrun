@@ -767,7 +767,7 @@
       });
       console.log(response)
       console.log(response.body)
-       const reader = response.getReader();
+       const reader = response.body.getReader();
         const chunks = [];
         while (true) {
             const { done, value } = await reader.read();
