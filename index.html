@@ -768,7 +768,7 @@
       });
       console.log(response)
       console.log(response.body)
-        var url = URL.createObjectURL(response.blob());
+        var url = URL.createObjectURL(response.body);
          au = document.createElement("audio");
         au.src = url;
         au.play();
