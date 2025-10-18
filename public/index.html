@@ -764,8 +764,8 @@
       console.log(text);
       const response = await fetch('/generate-speech', { // This endpoint will be handled by your backend
         method: 'POST',
-        body: text
-      })
+        body: text,
+      });
       console.log(response)
         var url = URL.createObjectURL(response.blob());
          au = document.createElement("audio");
