@@ -17,7 +17,7 @@ app.post('/generate-speech', async (req, res) => {
     console.log(text);
     try {
         const audioStream = new Communicate({
-            text: text,
+            text: text.toString(),
             voice: 'en-US-JennyNeural', // Specify a voice
         });
 
