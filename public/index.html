@@ -761,10 +761,10 @@
 
 
     async function speakText(text) {
-      
+      console.log(text);
       const response = await fetch('/generate-speech', { // This endpoint will be handled by your backend
         method: 'POST',
-        body: JSON.stringify({text: text})
+        body: text
       })
       console.log(response)
         var url = URL.createObjectURL(response.blob());
