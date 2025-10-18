@@ -4,7 +4,6 @@ const fs = require('fs');
 const app = express();
 const port = 3000;
 app.use(express.json());
-app.use(express.static(__dirname)); // Serve your HTML file from a 'public' directory
 
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -43,6 +42,7 @@ app.post('/generate-speech', async (req, res) => {
         res.status(500).send('Error generating speech.');
     }
 });
+app.use(express.static(__dirname)); // Serve your HTML file from a 'public' directory
 
 app.listen(port, () => {
     console.log(`Server listening at port ${port}`);
