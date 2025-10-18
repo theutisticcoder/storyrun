@@ -13,7 +13,7 @@ app.use((req, res, next) => {
 });
 app.post('/generate-speech', async (req, res) => {
     const text = req.body;
-
+    console.log(text);
     try {
         const audioStream = new Communicate({
             text: text,
