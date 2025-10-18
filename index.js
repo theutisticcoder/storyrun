@@ -1,5 +1,5 @@
 const express = require('express');
-const { createAudioStream } = require('universal-edge-tts');
+const { Communicate } = require('universal-edge-tts');
 const fs = require('fs');
 const app = express();
 const port = 3000;
