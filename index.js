@@ -15,7 +15,6 @@ app.post('/generate-speech', async (req, res) => {
     const text = req.body;
 
     try {
-        console.log(text)
         const audioStream = await createAudioStream({
             text: text,
             voice: 'en-US-JennyNeural', // Specify a voice
@@ -35,7 +34,7 @@ app.post('/generate-speech', async (req, res) => {
             // 3. Create the data URL
             const dataUrl = `data:audio/mpeg;base64,${base64Audio}`;
             res.json({ dataUrl: dataUrl });
-
+            console.log(dataUrl);
         });
     } catch (error) {
         console.error('Error calling TTS API:', error);
