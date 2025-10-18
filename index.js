@@ -15,27 +15,24 @@ app.post('/generate-speech', async (req, res) => {
     const text = req.body;
 
     try {
-        const audioStream = await createAudioStream({
+        const audioStream = await Communicate({
             text: text,
             voice: 'en-US-JennyNeural', // Specify a voice
         });
 
         // Collect all the audio data chunks
-        const chunks = [];
-        audioStream.on('data', (chunk) => {
-            chunks.push(chunk);
-        });
+        const buffers = [];
+        for await (const chunk of audioStream.stream()) {
+            if (chunk.type === 'audio' && chunk.data) {
+                buffers.push(chunk.data);
+            }
+        }
+        var blob = new Blob(buffers, {type: "audio/mp3"})
+        console.log(blob)
+        var url = URL.createObjectURL(blob);
+        console.log(url);
+        res.json({url: url})
 
-        audioStream.on('end', () => {
-            // 2. Concatenate chunks and convert to a Base64 string
-            const audioBuffer = Buffer.concat(chunks);
-            const base64Audio = audioBuffer.toString('base64');
-
-            // 3. Create the data URL
-            const dataUrl = `data:audio/mpeg;base64,${base64Audio}`;
-            res.json({ dataUrl: dataUrl });
-            console.log(dataUrl);
-        });
     } catch (error) {
         console.error('Error calling TTS API:', error);
         res.status(500).send('Error generating speech.');
