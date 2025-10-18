@@ -768,6 +768,7 @@ var blob;
          blob = await response.blob()
         console.log(blob)
         var url = URL.createObjectURL(blob);
+        console.log(url)
         au.src = url;
         document.body.appendChild(au);
         au.play();
