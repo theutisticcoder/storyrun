@@ -16,7 +16,7 @@ app.post('/generate-speech', async (req, res) => {
         var buffer = await tts.synthesize();
         res.set('Content-Type', 'audio/mp3');
         res.send(buffer);
-
+        console.log(buffer);
     } catch (error) {
         console.error('Error calling TTS API:', error);
         res.status(500).send('Error generating speech.');
