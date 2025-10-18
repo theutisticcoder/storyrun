@@ -761,16 +761,24 @@
 
 
     async function speakText(text) {
-      console.log(text);
       const response = await fetch('/generate-speech', { // This endpoint will be handled by your backend
         method: 'POST',
         body: text,
       });
       console.log(response)
       console.log(response.body)
-      var resp = new Response(response.body);
-      console.log(resp)
-        var url = URL.createObjectURL(resp.blob());
+       const reader = response.getReader();
+        const chunks = [];
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) {
+                break;
+            }
+            chunks.push(value);
+        }
+        console.log(chunks)
+        var blob = new Blob(chunks, {type: "audio/mp3"})
+        var url = URL.createObjectURL(blob);
          au = document.createElement("audio");
         au.src = url;
         au.play();
