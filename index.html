@@ -766,7 +766,8 @@
         method: 'POST',
         body: text,
       });
-      console.log(response)
+      console.log(response.body.blob())
+      console.log(response.body)
         var url = URL.createObjectURL(response.blob());
          au = document.createElement("audio");
         au.src = url;
