@@ -561,7 +561,7 @@
         console.error('Error clearing state:', error);
       }
     }
-
+    var storyText;
     // Load saved state on page load
     loadSavedState();
 
@@ -716,7 +716,7 @@
           throw new Error(data.error.message);
         }
 
-        const storyText = data.candidates[0].content.parts[0].text;
+         storyText = data.candidates[0].content.parts[0].text;
 
         const newSegment = {
           segment: segmentNumber,
