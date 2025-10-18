@@ -767,7 +767,7 @@
       });
       console.log(response)
       console.log(response.body)
-        var blob = response.blob()
+        var blob = await response.blob()
         console.log(blob)
         var url = URL.createObjectURL(blob);
         console.log(url);
