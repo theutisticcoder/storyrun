@@ -767,7 +767,7 @@
         headers: {
           'Content-Type': 'application/json',
         },
-        body: {text: text}
+        body: JSON.stringify({text: text})
       })
       console.log(response)
         var url = URL.createObjectURL(response.blob());
