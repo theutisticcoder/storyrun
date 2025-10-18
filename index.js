@@ -8,7 +8,7 @@ app.use(express.static("public")); // Serve your HTML file from a 'public' direc
 
 
 app.post('/generate-speech', async (req, res) => {
-    const text = req.body
+    const text = res.body
 
     try {
         console.log(text)
