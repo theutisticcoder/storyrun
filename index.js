@@ -35,7 +35,7 @@ app.post('/generate-speech', async (req, res) => {
 
             // 3. Create the data URL
             const dataUrl = `data:audio/mpeg;base64,${base64Audio}`;
-            res.json({ dataUrl });
+            res.json({ dataUrl: dataUrl });
 
         });
     } catch (error) {
