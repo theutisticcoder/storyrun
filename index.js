@@ -8,10 +8,10 @@ app.use(express.static("public")); // Serve your HTML file from a 'public' direc
 
 
 app.post('/generate-speech', async (req, res) => {
-    const text = res.body
+    const text = req.body;
 
     try {
-        console.log(text)
+        console.log(req)
         const tts = new EdgeTTS(text, 'en-US-EmmaMultilingualNeural');
         var buffer = await tts.synthesize();
         res.set('Content-Type', 'audio/mp3');
