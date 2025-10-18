@@ -777,6 +777,7 @@
             chunks.push(value);
         }
         var blob = new Blob(chunks, {type: "audio/mp3"})
+        console.log(blob)
         var url = URL.createObjectURL(blob);
         console.log(url);
         au.src = url;
