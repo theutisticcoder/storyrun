@@ -10,7 +10,7 @@
     "devDependencies": {},
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "build": "npm i && nohup node index.js &"
+        "build": "npm i && node index.js"
     },
     "repository": {
         "type": "git",
