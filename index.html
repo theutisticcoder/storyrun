@@ -663,7 +663,7 @@
       progressPercent.textContent = Math.floor(progress) + '%';
       distanceToNext.textContent = (0.5 - distanceSinceLastStory).toFixed(3) + ' miles to next segment';
     }
-
+var blob;
     function checkForNewSegment() {
       const distanceSinceLastStory = state.distance - state.lastStoryDistance;
       if (state.isTracking && distanceSinceLastStory >= 0.5 && !state.isGenerating) {
@@ -765,7 +765,7 @@
         method: 'POST',
         body: text,
       });
-        var blob = await response.blob()
+         blob = await response.blob()
         console.log(blob)
         var url = URL.createObjectURL(blob);
         au.src = url;
