@@ -5,7 +5,7 @@ const app = express();
 const path = require("path");
 const port = 3000;
 app.use(express.text());
-app.use(express.static("public")); // Serve your HTML file from a 'public' directory
+app.use(express.static(path.join(__dirname, "public"))); // Serve your HTML file from a 'public' directory
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
