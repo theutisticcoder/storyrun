@@ -1,6 +1,6 @@
 const express = require('express');
-const { UniversalCommunicate } = require('universal-edge-tts');
 const fs = require('fs');
+const { UniversalEdgeTTS } = require('universal-edge-tts');
 const app = express();
 const port = 3000;
 app.use(express.text());
@@ -16,21 +16,16 @@ app.post('/generate-speech', async (req, res) => {
     const text = req.body;
     console.log(text);
     try {
-        const tts = new UniversalCommunicate(text,
+        const tts = new UniversalEdgeTTS(text,
             {
                 voice: 'en-US-AndrewNeural', // Specify a voice
             }
         );
-        var audioStream = await tts.synthesize()
+        var result = await tts.synthesize()
         // Collect all the audio data chunks
-        const buffers = [];
-        for await (const chunk of audioStream.stream()) {
-            if (chunk.type === 'audio' && chunk.data) {
-                buffers.push(chunk.data);
-            }
-        }
-        var blob = new Blob(buffers, { type: "audio/mp3" })
-        console.log(blob)
+       const audioBuffer = Buffer.from(await result.audio.arrayBuffer());
+        var blob = new Blob([audioBuffer], {type: "audio/mp3"});
+        console.log(blob);
         var url = URL.createObjectURL(blob);
         console.log(url);
         res.json({ url: url })
