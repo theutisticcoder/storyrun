@@ -20,7 +20,7 @@ app.post('/generate-speech', async (req, res) => {
         var result = await tts.synthesize();
         // Collect all the audio data chunks
        const audioBuffer = Buffer.from(await result.audio.arrayBuffer());
-       fs.writeFile('output.mp3', audioBuffer);
+       fs.writeFileSync('output.mp3', audioBuffer);
         res.sendFile('output.mp3')
 
     } catch (error) {
