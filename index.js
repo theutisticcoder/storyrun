@@ -16,12 +16,12 @@ app.post('/generate-speech', async (req, res) => {
     const text = req.body;
     console.log(text);
     try {
-        const audioStream = new UniversalCommunicate(text,
+        const tts = new UniversalCommunicate(text,
             {
                 voice: 'en-US-AndrewNeural', // Specify a voice
             }
         );
-
+        var audioStream = await tts.synthesize()
         // Collect all the audio data chunks
         const buffers = [];
         for await (const chunk of audioStream.stream()) {
