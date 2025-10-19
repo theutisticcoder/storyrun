@@ -5,7 +5,7 @@ const app = express();
 const path = require("path");
 const port = 3000;
 app.use(express.text());
-app.use(express.static(__dirname)); // Serve your HTML file from a 'public' directory
+app.use(express.static("public")); // Serve your HTML file from a 'public' directory
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -22,7 +22,7 @@ app.post('/generate-speech', async (req, res) => {
         // Collect all the audio data chunks
        const audioBuffer = Buffer.from(await result.audio.arrayBuffer());
        fs.writeFileSync('output.mp3', audioBuffer);
-        res.sendFile(path.join(__dirname, 'output.mp3'))
+        res.sendFile(path.join(__dirname, "public", 'output.mp3'))
 
     } catch (error) {
         console.error('Error calling TTS API:', error);
