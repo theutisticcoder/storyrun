@@ -10,12 +10,12 @@ app.post('/generate-speech', async (req, res) => {
     const text = req.body;
     console.log(text);
     try {
-        const tts = new UniversalEdgeTTS(text, 'en-US-AndrewNeural');
+        const tts = new UniversalEdgeTTS(text, 'en-US-EmmaNeural');
         var result = await tts.synthesize();
         // Collect all the audio data chunks
        const audioBuffer = Buffer.from(await result.audio.arrayBuffer());
-       fs.writeFileSync('/tmp/output.mp3', audioBuffer);
-        res.sendFile( '/tmp/output.mp3')
+       fs.writeFileSync(path.join(__dirname, 'output.mp3'), audioBuffer);
+        res.sendFile(path.join(__dirname, 'output.mp3'))
 
     } catch (error) {
         console.error('Error calling TTS API:', error);
