@@ -17,14 +17,11 @@ app.post('/generate-speech', async (req, res) => {
     console.log(text);
     try {
         const tts = new UniversalEdgeTTS(text, 'en-US-AndrewNeural');
-        var result = await tts.synthesize()
+        var result = await tts.synthesize();
         // Collect all the audio data chunks
        const audioBuffer = Buffer.from(await result.audio.arrayBuffer());
-        var blob = new Blob([audioBuffer], {type: "audio/mp3"});
-        console.log(blob);
-        var url = URL.createObjectURL(blob);
-        console.log(url);
-        res.json({ url: url })
+       fs.writeFile('output.mp3', audioBuffer);
+        res.sendFile('output.mp3')
 
     } catch (error) {
         console.error('Error calling TTS API:', error);

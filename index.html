@@ -765,11 +765,11 @@
         method: 'POST',
         body: text,
       });
-      var data = await response.json()
-      var dataurl = data.url;
-      console.log(data)
+      var data = await response.blob()
+      var url = URL.createObjectURL(data);
+      console.log(url)
       
-      au.src = dataurl;
+      au.src = url;
       document.body.appendChild(au);
       au.play();
 
