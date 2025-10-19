@@ -10,7 +10,7 @@ app.post('/generate-speech', async (req, res) => {
     const text = req.body;
     console.log(text);
     try {
-        const tts = new UniversalEdgeTTS(text, 'en-US-EmmaNeural');
+        const tts = new UniversalEdgeTTS(text, 'en-US-BrianNeural');
         var result = await tts.synthesize();
         // Collect all the audio data chunks
         const audioBuffer = Buffer.from(await result.audio.arrayBuffer());
