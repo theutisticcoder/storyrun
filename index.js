@@ -20,7 +20,7 @@ app.post('/generate-speech', async (req, res) => {
             if (err) throw err;
             console.log('File created and data written successfully!');
         });
-        res.send(fname)
+        res.send(fname.toString());
 
     } catch (error) {
         console.error('Error calling TTS API:', error);
