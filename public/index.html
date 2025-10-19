@@ -765,11 +765,9 @@
         method: 'POST',
         body: text,
       });
-      var data = await response.blob()
-      var url = URL.createObjectURL(data);
-      console.log(url)
+    
       
-      au.src = url;
+      au.src = response.body;
       document.body.appendChild(au);
       au.play();
 

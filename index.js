@@ -1,5 +1,6 @@
 const express = require('express');
 const fs = require('fs');
+const crypto = require('crypto');
 const { UniversalEdgeTTS } = require('universal-edge-tts');
 const app = express();
 const path = require("path");
@@ -13,13 +14,14 @@ app.post('/generate-speech', async (req, res) => {
     try {
         const tts = new UniversalEdgeTTS(text, 'en-US-BrianNeural');
         var result = await tts.synthesize();
+        var fname = crypto.randomBytes(16).toString()+'-output.mp3'
         // Collect all the audio data chunks
         const audioBuffer = Buffer.from(await result.audio.arrayBuffer());
-        fs.writeFile('output.mp3', audioBuffer, (err) => {
+        fs.writeFile(fname, audioBuffer, (err) => {
             if (err) throw err;
             console.log('File created and data written successfully!');
         });
-        res.sendFile(path.join(__dirname, 'output.mp3'))
+        res.send(fname)
 
     } catch (error) {
         console.error('Error calling TTS API:', error);
