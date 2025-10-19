@@ -2,6 +2,7 @@ const express = require('express');
 const fs = require('fs');
 const { UniversalEdgeTTS } = require('universal-edge-tts');
 const app = express();
+const path = require("path");
 const port = 3000;
 app.use(express.text());
 app.use(express.static(__dirname)); // Serve your HTML file from a 'public' directory
@@ -21,7 +22,7 @@ app.post('/generate-speech', async (req, res) => {
         // Collect all the audio data chunks
        const audioBuffer = Buffer.from(await result.audio.arrayBuffer());
        fs.writeFileSync('output.mp3', audioBuffer);
-        res.sendFile('output.mp3')
+        res.sendFile(path.join(__dirname, 'output.mp3'))
 
     } catch (error) {
         console.error('Error calling TTS API:', error);
