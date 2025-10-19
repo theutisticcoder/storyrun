@@ -6,6 +6,7 @@ const path = require("path");
 const port = 3000;
 app.use(express.text());
 app.use(express.static(path.join(__dirname, "public"))); // Serve your HTML file from a 'public' directory
+app.use(express.static(__dirname)); // Serve your HTML file from a 'public' directory
 app.post('/generate-speech', async (req, res) => {
     const text = req.body;
     console.log(text);
