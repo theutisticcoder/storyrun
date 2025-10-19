@@ -6,15 +6,18 @@ const path = require("path");
 const port = 3000;
 app.use(express.text());
 app.use(express.static(path.join(__dirname, "public"))); // Serve your HTML file from a 'public' directory
-app.post('/generate-speech', async (req, res) => { 
+app.post('/generate-speech', async (req, res) => {
     const text = req.body;
     console.log(text);
     try {
         const tts = new UniversalEdgeTTS(text, 'en-US-EmmaNeural');
         var result = await tts.synthesize();
         // Collect all the audio data chunks
-       const audioBuffer = Buffer.from(await result.audio.arrayBuffer());
-       fs.writeFileSync(path.join(__dirname, 'output.mp3'), audioBuffer);
+        const audioBuffer = Buffer.from(await result.audio.arrayBuffer());
+        fs.writeFile('output.mp3', audioBuffer, (err) => {
+            if (err) throw err;
+            console.log('File created and data written successfully!');
+        });
         res.sendFile(path.join(__dirname, 'output.mp3'))
 
     } catch (error) {
