@@ -390,7 +390,7 @@
           <div class="progress-fill" id="progressFill" style="width: 0%"></div>
         </div>
         <div style="color: rgba(255, 255, 255, 0.6); font-size: 12px; text-align: center; margin-top: 10px;">
-          <span id="distanceToNext">0.500 miles to next segment</span>
+          <span id="distanceToNext">5.000 miles to next segment</span>
         </div>
       </div>
 
@@ -629,7 +629,7 @@
 
         const timeDiffHours = (currentTime - state.lastTime) / 1000 / 3600;
 
-        if (dist > 0.001 && dist < 0.5 && timeDiffHours > 0) {
+        if (dist > 0.001 && dist < 5.0 && timeDiffHours > 0) {
           state.distance += dist;
           distanceDisplay.textContent = state.distance.toFixed(3) + ' mi';
 
@@ -658,16 +658,16 @@
 
     function updateProgress() {
       const distanceSinceLastStory = state.distance - state.lastStoryDistance;
-      const progress = (distanceSinceLastStory / 0.5) * 100;
+      const progress = (distanceSinceLastStory / 5.0) * 100;
       progressFill.style.width = Math.min(progress, 100) + '%';
       progressPercent.textContent = Math.floor(progress) + '%';
-      distanceToNext.textContent = (0.5 - distanceSinceLastStory).toFixed(3) + ' miles to next segment';
+      distanceToNext.textContent = (5.0 - distanceSinceLastStory).toFixed(3) + ' miles to next segment';
     }
     var blob;
     function checkForNewSegment() {
       const distanceSinceLastStory = state.distance - state.lastStoryDistance;
-      if (state.isTracking && distanceSinceLastStory >= 0.5 && !state.isGenerating) {
-        const segmentNumber = Math.floor(state.distance / 0.5);
+      if (state.isTracking && distanceSinceLastStory >= 5.0 && !state.isGenerating) {
+        const segmentNumber = Math.floor(state.distance / 5.0);
         const avgSpeed = state.speedHistory.length > 0
           ? state.speedHistory.reduce((a, b) => a + b, 0) / state.speedHistory.length
           : 3;
