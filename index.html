@@ -767,7 +767,7 @@
       });
       console.log(response);
       
-      au.src = response.text();
+      au.src = await response.text();
       document.body.appendChild(au);
       au.play();
 
