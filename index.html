@@ -770,7 +770,17 @@
       au.src = await response.text();
       document.body.appendChild(au);
       au.play();
-
+      var toggle = document.querySelector("#resetBtn").cloneNode(true);
+      toggle.id = "toggle";
+      toggle.innerText = "Toggle Audio";
+      toggle.onclick = ()=> {
+        if(au.paused){
+          au.play();
+        }
+        else au.pause();
+      }
+      document.getElementById("buttons").appendChild(toggle);
+      au.onended = toggle.remove();
     }
 
     function displayStorySegment(segment) {
