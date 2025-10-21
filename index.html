@@ -774,12 +774,10 @@
       toggle.id = "toggle";
       toggle.innerText = "Toggle Audio";
       toggle.onclick = ()=> {
-        if(au.paused){
-          au.play();
-        }
+        if(au.paused) au.play();
         else au.pause();
       }
-      document.getElementById("buttons").appendChild(toggle);
+      document.querySelector(".buttons").appendChild(toggle);
       au.onended = toggle.remove();
     }
 
