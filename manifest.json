@@ -3,6 +3,7 @@
   "dir": "ltr",
   "display": "standalone",
   "name": "Story Run",
+  "description": "a fun free running app",
   "orientation": "any",
   "scope": "/",
   "short_name": "storyrun",
