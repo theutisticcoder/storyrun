@@ -9,5 +9,10 @@
   "short_name": "storyrun",
   "start_url": "/",
   "theme_color": "#000000",
-  "id": "storyrun"
+  "id": "storyrun",
+  "icons": [
+    {
+      "src": "icon.png"
+    }
+  ]
 }
