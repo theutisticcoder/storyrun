@@ -406,7 +406,7 @@
           🔄 Reset
         </button>
         <button class="btn btn-reset" onclick='generateStorySegment(1,5)'>
-          test app
+          Test App
         </button>
       </div>
 
@@ -765,7 +765,6 @@
         method: 'POST',
         body: text,
       });
-      console.log(response);
       
       au.src = await response.text();
       document.body.appendChild(au);
@@ -778,7 +777,7 @@
         else au.pause();
       }
       document.querySelector(".buttons").appendChild(toggle);
-      au.onended = toggle.remove();
+      au.onended =() => { toggle.remove()};
     }
 
     function displayStorySegment(segment) {
