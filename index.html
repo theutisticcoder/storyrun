@@ -767,7 +767,7 @@
         body: text,
       });
       if(!au.paused){
-        au.onended = ()=>{
+        au.onended = async ()=>{
           au.src = await response.text();
       document.body.appendChild(au);
       au.play();
