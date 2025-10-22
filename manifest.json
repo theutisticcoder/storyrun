@@ -1,0 +1,12 @@
+{
+  "background_color": "#000000",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "Story Run",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "storyrun",
+  "start_url": "/",
+  "theme_color": "#000000",
+  "id": "storyrun"
+}
