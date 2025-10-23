@@ -414,6 +414,9 @@
       <div id="generatingIndicator" style="display: none;" class="generating">
         ✨ Generating your story segment...
       </div>
+       <div id="generatingAudioIndicator" style="display: none;" class="generating">
+        ✨ Generating your story segment's TTS...
+      </div>
     </div>
 
     <div id="storyContainer"></div>
@@ -462,6 +465,7 @@
     const progressPercent = document.getElementById('progressPercent');
     const distanceToNext = document.getElementById('distanceToNext');
     const generatingIndicator = document.getElementById('generatingIndicator');
+    const generatingAudioIndicator = document.getElementById('generatingAudioIndicator');
     const storyContainer = document.getElementById('storyContainer');
     const setupSection = document.getElementById('setupSection');
     const speakingStatus = document.getElementById('speakingStatus');
@@ -758,6 +762,7 @@
 
       state.isGenerating = false;
       generatingIndicator.style.display = 'none';
+      generatingAudioIndicator.style.display = 'block';
     }
 
 
@@ -766,6 +771,7 @@
         method: 'POST',
         body: text,
       });
+      generatingAudioIndicator.style.display = 'none';
       au.src = await response.text();
       document.body.appendChild(au);
       au.play();
