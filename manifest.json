@@ -1,0 +1,23 @@
+{
+  "background_color": "#000000",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "Story Run",
+  "description": "a fun free running app",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "storyrun",
+  "start_url": "/",
+  "theme_color": "#000000",
+  "id": "storyrun",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512"
+    },
+    {
+      "src": "icon192.png",
+      "sizes": "192x192"
+    }
+  ]
+}
