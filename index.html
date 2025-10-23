@@ -406,7 +406,7 @@
         <button id="resetBtn" class="btn btn-reset">
           🔄 Reset
         </button>
-        <button class="btn btn-reset" onclick='generateStorySegment(1,5)'>
+        <button class="btn btn-reset" onclick='generateStorySegment2()'>
           Test App
         </button>
       </div>
@@ -958,6 +958,9 @@
         }
       }
     });
+    function generateStorySegment2(){
+      generateStorySegment(state.segments.length+1,5)
+    }
   </script>
   <script>
     if ('serviceWorker' in navigator) {
@@ -969,6 +972,7 @@
           console.error('Service Worker registration failed:', error);
         });
     }
+  
   </script>
 </body>
 
