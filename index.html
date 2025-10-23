@@ -692,8 +692,8 @@
 
       const prompt = 'You are writing segment ' + segmentNumber + ' of an ongoing ' + state.genre + ' story. This is a story for a runner, and they have been running at ' + avgSpeed.toFixed(1) + ' mph, so make this segment ' + paceDescription + '. It should be in second person with me as the main character, almost like roleplay.\n\n' +
         (segmentNumber === 1 ?
-          'This is the BEGINNING of the story. Introduce the main character and setting in an engaging way. End with a hook that makes them want to keep running for the next part. Write 8-10 paragraphs.' :
-          'This is segment ' + segmentNumber + '. Continue the story with rising action. Reference what happened before naturally. End with a cliffhanger or exciting moment. Write 8-10 paragraphs.\n\nPrevious segments summary: ' + state.storySegments.slice(-2).map(s => s.text.slice(0, 100)).join(' ... ')
+          'This is the BEGINNING of the story. Introduce the main character and setting in an engaging way. End with a hook that makes them want to keep running for the next part. Write 18-20 paragraphs.' :
+          'This is segment ' + segmentNumber + '. Continue the story with rising action. Reference what happened before naturally. End with a cliffhanger or exciting moment. Write 18-20 paragraphs.\n\nPrevious segment: ' + state.storySegments[segmentNumber-2]
         ) + '\n\nWrite ONLY the story segment, no meta-commentary. Make it exciting and match the running pace!';
 
       try {
