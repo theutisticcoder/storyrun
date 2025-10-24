@@ -699,7 +699,7 @@
         else{
             var sums = "Continue the story with rising action. Reference what happened before naturally. End with a cliffhanger or exciting moment. Write 18-20 paragraphs.\n\nhere is the story so far: ";
             for(let i = 0; i< state.storySegments.length; i++ ){
-              sums += "chapter " + i + ": " + state.storySegments[i].summary;
+              sums += "Chapter " + i + ": " + state.storySegments[i].summary + ", ";
             }
             prompt += sums;
         }   
