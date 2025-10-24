@@ -730,7 +730,7 @@
         storyText = data.candidates[0].content.parts[0].text;
         setTimeout(async () => {
 
-          const response2 = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + state.apiKey, {
+          const response2 = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=' + state.apiKey, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
