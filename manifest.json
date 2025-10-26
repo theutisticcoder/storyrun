@@ -12,11 +12,11 @@
   "id": "storyrun",
   "icons": [
     {
-      "src": "iconroad.png",
+      "src": "icon.png",
       "sizes": "512x512"
     },
     {
-      "src": "iconroad192.png",
+      "src": "icon192.png",
       "sizes": "192x192"
     }
   ]
