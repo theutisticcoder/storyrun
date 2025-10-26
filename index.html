@@ -424,6 +424,22 @@
 
   <script>
     // Configure LocalForage
+function downloadTextFile(filename, text) {
+  const blob = new Blob([text], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+
+  link.href = url;
+  link.download = filename;
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+}
+
+// Usage:
+
 
     localforage.config({
       name: 'RunningStoryTracker',
@@ -909,6 +925,12 @@
       if (state.hasStarted && !confirm('Are you sure you want to reset? This will clear your current run and story.')) {
         return;
       }
+      var text ="";
+      state.storySegements.forEach(seg=>{
+        text += " ";
+        text+= seg.text;
+      })
+      downloadTextFile("story.txt", text);
 
       if (state.watchId) {
         navigator.geolocation.clearWatch(state.watchId);
