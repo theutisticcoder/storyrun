@@ -6,9 +6,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Journey AI</title>
   <link rel="manifest" href="manifest.json">
-  <script src="https://js.puter.com/v2/"></script>
+
+  <script src="https://unpkg.com/jszip/dist/jszip.min.js"></script>
+  <script src="https://unpkg.com/ejs/ejs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jepub/dist/jepub.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
-  <script src="https://code.responsivevoice.org/responsivevoice.js?key=Qa0t9Y6n"></script>
   <style>
     * {
       margin: 0;
@@ -414,7 +416,7 @@
       <div id="generatingIndicator" style="display: none;" class="generating">
         ✨ Generating your story segment...
       </div>
-       <div id="generatingAudioIndicator" style="display: none;" class="generating">
+      <div id="generatingAudioIndicator" style="display: none;" class="generating">
         ✨ Generating your story segment's TTS...
       </div>
     </div>
@@ -424,21 +426,35 @@
 
   <script>
     // Configure LocalForage
-function downloadTextFile(filename, text) {
-  const blob = new Blob([text], { type: 'text/plain' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
+    async function downloadTextFile(filename, text) {
+      const jepub = new jEpub();
+      jepub.init({
+        i18n: 'en',
+        title: filename,
+        author: 'JourneyAI',
+        publisher: 'n/a',
+        description: 'a running story',
+        tags: ['epub', 'tag'],
+      });
+      var num = 0
+      state.storySegments.forEach(t => {
+        num++;
+        jepub.add("Chapter " + num, t)
+      })
+      const blob = await jepub.generate();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
 
-  link.href = url;
-  link.download = filename;
+      link.href = url;
+      link.download = filename;
 
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  window.URL.revokeObjectURL(url);
-}
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    }
 
-// Usage:
+    // Usage:
 
 
     localforage.config({
@@ -789,19 +805,19 @@ function downloadTextFile(filename, text) {
         method: 'POST',
         body: text,
       });
-      
+
       au.src = await response.text();
       document.body.appendChild(au);
       au.play();
       var toggle = document.querySelector("#resetBtn").cloneNode(true);
       toggle.id = "toggle";
       toggle.innerText = "Toggle Audio";
-      toggle.onclick = ()=> {
-        if(au.paused) au.play();
+      toggle.onclick = () => {
+        if (au.paused) au.play();
         else au.pause();
       }
       document.querySelector(".buttons").appendChild(toggle);
-      au.onended =() => { toggle.remove()};
+      au.onended = () => { toggle.remove() };
 
     }
 
@@ -925,12 +941,9 @@ function downloadTextFile(filename, text) {
       if (state.hasStarted && !confirm('Are you sure you want to reset? This will clear your current run and story.')) {
         return;
       }
-      var text ="";
-      state.storySegments.forEach(seg=>{
-        text += " ";
-        text+= seg.text;
-      })
-      downloadTextFile("story.txt", text);
+      var text = "";
+      var storyname = prompt("Choose a name for your story!")
+      downloadTextFile(storyname + ".epub", text);
 
       if (state.watchId) {
         navigator.geolocation.clearWatch(state.watchId);
@@ -988,8 +1001,8 @@ function downloadTextFile(filename, text) {
         }
       }
     });
-    function generateStorySegment2(){
-      generateStorySegment(state.storySegments.length+1,5)
+    function generateStorySegment2() {
+      generateStorySegment(state.storySegments.length + 1, 5)
     }
   </script>
   <script>
@@ -1002,7 +1015,7 @@ function downloadTextFile(filename, text) {
           console.error('Service Worker registration failed:', error);
         });
     }
-  
+
   </script>
 </body>
 
