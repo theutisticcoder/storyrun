@@ -504,14 +504,15 @@
     const generatingAudioIndicator = document.getElementById('generatingAudioIndicator');
 
     // Load saved state on startup
-        var impact; 
+    var impact;
 
     async function loadSavedState() {
       try {
         impact = await localforage.getItem("environ");
-        if(!impact){
+        if (!impact) {
           impact = 0;
         }
+        document.querySelector("#envi").innerHTML = "Lifetime Carbon Savings: " + impact + "kg";
         const savedApiKey = await localforage.getItem('apiKey');
         const savedGenre = await localforage.getItem('genre');
         const savedDistance = await localforage.getItem('distance');
