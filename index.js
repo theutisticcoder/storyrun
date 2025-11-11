@@ -3,7 +3,6 @@ const fs = require('fs');
 const crypto = require('crypto');
 const { UniversalEdgeTTS } = require('universal-edge-tts');
 const app = express();
-var android = require('node-on-android')
 const path = require("path");
 const port = 3000;
 app.use(express.text());
@@ -31,8 +30,6 @@ app.post('/generate-speech', async (req, res) => {
 
 app.listen(port, () => {
     console.log(`Server listening at port ${port}`);
-      android.loadUrl(`http://localhost:3000`)
-
 });
 
 module.exports = app;
