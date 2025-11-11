@@ -576,7 +576,7 @@
     async function saveState() {
       try {
         localforage.setItem("environ", impact)
-        document,querySelector("#envi").innerHTML = "Lifetime Environmental Savings: " + impact + "kg";
+        document.querySelector("#envi").innerHTML = "Lifetime Environmental Savings: " + impact + "kg";
         await localforage.setItem('apiKey', state.apiKey);
         await localforage.setItem('genre', state.genre);
         await localforage.setItem('distance', state.distance);
