@@ -410,7 +410,7 @@
         </button>
       </div>
       <br>
-      <h1 id="envi">Lifetime Environmental Savings: </h1>
+      <h1 id="envi">Lifetime Carbon Savings: </h1>
       <div id="generatingIndicator" style="display: none;" class="generating">
         ✨ Generating your story segment...
       </div>
@@ -577,7 +577,7 @@
     async function saveState() {
       try {
         localforage.setItem("environ", impact)
-        document.querySelector("#envi").innerHTML = "Lifetime Environmental Savings: " + impact + "kg";
+        document.querySelector("#envi").innerHTML = "Lifetime Carbon Savings: " + impact + "kg";
         await localforage.setItem('apiKey', state.apiKey);
         await localforage.setItem('genre', state.genre);
         await localforage.setItem('distance', state.distance);
