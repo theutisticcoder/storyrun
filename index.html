@@ -706,7 +706,7 @@
               speedDisplay.textContent = avgSpeed.toFixed(1) + ' mph';
             }
 
-          }
+          
         }
           else {
             if (dist > 0.001 && dist < 5 && timeDiffHours > 0) {
@@ -730,7 +730,7 @@
             checkForNewSegment();
           }
         }
-
+}
         state.lastPosition = { lat: currentLat, lon: currentLon };
         state.lastTime = currentTime;
 
