@@ -505,6 +505,9 @@
 
     // Load saved state on startup
         var impact = await localforage.getItem("environ");
+        if(impact===null){
+          impact = 0;
+        }
 
     async function loadSavedState() {
       try {
