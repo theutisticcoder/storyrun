@@ -504,13 +504,14 @@
     const generatingAudioIndicator = document.getElementById('generatingAudioIndicator');
 
     // Load saved state on startup
-        var impact = await localforage.getItem("environ");
-        if(impact===null){
-          impact = 0;
-        }
+        var impact; 
 
     async function loadSavedState() {
       try {
+        impact = await localforage.getItem("environ");
+        if(!impact){
+          impact = 0;
+        }
         const savedApiKey = await localforage.getItem('apiKey');
         const savedGenre = await localforage.getItem('genre');
         const savedDistance = await localforage.getItem('distance');
