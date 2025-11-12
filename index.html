@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Journey AI</title>
   <link rel="manifest" href="manifest.json">
-
+  <script src="https://unpkg.com/@tgwf/co2@latest/dist/cjs/index-node.min.js"></script>
   <script src="https://unpkg.com/jszip/dist/jszip.min.js"></script>
   <script src="https://unpkg.com/ejs/ejs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jepub/dist/jepub.js"></script>
@@ -427,6 +427,10 @@
   </div>
 
   <script>
+    const swd = new co2({ model: "swd" });
+
+    const emissions = swd.perVisit(43930);
+    
     // Configure LocalForage
     var people = 1;
     var mode = "w";
@@ -706,8 +710,8 @@
               speedDisplay.textContent = avgSpeed.toFixed(1) + ' mph';
             }
 
-          
-        }
+
+          }
           else {
             if (dist > 0.001 && dist < 5 && timeDiffHours > 0) {
               state.distance += dist;
@@ -730,366 +734,366 @@
             checkForNewSegment();
           }
         }
-}
-        state.lastPosition = { lat: currentLat, lon: currentLon };
-        state.lastTime = currentTime;
-
-        saveState();
       }
+      state.lastPosition = { lat: currentLat, lon: currentLon };
+      state.lastTime = currentTime;
 
-      function updateProgress() {
-        if (mode === "w") {
-          const distanceSinceLastStory = state.distance - state.lastStoryDistance;
-          const progress = (distanceSinceLastStory / 1) * 100;
-          progressFill.style.width = Math.min(progress, 100) + '%';
-          progressPercent.textContent = Math.floor(progress) + '%';
-          distanceToNext.textContent = (1 - distanceSinceLastStory).toFixed(3) + ' miles to next segment';
-        }
-        else {
-          const distanceSinceLastStory = state.distance - state.lastStoryDistance;
-          const progress = (distanceSinceLastStory / 5) * 100;
-          progressFill.style.width = Math.min(progress, 100) + '%';
-          progressPercent.textContent = Math.floor(progress) + '%';
-          distanceToNext.textContent = (5 - distanceSinceLastStory).toFixed(3) + ' miles to next segment';
-        }
+      saveState();
+    }
+
+    function updateProgress() {
+      if (mode === "w") {
+        const distanceSinceLastStory = state.distance - state.lastStoryDistance;
+        const progress = (distanceSinceLastStory / 1) * 100;
+        progressFill.style.width = Math.min(progress, 100) + '%';
+        progressPercent.textContent = Math.floor(progress) + '%';
+        distanceToNext.textContent = (1 - distanceSinceLastStory).toFixed(3) + ' miles to next segment';
       }
-      var blob;
-      function checkForNewSegment() {
-        if (mode === "w") {
-          const distanceSinceLastStory = state.distance - state.lastStoryDistance;
-          if (state.isTracking && distanceSinceLastStory >= 1 && !state.isGenerating) {
-            const segmentNumber = Math.floor(state.distance / 1);
-            const avgSpeed = state.speedHistory.length > 0
-              ? state.speedHistory.reduce((a, b) => a + b, 0) / state.speedHistory.length
-              : 3;
-            generateStorySegment(segmentNumber, avgSpeed);
+      else {
+        const distanceSinceLastStory = state.distance - state.lastStoryDistance;
+        const progress = (distanceSinceLastStory / 5) * 100;
+        progressFill.style.width = Math.min(progress, 100) + '%';
+        progressPercent.textContent = Math.floor(progress) + '%';
+        distanceToNext.textContent = (5 - distanceSinceLastStory).toFixed(3) + ' miles to next segment';
+      }
+    }
+    var blob;
+    function checkForNewSegment() {
+      if (mode === "w") {
+        const distanceSinceLastStory = state.distance - state.lastStoryDistance;
+        if (state.isTracking && distanceSinceLastStory >= 1 && !state.isGenerating) {
+          const segmentNumber = Math.floor(state.distance / 1);
+          const avgSpeed = state.speedHistory.length > 0
+            ? state.speedHistory.reduce((a, b) => a + b, 0) / state.speedHistory.length
+            : 3;
+          generateStorySegment(segmentNumber, avgSpeed);
 
-            state.lastStoryDistance = state.distance;
-          }
-        }
-        else {
-          const distanceSinceLastStory = state.distance - state.lastStoryDistance;
-          if (state.isTracking && distanceSinceLastStory >= 5 && !state.isGenerating) {
-            const segmentNumber = Math.floor(state.distance / 5);
-            const avgSpeed = state.speedHistory.length > 0
-              ? state.speedHistory.reduce((a, b) => a + b, 0) / state.speedHistory.length
-              : 3;
-            generateStorySegment(segmentNumber, avgSpeed);
-
-            state.lastStoryDistance = state.distance;
-          }
+          state.lastStoryDistance = state.distance;
         }
       }
+      else {
+        const distanceSinceLastStory = state.distance - state.lastStoryDistance;
+        if (state.isTracking && distanceSinceLastStory >= 5 && !state.isGenerating) {
+          const segmentNumber = Math.floor(state.distance / 5);
+          const avgSpeed = state.speedHistory.length > 0
+            ? state.speedHistory.reduce((a, b) => a + b, 0) / state.speedHistory.length
+            : 3;
+          generateStorySegment(segmentNumber, avgSpeed);
 
-      async function generateStorySegment(segmentNumber, avgSpeed) {
-
-        if (!state.apiKey) {
-          alert('Please enter your Google AI Studio API key first!');
-          return;
+          state.lastStoryDistance = state.distance;
         }
+      }
+    }
 
-        state.isGenerating = true;
-        generatingIndicator.style.display = 'block';
+    async function generateStorySegment(segmentNumber, avgSpeed) {
 
-        const paceDescription = avgSpeed > 4 ? 'fast-paced and intense' :
-          avgSpeed > 3 ? 'moderate tension' :
-            'reflective and atmospheric';
-        var prompt;
-        if (mode === "w") {
-                  impact += 0.39997;
-          prompt = 'You are writing segment ' + segmentNumber + ' of an ongoing ' + state.genre + ' story. This is a story for a runner, and they have been running at ' + avgSpeed.toFixed(1) + ' mph, so make this segment ' + paceDescription + '. It should be in second person with me as the main character, almost like roleplay.\n\n' +
-            (segmentNumber === 1 ?
-              'This is the BEGINNING of the story. Introduce the main character and setting in an engaging way. End with a hook that makes them want to keep running for the next part. Write 18-20 paragraphs.' :
-              'This is segment ' + segmentNumber + '. Continue the story with rising action. Reference what happened before naturally. End with a cliffhanger or exciting moment. Write 18-20 paragraphs.\n\nHere is the story so far, which you will continue on: ' + storyText
-            ) + '\n\nWrite ONLY the story segment, no meta-commentary. Make it exciting and match the running pace!';
-        }
-        else {
-                  impact += 400*people-0.0003
-          prompt = 'You are writing segment ' + segmentNumber + ' of an ongoing ' + state.genre + ' story. This is a story for a group of  ' + people + ' people in a car, and they have been driving at ' + avgSpeed.toFixed(1) + ' mph, so make this segment ' + paceDescription + '. It should be in second person with me as the main character, almost like roleplay.\n\n' +
-            (segmentNumber === 1 ?
-              'This is the BEGINNING of the story. Introduce the main character and setting in an engaging way. End with a hook that makes them want to keep driving for the next part. Write 18-20 paragraphs.' :
-              'This is segment ' + segmentNumber + '. Continue the story with rising action. Reference what happened before naturally. End with a cliffhanger or exciting moment. Write 18-20 paragraphs.\n\nHere is the story so far, which you will continue on: ' + storyText
-            ) + '\n\nWrite ONLY the story segment, no meta-commentary. Make it exciting and match the driving speed!';
- 
-        }
-        try {
-          const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=' + state.apiKey, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              contents: [{
-                parts: [{
-                  text: prompt
-                }]
-              }]
-            })
-          });
-
-          const data = await response.json();
-
-          if (data.error) {
-            throw new Error(data.error.message);
-          }
-
-          storyText = data.candidates[0].content.parts[0].text;
-
-          const newSegment = {
-            segment: segmentNumber,
-            text: storyText,
-            speed: avgSpeed,
-            timestamp: new Date().toLocaleTimeString()
-          };
-
-          state.storySegments.push(newSegment);
-          displayStorySegment(newSegment);
-
-          saveState();
-
-          if (state.notificationsEnabled && 'Notification' in window) {
-            const preview = storyText.slice(0, 100) + '...';
-            new Notification('📖 Story Segment ' + segmentNumber + ' Ready!', {
-              body: preview,
-              vibrate: [200, 100, 200],
-              tag: 'story-segment'
-            });
-          }
-
-          if (state.isTTSEnabled) {
-            speakText(storyText);
-          }
-        } catch (error) {
-          console.error('Error generating story:', error);
-          alert('Error generating story: ' + error.message + '\n\nPlease check your API key.');
-          const errorSegment = {
-            segment: segmentNumber,
-            text: 'Connection error. Please check your API key and try again!',
-            speed: avgSpeed,
-            timestamp: new Date().toLocaleTimeString()
-          };
-          state.storySegments.push(errorSegment);
-          displayStorySegment(errorSegment);
-        }
-
-        state.isGenerating = false;
-        generatingIndicator.style.display = 'none';
-        generatingAudioIndicator.style.display = 'block';
-
+      if (!state.apiKey) {
+        alert('Please enter your Google AI Studio API key first!');
+        return;
       }
 
+      state.isGenerating = true;
+      generatingIndicator.style.display = 'block';
 
-      async function speakText(text) {
-        generatingAudioIndicator.style.display = 'none';
-        const response = await fetch('/generate-speech', { // This endpoint will be handled by your backend
+      const paceDescription = avgSpeed > 4 ? 'fast-paced and intense' :
+        avgSpeed > 3 ? 'moderate tension' :
+          'reflective and atmospheric';
+      var prompt;
+      if (mode === "w") {
+        impact += 0.39997 - emissions/1000;
+        prompt = 'You are writing segment ' + segmentNumber + ' of an ongoing ' + state.genre + ' story. This is a story for a runner, and they have been running at ' + avgSpeed.toFixed(1) + ' mph, so make this segment ' + paceDescription + '. It should be in second person with me as the main character, almost like roleplay.\n\n' +
+          (segmentNumber === 1 ?
+            'This is the BEGINNING of the story. Introduce the main character and setting in an engaging way. End with a hook that makes them want to keep running for the next part. Write 18-20 paragraphs.' :
+            'This is segment ' + segmentNumber + '. Continue the story with rising action. Reference what happened before naturally. End with a cliffhanger or exciting moment. Write 18-20 paragraphs.\n\nHere is the story so far, which you will continue on: ' + storyText
+          ) + '\n\nWrite ONLY the story segment, no meta-commentary. Make it exciting and match the running pace!';
+      }
+      else {
+        impact += 400 * people - 0.0003 - emissions/1000;
+        prompt = 'You are writing segment ' + segmentNumber + ' of an ongoing ' + state.genre + ' story. This is a story for a group of  ' + people + ' people in a car, and they have been driving at ' + avgSpeed.toFixed(1) + ' mph, so make this segment ' + paceDescription + '. It should be in second person with me as the main character, almost like roleplay.\n\n' +
+          (segmentNumber === 1 ?
+            'This is the BEGINNING of the story. Introduce the main character and setting in an engaging way. End with a hook that makes them want to keep driving for the next part. Write 18-20 paragraphs.' :
+            'This is segment ' + segmentNumber + '. Continue the story with rising action. Reference what happened before naturally. End with a cliffhanger or exciting moment. Write 18-20 paragraphs.\n\nHere is the story so far, which you will continue on: ' + storyText
+          ) + '\n\nWrite ONLY the story segment, no meta-commentary. Make it exciting and match the driving speed!';
+
+      }
+      try {
+        const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=' + state.apiKey, {
           method: 'POST',
-          body: text,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            contents: [{
+              parts: [{
+                text: prompt
+              }]
+            }]
+          })
         });
 
-        au.src = await response.text();
-        au.controls = true
-        document.body.appendChild(au);
-        
-        au.play()
-        document.querySelector(".buttons").appendChild(toggle);
-        
+        const data = await response.json();
 
-      }
-
-      function displayStorySegment(segment) {
-        const segmentDiv = document.createElement('div');
-        segmentDiv.className = 'card';
-        const escapedText = segment.text.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
-        segmentDiv.innerHTML = '<div class="story-segment">' +
-          '<div class="segment-header">' +
-          '<span class="segment-title">Segment ' + segment.segment + '</span>' +
-          '<div class="segment-meta">' +
-          '<button class="speaker-btn" onclick="speakText(\'' + escapedText + '\')">🔊</button>' +
-          '<span>' + segment.speed.toFixed(1) + ' mph • ' + segment.timestamp + '</span>' +
-          '</div>' +
-          '</div>' +
-          '<div class="segment-text">' + segment.text + '</div>' +
-          '</div>';
-        storyContainer.appendChild(segmentDiv);
-        segmentDiv.scrollIntoView({ behavior: 'smooth', block: 'end' });
-      }
-
-      startBtn.addEventListener('click', () => {
-        const genre = genreSelect.value;
-        if (!genre) {
-          alert('Please select a genre first!');
-          return;
+        if (data.error) {
+          throw new Error(data.error.message);
         }
 
-        if (!state.apiKey) {
-          alert('Please enter your Google AI Studio API key first!');
-          apiKeyInput.focus();
-          return;
-        }
+        storyText = data.candidates[0].content.parts[0].text;
 
-        if (!navigator.geolocation) {
-          alert('Geolocation is not supported by your browser');
-          return;
-        }
+        const newSegment = {
+          segment: segmentNumber,
+          text: storyText,
+          speed: avgSpeed,
+          timestamp: new Date().toLocaleTimeString()
+        };
 
-        state.genre = genre;
-        state.hasStarted = true;
-        state.isTracking = true;
+        state.storySegments.push(newSegment);
+        displayStorySegment(newSegment);
+
         saveState();
-        setupSection.style.display = 'none';
-        progressSection.style.display = 'block';
-        startBtn.style.display = 'none';
-        pauseBtn.style.display = 'block';
-        gpsStatus.textContent = 'Requesting location permission...';
-        state.lastTime = Date.now();
 
-        if ('Notification' in window && Notification.permission === 'default') {
-          Notification.requestPermission().then(permission => {
-            if (permission === 'granted') {
-              state.notificationsEnabled = true;
-              notificationStatus.style.display = 'inline';
-            }
+        if (state.notificationsEnabled && 'Notification' in window) {
+          const preview = storyText.slice(0, 100) + '...';
+          new Notification('📖 Story Segment ' + segmentNumber + ' Ready!', {
+            body: preview,
+            vibrate: [200, 100, 200],
+            tag: 'story-segment'
           });
         }
 
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            state.lastPosition = {
-              lat: position.coords.latitude,
-              lon: position.coords.longitude
-            };
-            state.lastTime = Date.now();
-            gpsStatus.textContent = 'GPS Locked';
-            locationIcon.textContent = '✅';
+        if (state.isTTSEnabled) {
+          speakText(storyText);
+        }
+      } catch (error) {
+        console.error('Error generating story:', error);
+        alert('Error generating story: ' + error.message + '\n\nPlease check your API key.');
+        const errorSegment = {
+          segment: segmentNumber,
+          text: 'Connection error. Please check your API key and try again!',
+          speed: avgSpeed,
+          timestamp: new Date().toLocaleTimeString()
+        };
+        state.storySegments.push(errorSegment);
+        displayStorySegment(errorSegment);
+      }
 
-            state.watchId = navigator.geolocation.watchPosition(
-              handlePositionUpdate,
-              (error) => {
-                console.error('GPS Error:', error);
-                gpsStatus.textContent = 'GPS Error - ' + error.message;
-              },
-              {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 0
-              }
-            );
-          },
-          (error) => {
-            console.error('GPS Error:', error);
-            gpsStatus.textContent = 'Location permission denied';
-            alert('Please enable location permissions to track your run.');
-            state.isTracking = false;
-            state.hasStarted = false;
-            startBtn.style.display = 'block';
-            pauseBtn.style.display = 'none';
-            setupSection.style.display = 'block';
-          },
-          {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 0
-          }
-        );
+      state.isGenerating = false;
+      generatingIndicator.style.display = 'none';
+      generatingAudioIndicator.style.display = 'block';
+
+    }
+
+
+    async function speakText(text) {
+      generatingAudioIndicator.style.display = 'none';
+      const response = await fetch('/generate-speech', { // This endpoint will be handled by your backend
+        method: 'POST',
+        body: text,
       });
 
-      pauseBtn.addEventListener('click', () => {
-        state.isTracking = false;
-        saveState();
-        gpsStatus.textContent = 'Paused';
-        if (state.watchId) {
-          navigator.geolocation.clearWatch(state.watchId);
-          state.watchId = null;
+      au.src = await response.text();
+      au.controls = true
+      document.body.appendChild(au);
+
+      au.play()
+      document.querySelector(".buttons").appendChild(toggle);
+
+
+    }
+
+    function displayStorySegment(segment) {
+      const segmentDiv = document.createElement('div');
+      segmentDiv.className = 'card';
+      const escapedText = segment.text.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
+      segmentDiv.innerHTML = '<div class="story-segment">' +
+        '<div class="segment-header">' +
+        '<span class="segment-title">Segment ' + segment.segment + '</span>' +
+        '<div class="segment-meta">' +
+        '<button class="speaker-btn" onclick="speakText(\'' + escapedText + '\')">🔊</button>' +
+        '<span>' + segment.speed.toFixed(1) + ' mph • ' + segment.timestamp + '</span>' +
+        '</div>' +
+        '</div>' +
+        '<div class="segment-text">' + segment.text + '</div>' +
+        '</div>';
+      storyContainer.appendChild(segmentDiv);
+      segmentDiv.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
+
+    startBtn.addEventListener('click', () => {
+      const genre = genreSelect.value;
+      if (!genre) {
+        alert('Please select a genre first!');
+        return;
+      }
+
+      if (!state.apiKey) {
+        alert('Please enter your Google AI Studio API key first!');
+        apiKeyInput.focus();
+        return;
+      }
+
+      if (!navigator.geolocation) {
+        alert('Geolocation is not supported by your browser');
+        return;
+      }
+
+      state.genre = genre;
+      state.hasStarted = true;
+      state.isTracking = true;
+      saveState();
+      setupSection.style.display = 'none';
+      progressSection.style.display = 'block';
+      startBtn.style.display = 'none';
+      pauseBtn.style.display = 'block';
+      gpsStatus.textContent = 'Requesting location permission...';
+      state.lastTime = Date.now();
+
+      if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission().then(permission => {
+          if (permission === 'granted') {
+            state.notificationsEnabled = true;
+            notificationStatus.style.display = 'inline';
+          }
+        });
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          state.lastPosition = {
+            lat: position.coords.latitude,
+            lon: position.coords.longitude
+          };
+          state.lastTime = Date.now();
+          gpsStatus.textContent = 'GPS Locked';
+          locationIcon.textContent = '✅';
+
+          state.watchId = navigator.geolocation.watchPosition(
+            handlePositionUpdate,
+            (error) => {
+              console.error('GPS Error:', error);
+              gpsStatus.textContent = 'GPS Error - ' + error.message;
+            },
+            {
+              enableHighAccuracy: true,
+              timeout: 10000,
+              maximumAge: 0
+            }
+          );
+        },
+        (error) => {
+          console.error('GPS Error:', error);
+          gpsStatus.textContent = 'Location permission denied';
+          alert('Please enable location permissions to track your run.');
+          state.isTracking = false;
+          state.hasStarted = false;
+          startBtn.style.display = 'block';
+          pauseBtn.style.display = 'none';
+          setupSection.style.display = 'block';
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
         }
+      );
+    });
+
+    pauseBtn.addEventListener('click', () => {
+      state.isTracking = false;
+      saveState();
+      gpsStatus.textContent = 'Paused';
+      if (state.watchId) {
+        navigator.geolocation.clearWatch(state.watchId);
+        state.watchId = null;
+      }
+      if (state.currentAudio) {
+        state.currentAudio.pause();
+        state.currentAudio = null;
+        state.isSpeaking = false;
+        speakingStatus.style.display = 'none';
+      }
+      startBtn.style.display = 'block';
+      pauseBtn.style.display = 'none';
+      startBtn.innerHTML = '▶️ Resume';
+    });
+
+    resetBtn.addEventListener('click', async () => {
+      if (state.hasStarted && !confirm('Are you sure you want to reset? This will clear your current run and story.')) {
+        return;
+      }
+      var text = "";
+      var storyname = prompt("Choose a name for your story!")
+      downloadTextFile(storyname + ".epub", text);
+
+      if (state.watchId) {
+        navigator.geolocation.clearWatch(state.watchId);
+      }
+      if (state.currentAudio) {
+        state.currentAudio.pause();
+      }
+
+      state.isTracking = false;
+      state.distance = 0;
+      state.speed = 0;
+      state.storySegments = [];
+      state.isGenerating = false;
+      state.lastStoryDistance = 0;
+      state.hasStarted = false;
+      state.watchId = null;
+      state.lastPosition = null;
+      state.lastTime = null;
+      state.speedHistory = [];
+      state.currentAudio = null;
+      state.isSpeaking = false;
+
+      await clearSavedState();
+
+      distanceDisplay.textContent = '0.000 mi';
+      speedDisplay.textContent = '0.0 mph';
+      gpsStatus.textContent = 'Ready';
+      setupSection.style.display = 'block';
+      progressSection.style.display = 'none';
+      startBtn.style.display = 'block';
+      pauseBtn.style.display = 'none';
+      startBtn.innerHTML = '▶️ Start Running';
+      storyContainer.innerHTML = '';
+      speakingStatus.style.display = 'none';
+      locationIcon.textContent = '📍';
+    });
+
+    toggleAudioBtn.addEventListener('click', () => {
+      state.isTTSEnabled = !state.isTTSEnabled;
+      saveState();
+      if (state.isTTSEnabled) {
+        document.getElementById('audioIcon').textContent = '🔊';
+        document.getElementById('audioText').textContent = 'Audio Narration ON';
+        toggleAudioBtn.style.background = 'rgba(16, 185, 129, 0.3)';
+        responsiveVoice.cancel();
+      } else {
+        document.getElementById('audioIcon').textContent = '🔇';
+        document.getElementById('audioText').textContent = 'Audio Narration OFF';
+        toggleAudioBtn.style.background = 'rgba(239, 68, 68, 0.3)';
         if (state.currentAudio) {
           state.currentAudio.pause();
           state.currentAudio = null;
           state.isSpeaking = false;
           speakingStatus.style.display = 'none';
         }
-        startBtn.style.display = 'block';
-        pauseBtn.style.display = 'none';
-        startBtn.innerHTML = '▶️ Resume';
-      });
-
-      resetBtn.addEventListener('click', async () => {
-        if (state.hasStarted && !confirm('Are you sure you want to reset? This will clear your current run and story.')) {
-          return;
-        }
-        var text = "";
-        var storyname = prompt("Choose a name for your story!")
-        downloadTextFile(storyname + ".epub", text);
-
-        if (state.watchId) {
-          navigator.geolocation.clearWatch(state.watchId);
-        }
-        if (state.currentAudio) {
-          state.currentAudio.pause();
-        }
-
-        state.isTracking = false;
-        state.distance = 0;
-        state.speed = 0;
-        state.storySegments = [];
-        state.isGenerating = false;
-        state.lastStoryDistance = 0;
-        state.hasStarted = false;
-        state.watchId = null;
-        state.lastPosition = null;
-        state.lastTime = null;
-        state.speedHistory = [];
-        state.currentAudio = null;
-        state.isSpeaking = false;
-
-        await clearSavedState();
-
-        distanceDisplay.textContent = '0.000 mi';
-        speedDisplay.textContent = '0.0 mph';
-        gpsStatus.textContent = 'Ready';
-        setupSection.style.display = 'block';
-        progressSection.style.display = 'none';
-        startBtn.style.display = 'block';
-        pauseBtn.style.display = 'none';
-        startBtn.innerHTML = '▶️ Start Running';
-        storyContainer.innerHTML = '';
-        speakingStatus.style.display = 'none';
-        locationIcon.textContent = '📍';
-      });
-
-      toggleAudioBtn.addEventListener('click', () => {
-        state.isTTSEnabled = !state.isTTSEnabled;
-        saveState();
-        if (state.isTTSEnabled) {
-          document.getElementById('audioIcon').textContent = '🔊';
-          document.getElementById('audioText').textContent = 'Audio Narration ON';
-          toggleAudioBtn.style.background = 'rgba(16, 185, 129, 0.3)';
-          responsiveVoice.cancel();
-        } else {
-          document.getElementById('audioIcon').textContent = '🔇';
-          document.getElementById('audioText').textContent = 'Audio Narration OFF';
-          toggleAudioBtn.style.background = 'rgba(239, 68, 68, 0.3)';
-          if (state.currentAudio) {
-            state.currentAudio.pause();
-            state.currentAudio = null;
-            state.isSpeaking = false;
-            speakingStatus.style.display = 'none';
-          }
-        }
-      });
-      function generateStorySegment2() {
-        generateStorySegment(state.storySegments.length + 1, 5)
       }
+    });
+    function generateStorySegment2() {
+      generateStorySegment(state.storySegments.length + 1, 5)
+    }
   </script>
   <script>
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/pwabuilder-sw.js')
-          .then(registration => {
-            console.log('Service Worker registered with scope:', registration.scope);
-          })
-          .catch(error => {
-            console.error('Service Worker registration failed:', error);
-          });
-      }
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/pwabuilder-sw.js')
+        .then(registration => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service Worker registration failed:', error);
+        });
+    }
 
   </script>
 </body>
