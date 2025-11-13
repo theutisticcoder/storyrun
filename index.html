@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Journey AI</title>
   <link rel="manifest" href="manifest.json">
-  <script src="https://unpkg.com/@tgwf/co2@latest/dist/cjs/index-node.min.js"></script>
+  <script src="hhttps://cdn.jsdelivr.net/npm/@tgwf/co2@latest/dist/iife/index.js"></script>
   <script src="https://unpkg.com/jszip/dist/jszip.min.js"></script>
   <script src="https://unpkg.com/ejs/ejs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jepub/dist/jepub.js"></script>
@@ -412,7 +412,7 @@
         <button id="resetBtn" class="btn btn-reset">
           🔄 Reset
         </button>
-         <button onclick="generateStorySegment(10,1)" class="btn btn-start">
+        <button onclick="generateStorySegment(10,1)" class="btn btn-start">
           ▶️ Test Code
         </button>
       </div>
@@ -433,7 +433,7 @@
     const swd = new co2({ model: "swd" });
 
     const emissions = swd.perVisit(43930);
-    
+
     // Configure LocalForage
     var people = 1;
     var mode = "w";
@@ -803,7 +803,7 @@
           'reflective and atmospheric';
       var prompt;
       if (mode === "w") {
-        impact += 0.39997 - emissions/1000;
+        impact += 0.39997 - emissions / 1000;
         prompt = 'You are writing segment ' + segmentNumber + ' of an ongoing ' + state.genre + ' story. This is a story for a runner, and they have been running at ' + avgSpeed.toFixed(1) + ' mph, so make this segment ' + paceDescription + '. It should be in second person with me as the main character, almost like roleplay.\n\n' +
           (segmentNumber === 1 ?
             'This is the BEGINNING of the story. Introduce the main character and setting in an engaging way. End with a hook that makes them want to keep running for the next part. Write 18-20 paragraphs.' :
@@ -811,7 +811,7 @@
           ) + '\n\nWrite ONLY the story segment, no meta-commentary. Make it exciting and match the running pace!';
       }
       else {
-        impact += 400 * people - 0.0003 - emissions/1000;
+        impact += 400 * people - 0.0003 - emissions / 1000;
         prompt = 'You are writing segment ' + segmentNumber + ' of an ongoing ' + state.genre + ' story. This is a story for a group of  ' + people + ' people in a car, and they have been driving at ' + avgSpeed.toFixed(1) + ' mph, so make this segment ' + paceDescription + '. It should be in second person with me as the main character, almost like roleplay.\n\n' +
           (segmentNumber === 1 ?
             'This is the BEGINNING of the story. Introduce the main character and setting in an engaging way. End with a hook that makes them want to keep driving for the next part. Write 18-20 paragraphs.' :
