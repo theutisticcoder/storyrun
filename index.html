@@ -894,11 +894,10 @@
       });
 
       au.src = await response.text();
-      au.controls = true
-      document.body.appendChild(au);
+      au.controls = true;
+      document.querySelector("[#story-segment]:last-child").appendChild(au);
 
       au.play()
-      document.querySelector(".buttons").appendChild(toggle);
 
 
     }
