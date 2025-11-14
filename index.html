@@ -798,7 +798,7 @@
       state.isGenerating = true;
       generatingIndicator.style.display = 'block';
 
-      const paceDescription = avgSpeed > 4 ? 'fast-paced and intense' :
+      const paceDescription = avgSpeed > 5 ? 'fast-paced and intense' :
         avgSpeed > 3 ? 'moderate tension' :
           'reflective and atmospheric';
       var prompt;
@@ -811,7 +811,7 @@
           ) + '\n\nWrite ONLY the story segment, no meta-commentary. Make it exciting and match the running pace!';
       }
       else {
-        impact += (400 * people - 0.0003 - emissions) / 1000;
+        impact += (400 * (people-1) - 0.0003 - emissions) / 1000;
         prompt = 'You are writing segment ' + segmentNumber + ' of an ongoing ' + state.genre + ' story. This is a story for a group of  ' + people + ' people in a car, and they have been driving at ' + avgSpeed.toFixed(1) + ' mph, so make this segment ' + paceDescription + '. It should be in second person with me as the main character, almost like roleplay.\n\n' +
           (segmentNumber === 1 ?
             'This is the BEGINNING of the story. Introduce the main character and setting in an engaging way. End with a hook that makes them want to keep driving for the next part. Write 18-20 paragraphs.' :
