@@ -2,14 +2,14 @@
   "background_color": "#000000",
   "dir": "ltr",
   "display": "standalone",
-  "name": "Story Run",
-  "description": "a fun free running app",
+  "name": "Journey AI",
+  "description": "a fun free running/commuting app",
   "orientation": "any",
   "scope": "/",
-  "short_name": "storyrun",
+  "short_name": "journeyai",
   "start_url": "/",
   "theme_color": "#000000",
-  "id": "storyrun",
+  "id": "journeyai",
   "icons": [
     {
       "src": "icon.png",
