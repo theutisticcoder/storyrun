@@ -1,4 +1,5 @@
 const express = require('express');
+const functions = require('firebase-functions');
 const fs = require('fs');
 const crypto = require('crypto');
 const { UniversalEdgeTTS } = require('universal-edge-tts');
@@ -28,5 +29,4 @@ app.post('/generate-speech', async (req, res) => {
         res.status(500).send('Error generating speech.');
     }
 });
-module.exports = app;
-
+exports.app = functions.https.onRequest(app);
