@@ -8,8 +8,8 @@ const port = 3000;
 const cors = require("cors")
 app.use(express.text());
 app.use(cors()); // Allow all origins, or configure specific origins
-app.get('/api/generate-speech', async (req, res) => {
-    const text = req;
+app.post('/api/generate-speech', async (req, res) => {
+    const text = req.body;
     console.log(text);
     try {
         const tts = new UniversalEdgeTTS(text, 'en-US-BrianNeural');
@@ -28,7 +28,6 @@ app.get('/api/generate-speech', async (req, res) => {
         res.status(500).send('Error generating speech.');
     }
 });
-app.use(express.static("/public"));
 app.listen(port, () => {
     console.log(`Server listening at port ${port}`);
 });
