@@ -8,7 +8,7 @@ const port = 3000;
 const cors = require("cors")
 app.use(express.text());
 app.use(cors()); // Allow all origins, or configure specific origins
-app.get("/public");
+app.use(express.static("/public"));
 app.post('/api/generate-speech', async (req, res) => {
     const text = req.body;
     console.log(text);
