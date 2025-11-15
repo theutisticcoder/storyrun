@@ -6,7 +6,7 @@ const app = express();
 const path = require("path");
 const port = 3000;
 app.use(express.text());
-app.get("/public"); 
+app.get("/"); 
 app.post('/generate-speech', async (req, res) => {
     const text = req.body;
     console.log(text);
