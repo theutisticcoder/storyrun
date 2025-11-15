@@ -894,7 +894,7 @@
     async function speakText(text) {
       generatingAudioIndicator.style.display = 'none';
       const response = await fetch('/generate-speech', { // This endpoint will be handled by your backend
-        method: 'POST',
+        method: 'GET',
         body: text,
       });
 
