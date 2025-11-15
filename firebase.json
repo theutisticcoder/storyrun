@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "myecojourney",
     "public": ".",
     "ignore": [
       "firebase.json",
