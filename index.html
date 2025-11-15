@@ -454,12 +454,11 @@
         author: 'JourneyAI',
         publisher: 'n/a',
         description: 'a running story',
-        tags: ['epub', 'tag'],
       });
       var num = 0
       state.storySegments.forEach(t => {
         num++;
-        jepub.add("Chapter " + num, t)
+        jepub.add("Chapter " + num, t.text)
       })
 
       const blob = await jepub.generate();
