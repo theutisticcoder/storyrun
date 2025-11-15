@@ -6,6 +6,7 @@ const app = express();
 const path = require("path");
 const port = 3000;
 app.use(express.text());
+app.get("/public"); 
 app.post('/generate-speech', async (req, res) => {
     const text = req.body;
     console.log(text);
@@ -26,7 +27,6 @@ app.post('/generate-speech', async (req, res) => {
         res.status(500).send('Error generating speech.');
     }
 });
-app.get("/public"); 
 app.listen(port, () => {
     console.log(`Server listening at port ${port}`);
 });
