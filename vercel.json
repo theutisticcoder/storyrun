@@ -1,3 +1,3 @@
 {
-  "rewrites": [{ "source": "/", "destination": "/generate-speech" }]
+  "rewrites": [{ "source": "/api", "destination": "/api/generate-speech" }]
 }
