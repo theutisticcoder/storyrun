@@ -528,7 +528,7 @@
 
     // Load saved state on startup
     var impact;
-    function addaudio(aud){
+    function addaudio(aud) {
       document.querySelectorAll(".story-segment")[document.querySelectorAll(".story-segment").length - 1].appendChild(aud)
     }
 
@@ -572,8 +572,10 @@
           state.storySegments = savedStorySegments;
           for (let i = 0; i < state.storysegments.length; i++) {
             displayStorySegment(state.storysegments[i]);
-            addaudio(state.audio[i]);
 
+          }
+          for (let i = 0; i < state.audio.length; i++) {
+            addaudio(state.audio[i]);
           }
         }
 
@@ -901,7 +903,7 @@
       au.src = await response.text();
       au.controls = true;
       document.querySelectorAll(".story-segment")[document.querySelectorAll(".story-segment").length - 1].appendChild(au);
-
+      state.audio.push(au);
       au.play()
 
 
