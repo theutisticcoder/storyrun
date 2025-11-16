@@ -412,7 +412,7 @@
         <button id="resetBtn" class="btn btn-reset">
           🔄 Reset
         </button>
-        <button onclick="generateStorySegment(1,10)" class="btn btn-start">
+        <button onclick="generateStorySegment2()" class="btn btn-start">
           ▶️ Test Code
         </button>
       </div>
@@ -452,7 +452,7 @@
         i18n: 'en',
         title: filename,
         author: 'JourneyAI',
-        publisher: 'n/a',
+        publisher: 'JourneyAI',
         description: 'a running story',
       });
       var num = 0
@@ -617,6 +617,7 @@
         await localforage.setItem('lastStoryDistance', state.lastStoryDistance);
         await localforage.setItem('hasStarted', state.hasStarted);
         await localforage.setItem('isTTSEnabled', state.isTTSEnabled);
+        await localforage.setItem('audio', state.audio);
       } catch (error) {
         console.error('Error saving state:', error);
       }
@@ -897,13 +898,14 @@
       generatingAudioIndicator.style.display = 'none';
       const response = await fetch('/generate-speech', { // This endpoint will be handled by your backend
         method: 'POST',
-        body: ("Chapter " +(state.storySegments.length + 1) + ". \n" +text)
+        body: ("Chapter " +(state.storySegments.length) + ". \n" +text)
       });
 
       au.src = await response.text();
       au.controls = true;
       document.querySelectorAll(".story-segment")[document.querySelectorAll(".story-segment").length - 1].appendChild(au);
       state.audio.push(au);
+      saveState();
       au.play()
 
 
