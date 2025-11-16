@@ -617,6 +617,7 @@
         await localforage.setItem('lastStoryDistance', state.lastStoryDistance);
         await localforage.setItem('hasStarted', state.hasStarted);
         await localforage.setItem('isTTSEnabled', state.isTTSEnabled);
+        await localforage.setItem('audio', state.audio);
       } catch (error) {
         console.error('Error saving state:', error);
       }
@@ -904,6 +905,7 @@
       au.controls = true;
       document.querySelectorAll(".story-segment")[document.querySelectorAll(".story-segment").length - 1].appendChild(au);
       state.audio.push(au);
+      saveState();
       au.play()
 
 
