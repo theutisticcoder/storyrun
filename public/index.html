@@ -897,7 +897,7 @@
       generatingAudioIndicator.style.display = 'none';
       const response = await fetch('/generate-speech', { // This endpoint will be handled by your backend
         method: 'POST',
-        body: ("Chapter " +(state.storySegments.length + 1) + ". \n" +text)
+        body: ("Chapter " +(state.storySegments.length) + ". \n" +text)
       });
 
       au.src = await response.text();
