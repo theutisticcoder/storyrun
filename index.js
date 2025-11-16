@@ -28,7 +28,7 @@ app.post('/generate-speech', async (req, res) => {
         res.status(500).send('Error generating speech.');
     }
 });
-app.use(express.static(__dirname));
+app.use(express.static("public"));
 app.listen(port, () => {
     console.log(`Server listening at port ${port}`);
 });
