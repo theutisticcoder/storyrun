@@ -18,7 +18,7 @@ app.post('/generate-speech', async (req, res) => {
         var fname = crypto.pseudoRandomBytes(16).toString("hex") + '-output.mp3'
         // Collect all the audio data chunks
         const audioBuffer = Buffer.from(await result.audio.arrayBuffer());
-        const { url } = await put(fname, audioBuffer, { access: 'public' });
+        const { url } = await put(fname, audioBuffer, { access: 'public', token: process.env.AUDIO_READ_WRITE_TOKEN });
         res.send(url);
 
     } catch (error) {
