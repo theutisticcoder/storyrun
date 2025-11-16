@@ -33,3 +33,4 @@ app.listen(port, () => {
     console.log(`Server listening at port ${port}`);
 });
 
+module.exports = app; // Export the app for Vercel to use as a serverless function
