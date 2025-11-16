@@ -1,11 +1,12 @@
 const express = require('express');
-const fs = require('fs');
 const crypto = require('crypto');
 const { UniversalEdgeTTS } = require('universal-edge-tts');
 const app = express();
 const path = require("path");
 const port = 3000;
 const cors = require("cors")
+const {put} = require("@vercel/blob")
+
 app.use(express.text());
 app.use(cors()); // Allow all origins, or configure specific origins
 app.post('/generate-speech', async (req, res) => {
@@ -17,11 +18,8 @@ app.post('/generate-speech', async (req, res) => {
         var fname = crypto.pseudoRandomBytes(16).toString("hex") + '-output.mp3'
         // Collect all the audio data chunks
         const audioBuffer = Buffer.from(await result.audio.arrayBuffer());
-        fs.writeFile(fname, audioBuffer, (err) => {
-            if (err) throw err;
-            console.log('File created and data written successfully!');
-        });
-        res.send(fname.toString());
+        const { url } = await put(fname, audioBuffer, { access: 'public' });
+        res.send(url);
 
     } catch (error) {
         console.error('Error calling TTS API:', error);
