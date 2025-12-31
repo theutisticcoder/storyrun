@@ -889,7 +889,7 @@
 
 
     async function speakText(text) {
-      console.log("speaking")
+
       generatingAudioIndicator.style.display = 'none';
       const ttsClient = new EdgeTTSClient();
 
@@ -899,8 +899,8 @@
       // Define SSML options
       const options = new ProsodyOptions();
       options.pitch = 'medium';
-      options.rate = 1.2;
-      options.volume = 90;
+      options.rate = 1.0;
+      options.volume = 130;
 
       // Synthesize text to a stream
       const stream = ttsClient.toStream(text, options);
