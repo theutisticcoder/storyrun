@@ -400,7 +400,7 @@
           <div class="progress-fill" id="progressFill" style="width: 0%"></div>
         </div>
         <div style="color: rgba(255, 255, 255, 0.6); font-size: 12px; text-align: center; margin-top: 10px;">
-          <span id="distanceToNext">1.000 miles to next segment</span>
+          <span id="distanceToNext">0.500 miles to next segment</span>
         </div>
       </div>
 
@@ -699,7 +699,7 @@
         const timeDiffHours = (currentTime - state.lastTime) / 1000 / 3600;
 
         if (mode === "w") {
-          if (dist > 0.001 && dist < 1 && timeDiffHours > 0) {
+          if (dist > 0.001 && dist < 0.5 && timeDiffHours > 0) {
             state.distance += dist;
             distanceDisplay.textContent = state.distance.toFixed(3) + ' mi';
 
@@ -749,10 +749,10 @@
     function updateProgress() {
       if (mode === "w") {
         const distanceSinceLastStory = state.distance - state.lastStoryDistance;
-        const progress = (distanceSinceLastStory / 1) * 100;
+        const progress = (distanceSinceLastStory / 0.5) * 100;
         progressFill.style.width = Math.min(progress, 100) + '%';
         progressPercent.textContent = Math.floor(progress) + '%';
-        distanceToNext.textContent = (1 - distanceSinceLastStory).toFixed(3) + ' miles to next segment';
+        distanceToNext.textContent = (0.5 - distanceSinceLastStory).toFixed(3) + ' miles to next segment';
       }
       else {
         const distanceSinceLastStory = state.distance - state.lastStoryDistance;
