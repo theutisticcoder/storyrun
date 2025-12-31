@@ -916,7 +916,7 @@
         au.src = URL.createObjectURL(new Blob(chunks, {type: "audio/mp3"}))
       au.controls = true;
       document.querySelectorAll(".story-segment")[document.querySelectorAll(".story-segment").length - 1].appendChild(au);
-au.onload = ()=>{
+
       newSegment = {
           segment: segmentNumber,
           text: storyText,
@@ -927,7 +927,7 @@ au.onload = ()=>{
               state.storySegments.push(newSegment);
               console.log(newSegment)
       au.play()
-      }
+      
       })
       
 
