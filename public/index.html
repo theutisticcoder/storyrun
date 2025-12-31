@@ -10,6 +10,7 @@
   <script src="https://unpkg.com/jszip/dist/jszip.min.js"></script>
   <script src="https://unpkg.com/ejs/ejs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jepub/dist/jepub.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/edge-tts-client@1.0.2/dist/index.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
   <style>
     * {
@@ -340,11 +341,13 @@
           <option value="Sci-Fi Thriller">Sci-Fi Thriller</option>
           <option value="Mystery Detective">Mystery Detective</option>
           <option value="Horror Survival">Horror Survival</option>
+          <option value="Horror Gothic">Horror Gothic</option>
+          <option value="Horror Physchological">Horror Physchological</option>
           <option value="Romance Comedy">Romance Comedy</option>
           <option value="Historical Fiction">Historical Fiction</option>
           <option value="Superhero Action">Superhero Action</option>
           <option value="Dystopian Future">Dystopian Future</option>
-        </select>
+ 
         <select id="trans" onchange="transchange()" class="genre-select">
           <option value="Walking/Biking/On Foot">Walking/Biking/On Foot</option>
           <option value="Carpooling">Carpooling</option>
@@ -412,7 +415,7 @@
         <button id="resetBtn" class="btn btn-reset">
           🔄 Reset
         </button>
-        <button onclick="generateStorySegment2()" class="btn btn-start">
+        <button onclick="generateStorySegment(1,10)" class="btn btn-start">
           ▶️ Test Code
         </button>
       </div>
@@ -452,13 +455,14 @@
         i18n: 'en',
         title: filename,
         author: 'JourneyAI',
-        publisher: 'JourneyAI',
+        publisher: 'n/a',
         description: 'a running story',
+        tags: ['epub', 'tag'],
       });
       var num = 0
       state.storySegments.forEach(t => {
         num++;
-        jepub.add("Chapter " + num, t.text)
+        jepub.add("Chapter " + num, t)
       })
 
       const blob = await jepub.generate();
@@ -468,9 +472,7 @@
       link.href = url;
       link.download = filename;
 
-      document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     }
 
@@ -484,7 +486,6 @@
 
     let state = {
       apiKey: '',
-      audio: [],
       genre: '',
       isTracking: false,
       distance: 0,
@@ -528,9 +529,6 @@
 
     // Load saved state on startup
     var impact;
-    function addaudio(aud) {
-      document.querySelectorAll(".story-segment")[document.querySelectorAll(".story-segment").length - 1].appendChild(aud)
-    }
 
     async function loadSavedState() {
       try {
@@ -570,13 +568,9 @@
 
         if (savedStorySegments) {
           state.storySegments = savedStorySegments;
-          for (let i = 0; i < state.storySegments.length; i++) {
-            displayStorySegment(state.storySegments[i]);
-
-          }
-          for (let i = 0; i < state.audio.length; i++) {
-            addaudio(state.audio[i]);
-          }
+          savedStorySegments.forEach(segment => {
+            displayStorySegment(segment);
+          });
         }
 
         if (savedLastStoryDistance !== null) {
@@ -617,7 +611,6 @@
         await localforage.setItem('lastStoryDistance', state.lastStoryDistance);
         await localforage.setItem('hasStarted', state.hasStarted);
         await localforage.setItem('isTTSEnabled', state.isTTSEnabled);
-        await localforage.setItem('audio', state.audio);
       } catch (error) {
         console.error('Error saving state:', error);
       }
@@ -896,17 +889,34 @@
 
     async function speakText(text) {
       generatingAudioIndicator.style.display = 'none';
-      const response = await fetch('/generate-speech', { // This endpoint will be handled by your backend
-        method: 'POST',
-        body: ("Chapter " +(state.storySegments.length) + ". \n" +text)
-      });
+      const ttsClient = new EdgeTTSClient();
 
-      au.src = await response.text();
+      // Set metadata for synthesis
+      await ttsClient.setMetadata('en-US-AndrewMultilingual', OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
+
+      // Define SSML options
+      const options = new ProsodyOptions();
+      options.pitch = 'medium';
+      options.rate = 1.2;
+      options.volume = 90;
+
+      // Synthesize text to a stream
+      const stream = ttsClient.toStream(text, options);
+
+      var chunks = []
+      // Handle the audio stream
+      stream.on('data', (audioChunk) => {
+        chunks.push(audioChunk);
+        console.log('Received audio chunk:', audioChunk);
+      });
+      stream.on('end', () => {
+        au.src = URL.createObjectURL(new Blob(chunks, {type: "audio/mp3"}))
       au.controls = true;
       document.querySelectorAll(".story-segment")[document.querySelectorAll(".story-segment").length - 1].appendChild(au);
-      state.audio.push(au);
-      saveState();
+
       au.play()
+      })
+      
 
 
     }
@@ -1029,7 +1039,7 @@
 
     resetBtn.addEventListener('click', async () => {
       if (state.hasStarted && !confirm('Are you sure you want to reset? This will clear your current run and story.')) {
-        return;
+        return 0;
       }
       var text = "";
       var storyname = prompt("Choose a name for your story!")
@@ -1107,29 +1117,6 @@
     }
 
   </script>
-  <script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-analytics.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
-
-  // Your web app's Firebase configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-  const firebaseConfig = {
-    apiKey: "AIzaSyDbDYmHmHTKnqV3XAC9HAiENsaa59Xw-Qc",
-    authDomain: "storyrun-bf641.firebaseapp.com",
-    projectId: "storyrun-bf641",
-    storageBucket: "storyrun-bf641.firebasestorage.app",
-    messagingSenderId: "622139831473",
-    appId: "1:622139831473:web:796d3e627944d694cf1e90",
-    measurementId: "G-MR25R1M4BW"
-  };
-
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-</script>
 </body>
 
 </html>
