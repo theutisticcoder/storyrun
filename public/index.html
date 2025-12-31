@@ -415,7 +415,7 @@
         <button id="resetBtn" class="btn btn-reset">
           🔄 Reset
         </button>
-        <button onclick="generateStorySegment2()" class="btn btn-start">
+        <button id="test" class="btn btn-start">
           ▶️ Test Code
         </button>
       </div>
@@ -527,7 +527,7 @@
     const locationIcon = document.getElementById('locationIcon');
     const notificationIcon = document.getElementById('notificationIcon');
     const generatingAudioIndicator = document.getElementById('generatingAudioIndicator');
-
+    document.querySelector("#test").onclick = generateStorySegment2;
     // Load saved state on startup
     var impact;
 
