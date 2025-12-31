@@ -530,7 +530,6 @@
     document.querySelector("#test").onclick = generateStorySegment2;
     // Load saved state on startup
     var impact;
-
     async function loadSavedState() {
       try {
         impact = await localforage.getItem("environ");
@@ -868,7 +867,7 @@
         }
 
         if (state.isTTSEnabled) {
-          speakText(storyText);
+          speakText(storyText,segmentNumber, avgSpeed);
         }
       } catch (error) {
         console.error('Error generating story:', error);
@@ -890,7 +889,7 @@
     }
 
 
-    async function speakText(text) {
+    async function speakText(text,segmentNumber, avgSpeed) {
 
       generatingAudioIndicator.style.display = 'none';
       const ttsClient = new EdgeTTSClient();
