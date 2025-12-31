@@ -917,7 +917,6 @@
       au.controls = true;
       document.querySelectorAll(".story-segment")[document.querySelectorAll(".story-segment").length - 1].appendChild(au);
 
-      au.play()
       newSegment = {
           segment: segmentNumber,
           text: storyText,
@@ -926,6 +925,7 @@
           src: au.src
         };
               state.storySegments.push(newSegment);
+      au.play()
       })
       
 
