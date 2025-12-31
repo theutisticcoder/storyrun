@@ -913,7 +913,8 @@
         console.log('Received audio chunk:', audioChunk);
       });
       stream.on('end', () => {
-        au.src = URL.createObjectURL(new Blob(chunks, {type: "audio/mp3"}))
+        var url =  URL.createObjectURL(new Blob(chunks, {type: "audio/mp3"}))
+        au.src = url
       au.controls = true;
       document.querySelectorAll(".story-segment")[document.querySelectorAll(".story-segment").length - 1].appendChild(au);
 
@@ -922,7 +923,7 @@
           text: storyText,
           speed: avgSpeed,
           timestamp: new Date().toLocaleTimeString(),
-          src: au.src
+          src: url
         };
               state.storySegments.push(newSegment);
               console.log(newSegment)
