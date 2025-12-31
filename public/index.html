@@ -432,7 +432,8 @@
     <div id="storyContainer"></div>
   </div>
 
-  <script>
+<script type="module">
+  import {EdgeTtsClient, ProsodyOptions, OUTPUT_FORMAT} from 'https://cdn.jsdelivr.net/npm/edge-tts-client@1.0.2/+esm'
     const swd = new co2.co2({ model: "swd" });
 
     const emissions = swd.perByte(43930);
