@@ -762,6 +762,8 @@
         distanceToNext.textContent = (5 - distanceSinceLastStory).toFixed(3) + ' miles to next segment';
       }
     }
+    var newSegment;
+    
     var blob;
     function checkForNewSegment() {
       if (mode === "w") {
@@ -844,14 +846,14 @@
 
         storyText = data.candidates[0].content.parts[0].text;
 
-        const newSegment = {
+      newSegment = {
           segment: segmentNumber,
           text: storyText,
           speed: avgSpeed,
           timestamp: new Date().toLocaleTimeString()
         };
 
-        state.storySegments.push(newSegment);
+
         displayStorySegment(newSegment);
 
         saveState();
@@ -917,6 +919,14 @@
       document.querySelectorAll(".story-segment")[document.querySelectorAll(".story-segment").length - 1].appendChild(au);
 
       au.play()
+      newSegment = {
+          segment: segmentNumber,
+          text: storyText,
+          speed: avgSpeed,
+          timestamp: new Date().toLocaleTimeString(),
+          src: au.src
+        };
+              state.storySegments.push(newSegment);
       })
       
 
@@ -935,8 +945,11 @@
         '<span>' + segment.speed.toFixed(1) + ' mph • ' + segment.timestamp + '</span>' +
         '</div>' +
         '</div>' +
-        '<div class="segment-text">' + segment.text + '</div>' +
-        '</div>';
+        '<div class="segment-text">' + segment.text + '</div>'
+        if(segment.src){
+            segmentDiv.innerhtml +='</div>';
+        }
+  segmentDiv.innerhtml +='</div>';
       storyContainer.appendChild(segmentDiv);
       segmentDiv.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }
