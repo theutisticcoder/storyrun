@@ -889,6 +889,7 @@
 
 
     async function speakText(text) {
+      console.log("speaking")
       generatingAudioIndicator.style.display = 'none';
       const ttsClient = new EdgeTTSClient();
 
