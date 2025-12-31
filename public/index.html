@@ -766,8 +766,8 @@
     function checkForNewSegment() {
       if (mode === "w") {
         const distanceSinceLastStory = state.distance - state.lastStoryDistance;
-        if (state.isTracking && distanceSinceLastStory >= 1 && !state.isGenerating) {
-          const segmentNumber = Math.floor(state.distance / 1);
+        if (state.isTracking && distanceSinceLastStory >= 0.5 && !state.isGenerating) {
+          const segmentNumber = Math.floor(state.distance / 0.5);
           const avgSpeed = state.speedHistory.length > 0
             ? state.speedHistory.reduce((a, b) => a + b, 0) / state.speedHistory.length
             : 3;
