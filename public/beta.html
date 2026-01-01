@@ -68,17 +68,34 @@
 
     <!-- Header & Dashboard -->
     <header class="p-6 border-b border-gray-800 bg-gray-900/50 backdrop-blur-md sticky top-0 z-50">
-        <div class="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <h1 class="text-2xl font-bold tracking-tighter italic">PACE<span class="text-red-500">PULSE</span></h1>
-            <div class="flex gap-6 items-center">
-                <div class="text-center">
-                    <p class="text-xs uppercase text-gray-400">Current Speed</p>
-                    <p id="speed-display" class="text-3xl font-bold speed-low">0.0 <span
-                            class="text-sm font-normal">m/s</span></p>
+
+            <!-- Dashboard Metrics -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 items-center w-full md:w-auto">
+                <div class="text-center md:text-right border-r border-gray-800 pr-4 last:border-0 last:pr-0">
+                    <p class="text-[10px] uppercase text-gray-400 tracking-wider">Speed</p>
+                    <p id="speed-display" class="text-2xl font-bold speed-low">0.0 <span
+                            class="text-xs font-normal text-gray-500">m/s</span></p>
                 </div>
-                <div class="text-center">
-                    <p class="text-xs uppercase text-gray-400">Intensity</p>
-                    <p id="intensity-display" class="text-sm font-medium text-gray-300 italic">Waiting...</p>
+
+                <div class="text-center md:text-right border-r border-gray-800 pr-4 last:border-0 last:pr-0">
+                    <p class="text-[10px] uppercase text-gray-400 tracking-wider">Distance</p>
+                    <p id="distance-display" class="text-2xl font-bold text-gray-200">0.00 <span
+                            class="text-xs font-normal text-gray-500">km</span></p>
+                </div>
+
+                <div class="text-center md:text-right border-r border-gray-800 pr-4 last:border-0 last:pr-0">
+                    <p class="text-[10px] uppercase text-gray-400 tracking-wider">CO₂ Saved</p>
+                    <p id="emissions-display" class="text-2xl font-bold text-green-400">0 <span
+                            class="text-xs font-normal text-green-700">g</span></p>
+                </div>
+
+                <div class="text-center md:text-right">
+                    <p class="text-[10px] uppercase text-gray-400 tracking-wider">Intensity</p>
+                    <p id="intensity-display"
+                        class="text-xs font-medium text-gray-300 italic max-w-[100px] md:max-w-[150px] truncate">
+                        Waiting...</p>
                 </div>
             </div>
         </div>
@@ -104,10 +121,16 @@
                         <label class="block text-sm text-gray-400 mb-1">Genre</label>
                         <select id="genre"
                             class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 outline-none">
-                            <option>Cyberpunk Noir</option>
-                            <option>Grimdark Fantasy</option>
-                            <option>Psychological Thriller</option>
-                            <option>Post-Apocalyptic Survival</option>
+                            <option value="Fantasy Adventure">Fantasy Adventure</option>
+                            <option value="Sci-Fi Thriller">Sci-Fi Thriller</option>
+                            <option value="Mystery Detective">Mystery Detective</option>
+                            <option value="Horror Survival">Horror Survival</option>
+                            <option value="Horror Gothic">Horror Gothic</option>
+                            <option value="Horror Physchological">Horror Physchological</option>
+                            <option value="Romance Comedy">Romance Comedy</option>
+                            <option value="Historical Fiction">Historical Fiction</option>
+                            <option value="Superhero Action">Superhero Action</option>
+                            <option value="Dystopian Future">Dystopian Future</option>
                         </select>
                     </div>
                     <div>
@@ -153,8 +176,8 @@
 
     <!-- Controls Overlay -->
     <div id="player-controls"
-        class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 border border-gray-800 px-6 py-4 rounded-full shadow-2xl flex items-center gap-4 z-50">
-        <button id="tts-toggle" class="p-2 hover:bg-gray-800 rounded-full text-red-500">
+        class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 border border-gray-800 px-6 py-4 rounded-full shadow-2xl flex items-center gap-4 z-50 w-max max-w-[95vw]">
+        <button id="tts-toggle" class="p-2 hover:bg-gray-800 rounded-full text-red-500 flex-shrink-0">
             <svg xmlns="http://www.w3.org/2000/svg" id="tts-icon" class="h-8 w-8" fill="none" viewBox="0 0 24 24"
                 stroke="currentColor">
                 <!-- Speaker (sound-on) icon -->
@@ -167,8 +190,8 @@
             </svg>
         </button>
 
-        <div class="h-8 w-[1px] bg-gray-700"></div>
-        <div id="workout-timer" class="font-mono text-xl tabular-nums">00:00</div>
+        <div class="h-8 w-[1px] bg-gray-700 hidden sm:block"></div>
+        <div id="workout-timer" class="font-mono text-xl tabular-nums hidden sm:block">00:00</div>
         <div class="h-8 w-[1px] bg-gray-700" id="manual-speed-divider"></div>
         <div id="manual-speed-ctrl" class="flex items-center gap-2">
             <input type="range" id="speed-slider" min="0" max="8" step="0.5" value="0"
@@ -178,8 +201,8 @@
 
         <!-- End Run button -->
         <button id="end-run-btn"
-            class="ml-4 bg-gray-800 hover:bg-gray-700 text-gray-200 px-3 py-2 rounded-md text-sm">End Run & Download
-            EPUB</button>
+            class="ml-4 bg-gray-800 hover:bg-gray-700 text-gray-200 px-3 py-2 rounded-md text-sm whitespace-nowrap">End
+            Run</button>
     </div>
 
     <script type="module">
@@ -192,6 +215,7 @@
             genre: '',
             plot: '',
             currentSpeed: 0,
+            totalDistance: 0, // in meters
             startTime: null,
             timerId: null,
             chapters: [],
@@ -207,6 +231,8 @@
 
         const elements = {
             speed: document.getElementById('speed-display'),
+            distance: document.getElementById('distance-display'),
+            emissions: document.getElementById('emissions-display'),
             intensity: document.getElementById('intensity-display'),
             setup: document.getElementById('setup-panel'),
             story: document.getElementById('story-panel'),
@@ -284,22 +310,40 @@
                         state.usingSimulatedSpeed = false;
 
                         const reported = pos.coords.speed;
-                        if (reported !== null && !isNaN(reported)) {
-                            state.currentSpeed = reported;
-                        } else {
-                            if (state.lastPos) {
-                                const dt = (pos.timestamp - state.lastPos.timestamp) / 1000;
-                                if (dt > 0.1) {
-                                    const d = haversineDistanceMeters(
-                                        state.lastPos.lat, state.lastPos.lon,
-                                        pos.coords.latitude, pos.coords.longitude
-                                    );
+                        let distDelta = 0;
+
+                        // Calculate distance from previous point if available
+                        if (state.lastPos) {
+                            const d = haversineDistanceMeters(
+                                state.lastPos.lat, state.lastPos.lon,
+                                pos.coords.latitude, pos.coords.longitude
+                            );
+
+                            // Only count if accuracy is reasonable to prevent jumping
+                            if (pos.coords.accuracy < 100) {
+                                distDelta = d;
+                            }
+
+                            // Fallback speed calculation if native speed is null
+                            const dt = (pos.timestamp - state.lastPos.timestamp) / 1000;
+                            if (reported === null || isNaN(reported)) {
+                                if (dt > 0.1 && d > 0) {
                                     const computed = d / dt;
-                                    if (!isNaN(computed) && computed >= 0) {
+                                    // Basic filter for impossible speeds (e.g., GPS drift > 15m/s for running)
+                                    if (!isNaN(computed) && computed >= 0 && computed < 15) {
                                         state.currentSpeed = computed;
                                     }
                                 }
+                            } else {
+                                state.currentSpeed = reported;
                             }
+                        } else if (reported !== null && !isNaN(reported)) {
+                            state.currentSpeed = reported;
+                        }
+
+                        // Accumulate Distance if not simulating
+                        if (!state.usingSimulatedSpeed && distDelta > 0) {
+                            state.totalDistance += distDelta;
                         }
 
                         state.lastPos = { lat: pos.coords.latitude, lon: pos.coords.longitude, timestamp: pos.timestamp };
@@ -307,11 +351,8 @@
                     },
                     (err) => {
                         console.warn("Geolocation error:", err);
-                        if (err.code === 1) showError("Geolocation permission denied. Use manual simulator.");
-                        else if (err.code === 2) showError("Geolocation unavailable. Use manual simulator.");
-                        else if (err.code === 3) showError("Geolocation timeout. Use manual simulator.");
-                        else showError("Geolocation issue: Using manual simulator.");
-
+                        // Errors handled gracefully by falling back to simulation logic implicitly 
+                        // via the 'usingSimulatedSpeed' flag
                         state.usingSimulatedSpeed = true;
                     },
                     options
@@ -326,25 +367,40 @@
         });
 
         function updateUI() {
+            // Speed Update
             const s = state.currentSpeed || 0;
             elements.speed.innerText = s.toFixed(1) + " ";
             if (!elements.speed.querySelector('span')) {
                 const unit = document.createElement('span');
-                unit.className = 'text-sm font-normal';
+                unit.className = 'text-sm font-normal text-gray-500';
                 unit.innerText = 'm/s';
                 elements.speed.appendChild(unit);
             }
 
+            // Distance Update
+            const distKm = state.totalDistance / 1000;
+            elements.distance.innerHTML = `${distKm.toFixed(2)} <span class="text-xs font-normal text-gray-500">km</span>`;
+
+            // CO2 Emissions Saved Update
+            // Avg passenger vehicle ~250g CO2 per km (EPA approximation for simplified tracking)
+            const savedGrams = distKm * 250;
+            if (savedGrams < 1000) {
+                elements.emissions.innerHTML = `${Math.round(savedGrams)} <span class="text-xs font-normal text-green-700">g</span>`;
+            } else {
+                elements.emissions.innerHTML = `${(savedGrams / 1000).toFixed(2)} <span class="text-xs font-normal text-green-700">kg</span>`;
+            }
+
+            // Styling based on speed
             elements.speed.classList.remove('speed-low', 'speed-med', 'speed-high');
             if (s > 4.5) {
                 elements.speed.classList.add('speed-high');
                 elements.intensity.innerText = "CLIMAX - High Tension";
             } else if (s > 2.5) {
                 elements.speed.classList.add('speed-med');
-                elements.intensity.innerText = "RISING ACTION - Moderate Tension";
+                elements.intensity.innerText = "RISING ACTION - Moderate";
             } else {
                 elements.speed.classList.add('speed-low');
-                elements.intensity.innerText = s > 0.1 ? "EXPOSITION - Calm/Atmospheric" : "STATIONARY - Introspective";
+                elements.intensity.innerText = s > 0.1 ? "EXPOSITION - Calm" : "STATIONARY";
             }
         }
 
@@ -354,11 +410,22 @@
             if (state.timerId) clearInterval(state.timerId);
             state.timerId = setInterval(() => {
                 if (!state.active) return;
+
+                // Timer Logic
                 const elapsed = Math.floor((Date.now() - state.startTime) / 1000);
                 const mins = Math.floor(elapsed / 60).toString().padStart(2, '0');
                 const secs = (elapsed % 60).toString().padStart(2, '0');
                 elements.timer.innerText = `${mins}:${secs}`;
 
+                // Simulator Distance Integration
+                // If using slider, we must accumulate distance manually based on time
+                if (state.usingSimulatedSpeed) {
+                    // add speed (m/s) * 1 second
+                    state.totalDistance += state.currentSpeed;
+                    updateUI(); // Refresh UI for the distance change
+                }
+
+                // AI Chapter Trigger
                 if (elapsed > 0 && elapsed % 300 === 0 && !state.isGenerating) {
                     generateNewChapter();
                 }
@@ -438,7 +505,7 @@
             const data = await response.json();
             return data.candidates[0].content.parts[0].text;
         }
- 
+
         function renderChapter(text) {
             const chapterNum = state.chapters.length;
             const div = document.createElement('div');
@@ -763,6 +830,7 @@
             state.active = true;
             state.chapters = [];
             state.fullStoryContext = '';
+            state.totalDistance = 0; // reset
             state.sessionId = `session-${Date.now()}`;
 
             elements.setup.classList.add('hidden');
@@ -775,6 +843,7 @@
             setupTracking();
             startTimer();
             generateNewChapter();
+            updateUI(); // immediate UI init
         });
 
         elements.ttsBtn.addEventListener('click', () => {
