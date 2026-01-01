@@ -98,7 +98,7 @@
                 <div class="h-4 w-3/4 loading-shimmer rounded"></div>
                 <div class="h-4 w-full loading-shimmer rounded"></div>
                 <div class="h-4 w-5/6 loading-shimmer rounded"></div>
-                <p class="text-xs text-gray-500 animate-pulse text-center pt-2">AI is weaving your next chapter based on your current pace...</p>
+                <p class="text-xs text-gray-500 animate-pulse text-center pt-2">The AI is observing your pace to set the narrative tone...</p>
             </div>
 
             <div id="chapters-container" class="space-y-12">
@@ -137,7 +137,7 @@
             isGenerating: false,
             ttsEnabled: true,
             currentAudio: null,
-            usingSimulatedSpeed: true // Default to showing simulator for easier access
+            usingSimulatedSpeed: true 
         };
 
         const elements = {
@@ -165,44 +165,24 @@
             setTimeout(() => elements.error.classList.add('hidden'), 8000);
         }
 
-        // Initialize Geolocation Tracking
         function setupTracking() {
             if ("geolocation" in navigator) {
-                // Initial check
-                navigator.geolocation.getCurrentPosition(() => {}, (err) => {
-                   console.log("Initial check failed, awaiting watchPosition callback.");
-                });
-
                 navigator.geolocation.watchPosition(
                     (pos) => {
-                        // If speed is null, we stick with simulator or treat as 0
                         if (pos.coords.speed !== null && !state.usingSimulatedSpeed) {
                             state.currentSpeed = pos.coords.speed;
                             updateUI();
                         }
                     },
                     (err) => {
-                        let msg = "Geolocation issue: ";
-                        switch(err.code) {
-                            case err.PERMISSION_DENIED: msg += "User denied location access."; break;
-                            case err.POSITION_UNAVAILABLE: msg += "Location information unavailable."; break;
-                            case err.TIMEOUT: msg += "Location request timed out."; break;
-                            default: msg += "Unknown error."; break;
-                        }
-                        showError(msg + " Please use the manual simulator if speed isn't updating.");
+                        let msg = "Geolocation issue: Using manual simulator.";
+                        showError(msg);
                     },
-                    { 
-                        enableHighAccuracy: true, 
-                        maximumAge: 1000, 
-                        timeout: 15000 
-                    }
+                    { enableHighAccuracy: true, maximumAge: 1000, timeout: 15000 }
                 );
-            } else {
-                showError("Browser doesn't support Geolocation. Using manual simulator.");
             }
         }
 
-        // Manual Simulator logic
         elements.simSlider.addEventListener('input', (e) => {
             state.usingSimulatedSpeed = true;
             state.currentSpeed = parseFloat(e.target.value);
@@ -216,13 +196,13 @@
             elements.speed.classList.remove('speed-low', 'speed-med', 'speed-high');
             if (s > 4.5) {
                 elements.speed.classList.add('speed-high');
-                elements.intensity.innerText = "MAX EFFORT - Action Peak";
+                elements.intensity.innerText = "CLIMAX - High Tension";
             } else if (s > 2.5) {
                 elements.speed.classList.add('speed-med');
-                elements.intensity.innerText = "Steady Pace - Rising Tension";
+                elements.intensity.innerText = "RISING ACTION - Moderate Tension";
             } else {
                 elements.speed.classList.add('speed-low');
-                elements.intensity.innerText = s > 0.1 ? "Recovery - World Building" : "Stationary - Atmospheric";
+                elements.intensity.innerText = s > 0.1 ? "EXPOSITION - Calm/Atmospheric" : "STATIONARY - Introspective";
             }
         }
 
@@ -235,7 +215,6 @@
                 const secs = (elapsed % 60).toString().padStart(2, '0');
                 elements.timer.innerText = `${mins}:${secs}`;
 
-                // Trigger new chapter every 5 minutes
                 if (elapsed > 0 && elapsed % 300 === 0 && !state.isGenerating) {
                     generateNewChapter();
                 }
@@ -248,18 +227,29 @@
             elements.loading.classList.remove('hidden');
 
             const speed = state.currentSpeed;
-            let pacing = "slow-burn, descriptive, and introspective";
-            if (speed > 2.5) pacing = "fast-paced, rhythmic, and high-tension";
-            if (speed > 4.5) pacing = "chaotic, adrenaline-fueled, and frantic";
+            
+            // Define stylistic instructions instead of literal speed reporting
+            let stylisticInstruction = "";
+            if (speed > 4.5) {
+                stylisticInstruction = "The story must reach a fever pitch of adrenaline. Use short, punchy sentences. Focus on urgent action, racing hearts, and immediate threats. The tension should be at an absolute maximum.";
+            } else if (speed > 2.5) {
+                stylisticInstruction = "The story should build tension steadily. Use rhythmic prose with rising stakes. Focus on the momentum of the plot and the characters' forward progress.";
+            } else {
+                stylisticInstruction = "The story should be atmospheric, descriptive, and introspective. Use longer, more complex sentences. Focus on world-building, sensory details, and character backstory.";
+            }
 
             const prompt = `
                 Genre: ${state.genre}. 
-                Core Plot Idea: ${state.plot}.
-                Current Runner Intensity: ${pacing}.
-                Current Speed: ${speed.toFixed(1)} meters per second.
+                Core Plot: ${state.plot}.
+                
+                WRITING STYLE MANDATE: 
+                ${stylisticInstruction}
+                
+                IMPORTANT: DO NOT mention that the user is running, working out, or mention their "speed", "meters per second", or "pace" literally. This is a fictional story. The energy of the writing should match the instruction above metaphorically.
+                
                 Task: Write Chapter ${state.chapters.length + 1}. 
-                Context: Continue the ongoing story based on these previous themes: ${state.fullStoryContext.slice(-1200)}.
-                Requirement: Write a very long, high-quality chapter. If the runner is fast, the prose should be short and punchy. If the runner is slow, use flowery and dense world-building.
+                Context: Continue the ongoing story based on these previous themes: ${state.fullStoryContext.slice(-1500)}.
+                Requirement: Write a very long, high-quality chapter.
             `;
 
             try {
@@ -271,7 +261,7 @@
                 if (state.ttsEnabled) speakText(chapterText);
                 
             } catch (err) {
-                showError("AI Error: Check your Gemini API Key or network.");
+                showError("AI Error: Connection issue or invalid API key.");
             } finally {
                 state.isGenerating = false;
                 elements.loading.classList.add('hidden');
@@ -286,7 +276,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: { maxOutputTokens: 8192, temperature: 0.95 }
+                    generationConfig: { maxOutputTokens: 8192, temperature: 0.85 }
                 })
             });
 
@@ -332,7 +322,6 @@
             }
         }
 
-        // Event Handlers
         elements.startBtn.addEventListener('click', () => {
             const key = document.getElementById('api-key').value.trim();
             if (!key) {
