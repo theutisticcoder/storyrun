@@ -553,10 +553,9 @@
                     // Use `tts.list_voices()` to list all available voices
                     voice: "af_heart",
                 }); 
-                
-
+ 
               
-                    const url = URL.createObjectURL(audio);
+                    const url = URL.createObjectURL(new Blob([audio.buffer], { type: 'audio/mp3' }));
 
                     // Create the audio element
                     const audioEl = document.createElement('audio');
