@@ -554,9 +554,9 @@
                     voice: "af_heart",
                 }); 
  
-              
+              console.log(audio)
                     const url = URL.createObjectURL(new Blob([audio.buffer], { type: 'audio/mp3' }));
-
+console.log(url)
                     // Create the audio element
                     const audioEl = document.createElement('audio');
                     audioEl.controls = true;
