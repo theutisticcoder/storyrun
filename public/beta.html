@@ -578,7 +578,7 @@
                     audioEl.controls = true;
                     audioEl.src = url;
                     audioEl.className = "h-8 mt-2 w-full accent-red-500 opacity-80 hover:opacity-100 transition-opacity";
-
+                    audioEl.play();
                     // Replace progress bar with audio player
                     setTimeout(() => {
                         barBg.classList.add('hidden');
