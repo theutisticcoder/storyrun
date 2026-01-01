@@ -474,6 +474,7 @@
                 var chunks = [];
                 // Handle the audio stream
                 stream.on('data', (audioChunk) => {
+                    console.log(audioChunk)
                     chunks.push(audioChunk)
                 });
 
