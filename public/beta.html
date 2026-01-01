@@ -490,7 +490,7 @@
                 elements.loading.classList.add('hidden');
             }
         }
-        import { KokoroTTS } from "kokoro-js";
+        import { KokoroTTS } from "https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/+esm";
 
         const model_id = "onnx-community/Kokoro-82M-v1.0-ONNX";
         const tts = await KokoroTTS.from_pretrained(model_id, {
