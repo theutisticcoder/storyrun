@@ -365,7 +365,7 @@
                 // Save after each new chapter
                 await saveCurrentSessionToStorage();
 
-                if (state.ttsEnabled) speakText(chapterText);
+                if (state.ttsEnabled) speakText(chapterText.toString());
             } catch (err) {
                 showError("AI Error: Connection issue or invalid API key.");
             } finally {
