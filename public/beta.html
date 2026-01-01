@@ -1,1 +1,720 @@
-AIzaSyCnDKjstFTNZDSvkcDarOmIuEzqw44rBhc
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>PacePulse: AI Run-Narrator</title>
+
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Third-party libs (localForage for storage, JSZip for EPUB generation) -->
+    <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+
+    <!-- EdgeTTS -->
+    <script type="module">
+        import { EdgeTTS } from 'https://cdn.jsdelivr.net/npm/edge-tts-universal/dist/browser.js';
+        window.EdgeTTS = EdgeTTS;
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=Lora:ital,wght@0,400;1,400&display=swap');
+        body { font-family: 'Space Grotesk', sans-serif; }
+        .prose-font { font-family: 'Lora', serif; }
+
+        .speed-glow { transition: text-shadow 0.3s ease; }
+        .speed-high { text-shadow: 0 0 20px #ef4444; color: #ef4444; }
+        .speed-med { text-shadow: 0 0 20px #f59e0b; color: #f59e0b; }
+        .speed-low { text-shadow: 0 0 20px #10b981; color: #10b981; }
+
+        .loading-shimmer {
+            background: linear-gradient(90deg, #1f2937 25%, #374151 50%, #1f2937 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+    </style>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen flex flex-col">
+
+    <!-- Header & Dashboard -->
+    <header class="p-6 border-b border-gray-800 bg-gray-900/50 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <h1 class="text-2xl font-bold tracking-tighter italic">PACE<span class="text-red-500">PULSE</span></h1>
+            <div class="flex gap-6 items-center">
+                <div class="text-center">
+                    <p class="text-xs uppercase text-gray-400">Current Speed</p>
+                    <p id="speed-display" class="text-3xl font-bold speed-low">0.0 <span class="text-sm font-normal">m/s</span></p>
+                </div>
+                <div class="text-center">
+                    <p class="text-xs uppercase text-gray-400">Intensity</p>
+                    <p id="intensity-display" class="text-sm font-medium text-gray-300 italic">Waiting...</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow p-4 md:p-8 max-w-4xl mx-auto w-full">
+        <!-- Error Toast -->
+        <div id="error-toast" class="hidden bg-red-900/80 border border-red-500 p-4 rounded-xl mb-6 text-sm text-red-200"></div>
+
+        <!-- Setup Form -->
+        <section id="setup-panel" class="bg-gray-900 p-6 rounded-2xl border border-gray-800 shadow-2xl">
+            <h2 class="text-xl font-semibold mb-4">Initialize Adventure</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Gemini API Key (Free Tier)</label>
+                    <input type="password" id="api-key" placeholder="Enter your key..." class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 focus:ring-2 focus:ring-red-500 outline-none">
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Genre</label>
+                        <select id="genre" class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 outline-none">
+                            <option>Cyberpunk Noir</option>
+                            <option>Grimdark Fantasy</option>
+                            <option>Psychological Thriller</option>
+                            <option>Post-Apocalyptic Survival</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Custom Plot Hook</label>
+                        <input type="text" id="plot" placeholder="e.g. A heist on a moon base..." class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 outline-none">
+                    </div>
+                </div>
+
+                <div class="p-3 bg-gray-800/50 rounded-lg text-xs text-gray-400">
+                    <p>Note: Speed tracking requires a GPS-enabled device and an HTTPS connection. If GPS is unavailable or stationary, use the simulator in the control bar below.</p>
+                </div>
+
+                <button id="start-btn" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-4 rounded-xl transition-all transform hover:scale-[1.02] active:scale-95">
+                    START WORKOUT & GENERATE
+                </button>
+
+                <!-- Saved Stories -->
+                <div id="saved-stories-section" class="mt-4">
+                    <h3 class="text-sm text-gray-400 mb-2 uppercase">Saved Stories</h3>
+                    <div id="saved-list" class="space-y-2 text-sm text-gray-300"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Story Display -->
+        <section id="story-panel" class="hidden mt-8 space-y-8 pb-24">
+            <div id="loading-indicator" class="hidden space-y-3">
+                <div class="h-4 w-3/4 loading-shimmer rounded"></div>
+                <div class="h-4 w-full loading-shimmer rounded"></div>
+                <div class="h-4 w-5/6 loading-shimmer rounded"></div>
+                <p class="text-xs text-gray-500 animate-pulse text-center pt-2">The AI is observing your pace to set the narrative tone...</p>
+            </div>
+
+            <div id="chapters-container" class="space-y-12">
+                <!-- Chapters injected here -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Controls Overlay -->
+    <div id="player-controls" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 border border-gray-800 px-6 py-4 rounded-full shadow-2xl flex items-center gap-4 z-50">
+        <button id="tts-toggle" class="p-2 hover:bg-gray-800 rounded-full text-red-500">
+            <svg xmlns="http://www.w3.org/2000/svg" id="tts-icon" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <!-- Speaker (sound-on) icon -->
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.05 4.99 6.3 8.49H3.75A.75.75 0 0 0 3 9.24v5.52c0 .414.336.75.75.75h2.55l4.75 3.5c.412.304 1.025.01 1.025-.58V5.57c0-.59-.613-.884-1.025-.58z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.364 4.636a9 9 0 010 12.728"/>
+            </svg>
+        </button>
+
+        <div class="h-8 w-[1px] bg-gray-700"></div>
+        <div id="workout-timer" class="font-mono text-xl tabular-nums">00:00</div>
+        <div class="h-8 w-[1px] bg-gray-700" id="manual-speed-divider"></div>
+        <div id="manual-speed-ctrl" class="flex items-center gap-2">
+            <input type="range" id="speed-slider" min="0" max="8" step="0.5" value="0" class="w-24 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-red-500">
+            <span class="text-xs text-gray-400">SIM</span>
+        </div>
+
+        <!-- End Run button -->
+        <button id="end-run-btn" class="ml-4 bg-gray-800 hover:bg-gray-700 text-gray-200 px-3 py-2 rounded-md text-sm">End Run & Download EPUB</button>
+    </div>
+
+    <script type="module">
+        // --- State ---
+        let state = {
+            active: false,
+            apiKey: '',
+            genre: '',
+            plot: '',
+            currentSpeed: 0,
+            startTime: null,
+            timerId: null,
+            chapters: [],
+            fullStoryContext: '',
+            isGenerating: false,
+            ttsEnabled: true,
+            currentAudio: null,
+            usingSimulatedSpeed: true,
+            lastPos: null,
+            watchId: null,
+            sessionId: null
+        };
+
+        const elements = {
+            speed: document.getElementById('speed-display'),
+            intensity: document.getElementById('intensity-display'),
+            setup: document.getElementById('setup-panel'),
+            story: document.getElementById('story-panel'),
+            loading: document.getElementById('loading-indicator'),
+            container: document.getElementById('chapters-container'),
+            timer: document.getElementById('workout-timer'),
+            controls: document.getElementById('player-controls'),
+            startBtn: document.getElementById('start-btn'),
+            ttsBtn: document.getElementById('tts-toggle'),
+            ttsIcon: document.getElementById('tts-icon'),
+            error: document.getElementById('error-toast'),
+            simSlider: document.getElementById('speed-slider'),
+            savedList: document.getElementById('saved-list'),
+            endRunBtn: document.getElementById('end-run-btn')
+        };
+
+        // localForage config
+        localforage.config({
+            name: 'pacepulse',
+            storeName: 'stories' // table/collection name
+        });
+
+        function showError(msg) {
+            elements.error.innerText = msg;
+            elements.error.classList.remove('hidden');
+            console.error("PacePulse Error:", msg);
+            setTimeout(() => elements.error.classList.add('hidden'), 8000);
+        }
+
+        // Haversine distance (meters)
+        function haversineDistanceMeters(lat1, lon1, lat2, lon2) {
+            const toRad = (deg) => deg * Math.PI / 180;
+            const R = 6371000;
+            const dLat = toRad(lat2 - lat1);
+            const dLon = toRad(lon2 - lon1);
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        // --- Tracking setup ---
+        function setupTracking() {
+            if (!("geolocation" in navigator)) {
+                showError("Geolocation not supported in this browser. Use manual simulator.");
+                return;
+            }
+
+            const options = { enableHighAccuracy: true, maximumAge: 1000, timeout: 15000 };
+
+            if (navigator.permissions && navigator.permissions.query) {
+                navigator.permissions.query({ name: 'geolocation' })
+                    .then((perm) => {
+                        if (perm.state === 'denied') {
+                            showError("Geolocation permission denied. Using manual simulator.");
+                            state.usingSimulatedSpeed = true;
+                        }
+                        startWatch();
+                    })
+                    .catch(() => startWatch());
+            } else {
+                startWatch();
+            }
+
+            function startWatch() {
+                if (state.watchId !== null) {
+                    try { navigator.geolocation.clearWatch(state.watchId); } catch (e) {}
+                    state.watchId = null;
+                }
+
+                state.watchId = navigator.geolocation.watchPosition(
+                    (pos) => {
+                        // auto-switch to GPS when valid updates come in, unless user touches slider (explicit)
+                        state.usingSimulatedSpeed = false;
+
+                        const reported = pos.coords.speed;
+                        if (reported !== null && !isNaN(reported)) {
+                            state.currentSpeed = reported;
+                        } else {
+                            if (state.lastPos) {
+                                const dt = (pos.timestamp - state.lastPos.timestamp) / 1000;
+                                if (dt > 0.1) {
+                                    const d = haversineDistanceMeters(
+                                        state.lastPos.lat, state.lastPos.lon,
+                                        pos.coords.latitude, pos.coords.longitude
+                                    );
+                                    const computed = d / dt;
+                                    if (!isNaN(computed) && computed >= 0) {
+                                        state.currentSpeed = computed;
+                                    }
+                                }
+                            }
+                        }
+
+                        state.lastPos = { lat: pos.coords.latitude, lon: pos.coords.longitude, timestamp: pos.timestamp };
+                        updateUI();
+                    },
+                    (err) => {
+                        console.warn("Geolocation error:", err);
+                        if (err.code === 1) showError("Geolocation permission denied. Use manual simulator.");
+                        else if (err.code === 2) showError("Geolocation unavailable. Use manual simulator.");
+                        else if (err.code === 3) showError("Geolocation timeout. Use manual simulator.");
+                        else showError("Geolocation issue: Using manual simulator.");
+
+                        state.usingSimulatedSpeed = true;
+                    },
+                    options
+                );
+            }
+        }
+
+        elements.simSlider.addEventListener('input', (e) => {
+            state.usingSimulatedSpeed = true;
+            state.currentSpeed = parseFloat(e.target.value);
+            updateUI();
+        });
+
+        function updateUI() {
+            const s = state.currentSpeed || 0;
+            elements.speed.innerText = s.toFixed(1) + " ";
+            if (!elements.speed.querySelector('span')) {
+                const unit = document.createElement('span');
+                unit.className = 'text-sm font-normal';
+                unit.innerText = 'm/s';
+                elements.speed.appendChild(unit);
+            }
+
+            elements.speed.classList.remove('speed-low', 'speed-med', 'speed-high');
+            if (s > 4.5) {
+                elements.speed.classList.add('speed-high');
+                elements.intensity.innerText = "CLIMAX - High Tension";
+            } else if (s > 2.5) {
+                elements.speed.classList.add('speed-med');
+                elements.intensity.innerText = "RISING ACTION - Moderate Tension";
+            } else {
+                elements.speed.classList.add('speed-low');
+                elements.intensity.innerText = s > 0.1 ? "EXPOSITION - Calm/Atmospheric" : "STATIONARY - Introspective";
+            }
+        }
+
+        // --- Timer ---
+        function startTimer() {
+            state.startTime = Date.now();
+            if (state.timerId) clearInterval(state.timerId);
+            state.timerId = setInterval(() => {
+                if (!state.active) return;
+                const elapsed = Math.floor((Date.now() - state.startTime) / 1000);
+                const mins = Math.floor(elapsed / 60).toString().padStart(2, '0');
+                const secs = (elapsed % 60).toString().padStart(2, '0');
+                elements.timer.innerText = `${mins}:${secs}`;
+
+                if (elapsed > 0 && elapsed % 300 === 0 && !state.isGenerating) {
+                    generateNewChapter();
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (state.timerId) { clearInterval(state.timerId); state.timerId = null; }
+        }
+
+        // --- AI generation (unchanged majorly) ---
+        async function generateNewChapter() {
+            if (state.isGenerating) return;
+            state.isGenerating = true;
+            elements.loading.classList.remove('hidden');
+
+            const speed = state.currentSpeed;
+            let stylisticInstruction = "";
+            if (speed > 4.5) {
+                stylisticInstruction = "The story must reach a fever pitch of adrenaline. Use short, punchy sentences. Focus on urgent action, racing hearts, and immediate threats. The tension should be immediate and visceral.";
+            } else if (speed > 2.5) {
+                stylisticInstruction = "The story should build tension steadily. Use rhythmic prose with rising stakes. Focus on the momentum of the plot and the characters' forward progress.";
+            } else {
+                stylisticInstruction = "The story should be atmospheric, descriptive, and introspective. Use longer, more complex sentences. Focus on world-building, sensory details, and character background.";
+            }
+
+            const prompt = `
+                Genre: ${state.genre}. 
+                Core Plot: ${state.plot}.
+                
+                WRITING STYLE MANDATE: 
+                ${stylisticInstruction}
+                
+                IMPORTANT: DO NOT mention that the user is running, working out, or mention their "speed", "meters per second", or "pace" literally. This is a fictional story.
+                
+                Task: Write Chapter ${state.chapters.length + 1}. 
+                Context: Continue the ongoing story based on these previous themes: ${state.fullStoryContext.slice(-1500)}.
+                Requirement: Write a very long, high-quality chapter.
+            `;
+
+            try {
+                const chapterText = await fetchGemini(prompt);
+                state.fullStoryContext += `\n\nChapter ${state.chapters.length + 1}\n${chapterText}`;
+                state.chapters.push(chapterText);
+                renderChapter(chapterText);
+
+                // Save after each new chapter
+                await saveCurrentSessionToStorage();
+
+                if (state.ttsEnabled) speakText(chapterText);
+            } catch (err) {
+                showError("AI Error: Connection issue or invalid API key.");
+            } finally {
+                state.isGenerating = false;
+                elements.loading.classList.add('hidden');
+            }
+        }
+
+        async function fetchGemini(prompt) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${state.apiKey}`;
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: { maxOutputTokens: 8192, temperature: 0.85 }
+                })
+            });
+
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.error?.message || "API Request Failed");
+            }
+            const data = await response.json();
+            return data.candidates[0].content.parts[0].text;
+        }
+
+        function renderChapter(text) {
+            const chapterNum = state.chapters.length;
+            const div = document.createElement('div');
+            div.className = "bg-gray-900/40 p-8 rounded-3xl border border-gray-800 shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-1000";
+            div.innerHTML = `
+                <h3 class="text-red-500 font-bold uppercase tracking-widest text-sm mb-4">Chapter ${chapterNum}</h3>
+                <div class="prose-font text-lg text-gray-300 leading-relaxed first-letter:text-5xl first-letter:font-bold first-letter:mr-3 first-letter:float-left">
+                    ${text.replace(/\n/g, '<br>')}
+                </div>
+            `;
+            elements.container.prepend(div);
+        }
+
+        // --- TTS ---
+        async function speakText(text) {
+            if (state.currentAudio) {
+                state.currentAudio.pause();
+                state.currentAudio = null;
+            }
+
+            try {
+                const tts = new window.EdgeTTS();
+                const result = await tts.synthesize(text, 'en-US-GuyNeural');
+
+                if (result && result.audio) {
+                    const url = URL.createObjectURL(result.audio);
+                    state.currentAudio = new Audio(url);
+                    state.currentAudio.onended = () => URL.revokeObjectURL(url);
+                    state.currentAudio.play();
+                }
+            } catch (e) {
+                console.warn("TTS Error:", e);
+            }
+        }
+
+        // --- Storage (localForage) ---
+        async function saveCurrentSessionToStorage() {
+            // create a lightweight session object
+            if (!state.sessionId) state.sessionId = `session-${Date.now()}`;
+            const item = {
+                id: state.sessionId,
+                title: `${state.genre || 'Untitled'} - ${new Date().toISOString()}`,
+                genre: state.genre,
+                plot: state.plot,
+                created_at: new Date().toISOString(),
+                chapters: state.chapters,
+                fullStoryContext: state.fullStoryContext
+            };
+
+            try {
+                const saved = (await localforage.getItem('savedStories')) || [];
+                // replace existing by id or push new
+                const idx = saved.findIndex(s => s.id === item.id);
+                if (idx >= 0) saved[idx] = item;
+                else saved.push(item);
+                await localforage.setItem('savedStories', saved);
+                await displaySavedList();
+            } catch (e) {
+                console.error("save error", e);
+            }
+        }
+
+        async function displaySavedList() {
+            const saved = (await localforage.getItem('savedStories')) || [];
+            elements.savedList.innerHTML = '';
+            if (saved.length === 0) {
+                elements.savedList.innerHTML = `<div class="text-xs text-gray-500">No saved stories yet.</div>`;
+                return;
+            }
+
+            saved.slice().reverse().forEach(s => {
+                const row = document.createElement('div');
+                row.className = 'flex items-center justify-between gap-2 bg-gray-800/30 p-2 rounded';
+                row.innerHTML = `
+                    <div class="truncate text-xs">
+                        <div class="font-medium text-gray-200">${escapeHtml(s.title)}</div>
+                        <div class="text-xs text-gray-400 truncate">${escapeHtml(s.plot || '')}</div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button data-id="${s.id}" class="load-btn bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded text-xs">Load</button>
+                        <button data-id="${s.id}" class="del-btn bg-red-700 hover:bg-red-600 px-2 py-1 rounded text-xs">Delete</button>
+                    </div>
+                `;
+                elements.savedList.appendChild(row);
+            });
+
+            // attach listeners
+            elements.savedList.querySelectorAll('.load-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const id = e.currentTarget.dataset.id;
+                    await restoreSavedStory(id);
+                });
+            });
+            elements.savedList.querySelectorAll('.del-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const id = e.currentTarget.dataset.id;
+                    await deleteSavedStory(id);
+                });
+            });
+        }
+
+        async function restoreSavedStory(id) {
+            const saved = (await localforage.getItem('savedStories')) || [];
+            const s = saved.find(x => x.id === id);
+            if (!s) return showError("Saved story not found.");
+            // populate state and render
+            state.sessionId = s.id;
+            state.genre = s.genre;
+            state.plot = s.plot;
+            state.chapters = s.chapters || [];
+            state.fullStoryContext = s.fullStoryContext || '';
+            // show story panel and render chapters
+            elements.setup.classList.add('hidden');
+            elements.story.classList.remove('hidden');
+            elements.controls.classList.remove('hidden');
+            elements.container.innerHTML = '';
+            state.chapters.forEach((c) => renderChapter(c));
+        }
+
+        async function deleteSavedStory(id) {
+            const saved = (await localforage.getItem('savedStories')) || [];
+            const filtered = saved.filter(s => s.id !== id);
+            await localforage.setItem('savedStories', filtered);
+            await displaySavedList();
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+        }
+
+        // --- EPUB generation using JSZip ---
+        async function createEpub(title, chapters) {
+            // Minimal EPUB structure with OEBPS and META-INF
+            const zip = new JSZip();
+
+            // 1) mimetype must be stored uncompressed and be first entry
+            zip.file('mimetype', 'application/epub+zip', { compression: 'STORE' });
+
+            // 2) META-INF/container.xml
+            zip.folder('META-INF').file('container.xml', `<?xml version="1.0"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles>
+    <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>
+  </rootfiles>
+</container>`);
+
+            // 3) OEBPS content: create xhtml chapters
+            const oebps = zip.folder('OEBPS');
+            const manifestItems = [];
+            const spineItems = [];
+
+            // Generate each chapter xhtml and register in manifest/spine
+            chapters.forEach((ch, i) => {
+                const idx = i + 1;
+                const filename = `chapter${idx}.xhtml`;
+                const body = `<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+<head><title>Chapter ${idx}</title><meta charset="utf-8"/></head>
+<body>
+  <h1>Chapter ${idx}</h1>
+  <div>${escapeHtml(ch).replace(/\n/g, '<br/>')}</div>
+</body>
+</html>`;
+                oebps.file(filename, body);
+                manifestItems.push(`<item id="chap${idx}" href="${filename}" media-type="application/xhtml+xml"/>`);
+                spineItems.push(`<itemref idref="chap${idx}"/>`);
+            });
+
+            // package metadata and manifest
+            const uid = `urn:uuid:${state.sessionId || 'session-' + Date.now()}`;
+            const now = new Date().toISOString();
+            const contentOpf = `<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" unique-identifier="BookId" version="2.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>${escapeHtml(title)}</dc:title>
+    <dc:language>en</dc:language>
+    <dc:identifier id="BookId">${uid}</dc:identifier>
+    <dc:creator>PacePulse</dc:creator>
+    <dc:date>${now}</dc:date>
+  </metadata>
+  <manifest>
+    ${manifestItems.join('\n    ')}
+  </manifest>
+  <spine toc="ncx">
+    ${spineItems.join('\n    ')}
+  </spine>
+</package>`;
+            oebps.file('content.opf', contentOpf);
+
+            // basic toc.ncx for EPUB 2 compatibility
+            const tocNav = chapters.map((_, i) => {
+                return `<navPoint id="navPoint-${i+1}" playOrder="${i+1}">
+  <navLabel><text>Chapter ${i+1}</text></navLabel>
+  <content src="chapter${i+1}.xhtml"/>
+</navPoint>`;
+            }).join('\n    ');
+
+            const ncx = `<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE ncx PUBLIC "-//NISO//DTD ncx 2005-1//EN"
+  "http://www.daisy.org/z3986/2005/ncx-2005-1.dtd">
+<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">
+  <head>
+    <meta name="dtb:uid" content="${uid}"/>
+    <meta name="dtb:depth" content="1"/>
+    <meta name="dtb:totalPageCount" content="0"/>
+    <meta name="dtb:maxPageNumber" content="0"/>
+  </head>
+  <docTitle><text>${escapeHtml(title)}</text></docTitle>
+  <navMap>
+    ${tocNav}
+  </navMap>
+</ncx>`;
+            oebps.file('toc.ncx', ncx);
+
+            // finalize zip into blob
+            const blob = await zip.generateAsync({ type: 'blob', mimeType: 'application/epub+zip' });
+            return blob;
+        }
+
+        // --- End run behavior ---
+        async function endRunAndDownload() {
+            // stop activity
+            state.active = false;
+            stopTimer();
+            if (state.watchId !== null) {
+                try { navigator.geolocation.clearWatch(state.watchId); } catch(e) {}
+                state.watchId = null;
+            }
+            if (state.currentAudio) { state.currentAudio.pause(); state.currentAudio = null; }
+
+            // ensure latest session saved
+            await saveCurrentSessionToStorage();
+
+            // create EPUB (use session title)
+            const title = `${state.genre || 'Untitled Story'} - ${new Date().toLocaleString()}`;
+            const chapters = state.chapters.slice();
+            if (!chapters || chapters.length === 0) {
+                showError("No chapters to export.");
+                return;
+            }
+
+            elements.endRunBtn.disabled = true;
+            elements.endRunBtn.innerText = 'Preparing EPUB...';
+
+            try {
+                const epubBlob = await createEpub(title, chapters);
+                const filename = `${(state.genre || 'story').replace(/\s+/g,'_')}_${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.epub`;
+                const url = URL.createObjectURL(epubBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+            } catch (e) {
+                console.error("EPUB error", e);
+                showError("Failed to create EPUB.");
+            } finally {
+                elements.endRunBtn.disabled = false;
+                elements.endRunBtn.innerText = 'End Run & Download EPUB';
+            }
+        }
+
+        // --- Utilities & initialization ---
+        elements.startBtn.addEventListener('click', () => {
+            const key = document.getElementById('api-key').value.trim();
+            if (!key) { showError("Gemini API Key is required."); return; }
+
+            // init new session
+            state.apiKey = key;
+            state.genre = document.getElementById('genre').value;
+            state.plot = document.getElementById('plot').value || "An unexpected journey begins.";
+            state.active = true;
+            state.chapters = [];
+            state.fullStoryContext = '';
+            state.sessionId = `session-${Date.now()}`;
+
+            elements.setup.classList.add('hidden');
+            elements.story.classList.remove('hidden');
+            elements.controls.classList.remove('hidden');
+            elements.container.innerHTML = '';
+
+            // start with simulator until GPS available
+            state.usingSimulatedSpeed = true;
+            setupTracking();
+            startTimer();
+            generateNewChapter();
+        });
+
+        elements.ttsBtn.addEventListener('click', () => {
+            state.ttsEnabled = !state.ttsEnabled;
+            if (!state.ttsEnabled) {
+                if (state.currentAudio) state.currentAudio.pause();
+                elements.ttsIcon.innerHTML = `
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.05 4.99 6.3 8.49H3.75A.75.75 0 0 0 3 9.24v5.52c0 .414.336.75.75.75h2.55l4.75 3.5c.412.304 1.025.01 1.025-.58V5.57c0-.59-.613-.884-1.025-.58z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 9l6 6"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 9l-6 6"/>
+                `;
+                elements.ttsBtn.classList.replace('text-red-500', 'text-gray-500');
+            } else {
+                elements.ttsIcon.innerHTML = `
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.05 4.99 6.3 8.49H3.75A.75.75 0 0 0 3 9.24v5.52c0 .414.336.75.75.75h2.55l4.75 3.5c.412.304 1.025.01 1.025-.58V5.57c0-.59-.613-.884-1.025-.58z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.364 4.636a9 9 0 010 12.728"/>
+                `;
+                elements.ttsBtn.classList.replace('text-gray-500', 'text-red-500');
+            }
+        });
+
+        elements.endRunBtn.addEventListener('click', () => {
+            endRunAndDownload();
+        });
+
+        // load saved stories list on startup
+        (async function init() {
+            await displaySavedList();
+        })();
+
+    </script>
+</body>
+</html>
