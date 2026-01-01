@@ -692,29 +692,96 @@
         // --- EPUB generation using JSZip ---
         // --- EPUB generation using jepub ---
         async function createEpub(title, chapters) {
-            // 1. Initialize jepub with book metadata
-            var epub = new jEpub();
-            console.log(title)
-            epub.init({
-                title: title,
+            // Defensive checks
+            if (typeof jEpub === 'undefined') {
+                throw new Error('jEpub library is not loaded. Make sure https://cdn.jsdelivr.net/npm/jepub/dist/jepub.js is included.');
+            }
+
+            const meta = {
+                title: title || 'Untitled',
                 author: 'PacePulse AI',
                 publisher: 'PacePulse App',
-                description: `An AI-generated ${state.genre} story based on a workout.`,
-                tags: [state.genre, 'AI Fiction', 'Fitness'],
-            });
-            console.log(epub)
-            // 2. Add Chapters
-            // jepub expects: epub.add(title, content)
-            chapters.forEach((ch, i) => {
-                const chapterTitle = `Chapter ${i + 1}`;
-                // Convert plain text breaks to HTML for the EPUB reader
-                const htmlContent = ch.replace(/\n/g, '<br/>');
-                epub.add(chapterTitle, htmlContent);
-            });
+                description: `An AI-generated ${state.genre} story.`,
+                // Ensure tags is an array (some jEpub builds are picky)
+                tags: state.genre ? [state.genre, 'AI Fiction', 'Fitness'] : ['AI Fiction', 'Fitness']
+            };
 
-            // 3. Generate Blob
-            const blob = await epub.generate('blob');
-            return blob;
+            let epub;
+            try {
+                // Some jEpub builds accept metadata in the constructor; try that first
+                try {
+                    epub = new jEpub(meta);
+                } catch (e) {
+                    // If constructor form fails, fall back to no-arg constructor
+                    epub = new jEpub();
+                }
+
+                // Only call init if it exists and is a function (guard against builds that set init in a different way)
+                if (typeof epub.init === 'function') {
+                    // Sanitize tags/strings to avoid internal instanceof checks failing
+                    if (meta.tags && !Array.isArray(meta.tags)) meta.tags = [meta.tags];
+                    // Call init inside try/catch to prevent library internal errors from bubbling raw
+                    try {
+                        epub.init(meta);
+                    } catch (innerErr) {
+                        console.warn('jEpub.init threw an error (continuing if constructor already applied metadata):', innerErr);
+                        // don't rethrow here — continue if constructor already set metadata
+                    }
+                }
+            } catch (e) {
+                // If anything about jEpub instantiation fails, give a clearer error so you can try a different CDN/version
+                console.error('Failed to initialize jEpub:', e);
+                throw new Error('EPUB library initialization failed. Try using a different jepub build (upgrade/downgrade CDN version).');
+            }
+
+            // Add chapters (wrap text in minimal HTML)
+            try {
+                chapters.forEach((ch, i) => {
+                    const chapterTitle = `Chapter ${i + 1}`;
+                    const htmlContent = `
+                <!doctype html>
+                <html lang="en">
+                <head><meta charset="utf-8"/></head>
+                <body>
+                    <h1>${chapterTitle}</h1>
+                    <div>${ch.replace(/\n/g, '<br/>')}</div>
+                </body>
+                </html>
+            `;
+                    // jEpub expects epub.add(title, content)
+                    epub.add(chapterTitle, htmlContent);
+                });
+
+                // Generate the EPUB as a blob.
+                // jEpub.generate may return a Promise or accept a callback depending on build/version,
+                // so handle both forms.
+                let blob;
+                const gen = epub.generate;
+                if (!gen) throw new Error('jEpub.generate is not available on this build.');
+
+                // If generate returns a Promise when called, await it; otherwise wrap the callback form.
+                try {
+                    // try promise-style
+                    blob = await epub.generate('blob');
+                } catch (promiseErr) {
+                    // fallback to callback-style
+                    blob = await new Promise((resolve, reject) => {
+                        try {
+                            epub.generate('blob', function (err, result) {
+                                if (err) reject(err);
+                                else resolve(result);
+                            });
+                        } catch (cbErr) {
+                            reject(cbErr);
+                        }
+                    });
+                }
+
+                return blob;
+            } catch (e) {
+                console.error('createEpub failed:', e);
+                throw e; // rethrow so caller shows friendly error
+            }
         }
 
         // --- End run behavior ---
