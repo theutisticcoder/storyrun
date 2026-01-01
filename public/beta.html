@@ -703,7 +703,7 @@
                 description: `An AI-generated ${state.genre} story based on a workout.`,
                 tags: [state.genre, 'AI Fiction', 'Fitness'],
             });
-
+            console.log(epub)
             // 2. Add Chapters
             // jepub expects: epub.add(title, content)
             chapters.forEach((ch, i) => {
