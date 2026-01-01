@@ -694,9 +694,8 @@
         async function createEpub(title, chapters) {
             // 1. Initialize jepub with book metadata
             var epub = new jEpub();
-
+            console.log(title)
             epub.init({
-                i18n: 'en',
                 title: title,
                 author: 'PacePulse AI',
                 publisher: 'PacePulse App',
