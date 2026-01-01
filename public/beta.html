@@ -763,49 +763,7 @@ async function endRunAndDownload() {
 
 
         // --- End run behavior ---
-        async function endRunAndDownload() {
-            // stop activity
-            state.active = false;
-            stopTimer();
-            if (state.watchId !== null) {
-                try { navigator.geolocation.clearWatch(state.watchId); } catch (e) { }
-                state.watchId = null;
-            }
-            if (state.currentAudio) { state.currentAudio.pause(); state.currentAudio = null; }
-
-            // ensure latest session saved
-            await saveCurrentSessionToStorage();
-
-            // create EPUB (use session title)
-            const title = `${state.genre || 'Untitled Story'} - ${new Date().toLocaleString()}`;
-            const chapters = state.chapters.slice();
-            if (!chapters || chapters.length === 0) {
-                showError("No chapters to export.");
-                return;
-            }
-
-            elements.endRunBtn.disabled = true;
-            elements.endRunBtn.innerText = 'Preparing EPUB...';
-
-            try {
-                const epubBlob = await createEpub(title, chapters);
-                const filename = `${(state.genre || 'story').replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.epub`;
-                const url = URL.createObjectURL(epubBlob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-                URL.revokeObjectURL(url);
-            } catch (e) {
-                console.error("EPUB error", e);
-                showError("Failed to create EPUB.");
-            } finally {
-                elements.endRunBtn.disabled = false;
-                elements.endRunBtn.innerText = 'End Run & Download EPUB';
-            }
-        }
+    
 
         // --- Utilities & initialization ---
         elements.startBtn.addEventListener('click', () => {
