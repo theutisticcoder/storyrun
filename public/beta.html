@@ -470,7 +470,7 @@
                 options.volume = 90;
 
                 // Synthesize text to a stream
-                const stream = ttsClient.toStream('Hello, world!', options);
+                const stream = ttsClient.toStream(text, options);
                 var chunks = [];
                 // Handle the audio stream
                 stream.on('data', (audioChunk) => {
