@@ -13,10 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 
     <!-- EdgeTTS -->
-    <script type="module">
-        import { EdgeTTSClient } from 'https://cdn.jsdelivr.net/npm/edge-tts-client/dist/browser.js';
-        window.EdgeTTS = EdgeTTSClient;
-    </script>
+
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=Lora:ital,wght@0,400;1,400&display=swap');
@@ -141,8 +138,10 @@
         <button id="end-run-btn" class="ml-4 bg-gray-800 hover:bg-gray-700 text-gray-200 px-3 py-2 rounded-md text-sm">End Run & Download EPUB</button>
     </div>
 
-    <script type="module">
-        // --- State ---
+<script type="module">
+        import { EdgeTTSClient } from 'https://cdn.jsdelivr.net/npm/edge-tts-client/dist/browser.js';
+        window.EdgeTTS = EdgeTTSClient;
+            // --- State ---
         let state = {
             active: false,
             apiKey: '',
