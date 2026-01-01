@@ -27,58 +27,89 @@
             50% { transform: scale(1.1); opacity: 1; }
         }
 
-        /* Ensure interactive elements are touch-friendly */
         button, textarea { touch-action: manipulation; }
+        
+        .genre-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 0.75rem;
+        }
     </style>
 </head>
 <body class="text-slate-100 min-h-screen selection:bg-emerald-500/30">
 
-    <div id="app" class="max-w-xl mx-auto min-h-screen flex flex-col p-4 md:p-8">
+    <div id="app" class="max-w-2xl mx-auto min-h-screen flex flex-col p-4 md:p-8">
         <!-- Setup Screen -->
-        <div id="setup-screen" class="space-y-6 py-8">
+        <div id="setup-screen" class="space-y-8 py-8">
             <header class="text-center space-y-2">
                 <div class="inline-block p-3 bg-emerald-500/10 rounded-full mb-2">
-                    <svg class="w-8 h-8 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    <svg class="w-8 h-8 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                 </div>
-                <h1 class="text-5xl font-black tracking-tighter text-white uppercase italic">Story<span class="text-emerald-500">Stride</span></h1>
-                <p class="text-slate-400 font-medium italic">Narrated sagas synced to your pace.</p>
+                <h1 class="text-5xl font-black tracking-tighter text-white uppercase italic leading-none">Story<span class="text-emerald-500">Stride</span></h1>
+                <p class="text-slate-400 font-medium italic">Narrated sagas synced to your biometric pace.</p>
             </header>
 
             <div class="space-y-4">
-                <label class="block text-xs font-black uppercase tracking-[0.2em] text-slate-500">Choose Your Reality</label>
-                <div class="grid grid-cols-2 gap-3">
-                    <button onclick="setGenre('Cyberpunk Fugitive')" class="genre-btn group p-4 rounded-2xl bg-slate-900 border-2 border-emerald-500 transition-all text-left">
+                <div class="flex items-center justify-between">
+                    <label class="text-xs font-black uppercase tracking-[0.2em] text-slate-500">1. Select Your Reality</label>
+                    <span id="selected-label" class="text-[10px] font-bold text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-2 py-1 rounded">Cyberpunk</span>
+                </div>
+                <div class="genre-grid">
+                    <button onclick="setGenre('Cyberpunk Fugitive', '🏙️')" class="genre-btn group p-4 rounded-2xl bg-slate-900 border-2 border-emerald-500 transition-all text-left">
                         <span class="text-2xl mb-1 block">🏙️</span>
-                        <span class="font-bold block group-hover:text-emerald-400">Cyberpunk</span>
+                        <span class="font-bold text-sm block group-hover:text-emerald-400">Cyberpunk</span>
                     </button>
-                    <button onclick="setGenre('Grim Fantasy Quest')" class="genre-btn group p-4 rounded-2xl bg-slate-900 border-2 border-slate-800 hover:border-emerald-500 transition-all text-left">
+                    <button onclick="setGenre('Grim Fantasy Quest', '⚔️')" class="genre-btn group p-4 rounded-2xl bg-slate-900 border-2 border-slate-800 hover:border-emerald-500 transition-all text-left">
                         <span class="text-2xl mb-1 block">⚔️</span>
-                        <span class="font-bold block group-hover:text-emerald-400">Dark Fantasy</span>
+                        <span class="font-bold text-sm block group-hover:text-emerald-400">Dark Fantasy</span>
                     </button>
-                    <button onclick="setGenre('Eldritch Horror')" class="genre-btn group p-4 rounded-2xl bg-slate-900 border-2 border-slate-800 hover:border-emerald-500 transition-all text-left">
+                    <button onclick="setGenre('Eldritch Horror', '🐙')" class="genre-btn group p-4 rounded-2xl bg-slate-900 border-2 border-slate-800 hover:border-emerald-500 transition-all text-left">
                         <span class="text-2xl mb-1 block">🐙</span>
-                        <span class="font-bold block group-hover:text-emerald-400">Eldritch</span>
+                        <span class="font-bold text-sm block group-hover:text-emerald-400">Eldritch</span>
                     </button>
-                    <button onclick="setGenre('Samurai Ronin')" class="genre-btn group p-4 rounded-2xl bg-slate-900 border-2 border-slate-800 hover:border-emerald-500 transition-all text-left">
+                    <button onclick="setGenre('Samurai Ronin', '🏮')" class="genre-btn group p-4 rounded-2xl bg-slate-900 border-2 border-slate-800 hover:border-emerald-500 transition-all text-left">
                         <span class="text-2xl mb-1 block">🏮</span>
-                        <span class="font-bold block group-hover:text-emerald-400">Ronin</span>
+                        <span class="font-bold text-sm block group-hover:text-emerald-400">Ronin</span>
                     </button>
-                    <button onclick="setGenre('Victorian Gothic')" class="genre-btn group p-4 rounded-2xl bg-slate-900 border-2 border-slate-800 hover:border-emerald-500 transition-all text-left">
+                    <button onclick="setGenre('Victorian Gothic', '🏰')" class="genre-btn group p-4 rounded-2xl bg-slate-900 border-2 border-slate-800 hover:border-emerald-500 transition-all text-left">
                         <span class="text-2xl mb-1 block">🦇</span>
-                        <span class="font-bold block group-hover:text-emerald-400">Gothic</span>
+                        <span class="font-bold text-sm block group-hover:text-emerald-400">Gothic</span>
                     </button>
-                    <button onclick="setGenre('Space Western')" class="genre-btn group p-4 rounded-2xl bg-slate-900 border-2 border-slate-800 hover:border-emerald-500 transition-all text-left">
+                    <button onclick="setGenre('Space Western', '🤠')" class="genre-btn group p-4 rounded-2xl bg-slate-900 border-2 border-slate-800 hover:border-emerald-500 transition-all text-left">
                         <span class="text-2xl mb-1 block">🛸</span>
-                        <span class="font-bold block group-hover:text-emerald-400">Star-Wilds</span>
+                        <span class="font-bold text-sm block group-hover:text-emerald-400">Star-Wilds</span>
+                    </button>
+                    <button onclick="setGenre('Zombie Survival', '🧟')" class="genre-btn group p-4 rounded-2xl bg-slate-900 border-2 border-slate-800 hover:border-emerald-500 transition-all text-left">
+                        <span class="text-2xl mb-1 block">🧟</span>
+                        <span class="font-bold text-sm block group-hover:text-emerald-400">Apocalypse</span>
+                    </button>
+                    <button onclick="setGenre('Noir Detective', '🕵️')" class="genre-btn group p-4 rounded-2xl bg-slate-900 border-2 border-slate-800 hover:border-emerald-500 transition-all text-left">
+                        <span class="text-2xl mb-1 block">🕵️</span>
+                        <span class="font-bold text-sm block group-hover:text-emerald-400">Hardboiled</span>
+                    </button>
+                    <button onclick="setGenre('Greek Mythos', '⚡')" class="genre-btn group p-4 rounded-2xl bg-slate-900 border-2 border-slate-800 hover:border-emerald-500 transition-all text-left">
+                        <span class="text-2xl mb-1 block">⚡</span>
+                        <span class="font-bold text-sm block group-hover:text-emerald-400">Olympian</span>
+                    </button>
+                    <button onclick="setGenre('WWII Commando', '🪖')" class="genre-btn group p-4 rounded-2xl bg-slate-900 border-2 border-slate-800 hover:border-emerald-500 transition-all text-left">
+                        <span class="text-2xl mb-1 block">🪖</span>
+                        <span class="font-bold text-sm block group-hover:text-emerald-400">Commando</span>
                     </button>
                 </div>
-                <textarea id="custom-plot" placeholder="Or enter a specific prompt..." class="w-full bg-slate-900 border-2 border-slate-800 rounded-2xl p-4 focus:border-emerald-500 outline-none h-20 transition-all text-sm"></textarea>
             </div>
 
-            <button id="main-start-btn" onclick="requestPermissionsAndStart()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-5 rounded-2xl text-xl shadow-lg transition-all active:scale-95">
-                START RUNNING
-            </button>
-            <p class="text-[10px] text-slate-600 text-center uppercase tracking-widest">Requires GPS & Audio Permissions</p>
+            <div class="space-y-4">
+                <label class="block text-xs font-black uppercase tracking-[0.2em] text-slate-500">2. Custom Mission Parameters (Optional)</label>
+                <textarea id="custom-plot" placeholder="e.g. 'I am a messenger carrying the antidote through a city of neon and rain...'" class="w-full bg-slate-900 border-2 border-slate-800 rounded-2xl p-4 focus:border-emerald-500 outline-none h-24 transition-all text-sm leading-relaxed"></textarea>
+            </div>
+
+            <div class="pt-4">
+                <button id="main-start-btn" onclick="requestPermissionsAndStart()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-6 rounded-3xl text-2xl shadow-[0_0_40px_-10px_rgba(16,185,129,0.5)] transition-all active:scale-[0.98] group flex items-center justify-center gap-3">
+                    INITIATE RUN
+                    <svg class="w-6 h-6 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </button>
+                <p class="text-[10px] text-slate-600 text-center uppercase tracking-widest mt-4">Calibrating Audio & Satellite Uplink</p>
+            </div>
         </div>
 
         <!-- Workout Screen -->
@@ -106,8 +137,8 @@
                         <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"></path></svg>
                     </div>
                     <div>
-                        <div class="text-[10px] font-black text-slate-500 uppercase">Narrator (Charon)</div>
-                        <div id="voice-state" class="text-sm font-bold">Acquiring Story Signal...</div>
+                        <div class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Narrator (Charon)</div>
+                        <div id="voice-state" class="text-xs font-bold text-emerald-500/80">Acquiring Story Signal...</div>
                     </div>
                 </div>
                 <button onclick="toggleAudio()" class="p-3 bg-slate-800 rounded-xl hover:bg-slate-700 transition-colors">
@@ -118,16 +149,16 @@
             <div class="flex-1 bg-white text-slate-900 rounded-[2.5rem] p-8 overflow-y-auto shadow-inner relative border-b-8 border-slate-200">
                 <div id="loading-overlay" class="hidden absolute inset-0 bg-white/95 backdrop-blur-md flex flex-col items-center justify-center z-10 p-10 text-center">
                     <div class="spinner mb-6"></div>
-                    <h3 class="font-black text-xl uppercase tracking-tighter mb-2 text-slate-900">Generating Narrative</h3>
-                    <p id="loading-text" class="text-slate-500 text-sm">Synchronizing ~3000 words to your movement...</p>
+                    <h3 class="font-black text-xl uppercase tracking-tighter mb-2 text-slate-900">Synchronizing Plot</h3>
+                    <p id="loading-text" class="text-slate-500 text-sm italic">Forging approximately 3,000 words for your current pace...</p>
                 </div>
                 <div id="story-container" class="serif text-lg leading-relaxed space-y-6">
                     <h2 id="story-title" class="text-3xl font-black tracking-tight mb-4 sans uppercase italic text-emerald-600">Calibration</h2>
-                    <div id="story-content" class="opacity-60">Ready to begin. Please start moving.</div>
+                    <div id="story-content" class="opacity-60">Uplink established. Start moving to trigger the opening chapter.</div>
                 </div>
             </div>
             
-            <button onclick="location.reload()" class="py-2 text-slate-600 text-[10px] font-black uppercase tracking-[0.3em] hover:text-white">End Session</button>
+            <button onclick="location.reload()" class="py-2 text-slate-600 text-[10px] font-black uppercase tracking-[0.3em] hover:text-white transition-colors">Abort Mission</button>
         </div>
     </div>
 
@@ -147,25 +178,24 @@
         let isAudioPlaying = false;
         let watchId = null;
 
-        function setGenre(g) {
+        function setGenre(g, emoji) {
             currentGenre = g;
             document.querySelectorAll('.genre-btn').forEach(btn => btn.classList.remove('border-emerald-500', 'bg-slate-800'));
             event.currentTarget.classList.add('border-emerald-500', 'bg-slate-800');
+            document.getElementById('selected-label').innerText = g.split(' ')[0];
         }
 
         async function requestPermissionsAndStart() {
-            // UI Switch immediately to prevent double-clicks
             const btn = document.getElementById('main-start-btn');
             btn.disabled = true;
-            btn.innerText = "INITIALIZING...";
+            btn.innerHTML = `CALIBRATING SENSORS...`;
 
             document.getElementById('setup-screen').classList.add('hidden');
             document.getElementById('workout-screen').classList.remove('hidden');
 
-            // Set a timeout for GPS: If it doesn't respond in 3 seconds, start anyway with 0 speed
             const gpsTimeout = setTimeout(() => {
                 if (!workoutActive) {
-                    console.log("GPS Timeout: Forcing start...");
+                    console.log("GPS Warning: Forcing manual start...");
                     startTracking();
                 }
             }, 3000);
@@ -177,9 +207,9 @@
                         startTracking();
                     },
                     (err) => {
-                        console.error("GPS Denied/Error:", err);
+                        console.warn("GPS Signal Weak:", err);
                         clearTimeout(gpsTimeout);
-                        startTracking(); // Start anyway, speed will just stay 0
+                        startTracking();
                     },
                     { enableHighAccuracy: true, timeout: 5000 }
                 );
@@ -193,7 +223,6 @@
             workoutActive = true;
             startTime = Date.now();
             
-            // Start Clock and First Chapter
             generateChapter();
             startClock();
 
@@ -232,18 +261,17 @@
             const loading = document.getElementById('loading-overlay');
             loading.classList.remove('hidden');
             
-            const pace = currentSpeed > 3.0 ? "frantic and high-stakes" : currentSpeed > 1.2 ? "steady and rhythmic" : "atmospheric and slow";
+            const pace = currentSpeed > 3.0 ? "fast-paced, breathless action" : currentSpeed > 1.2 ? "moving with purpose, mounting suspense" : "slow, descriptive, and heavy with atmosphere";
             const customPlot = document.getElementById('custom-plot').value;
 
             const prompt = `
-                Write an extremely long and detailed Chapter ${chapterCount} for a ${currentGenre} novel.
-                User Prompt: ${customPlot || "No specific prompt, follow genre tropes."}
-                Current Pacing: ${pace} (based on ${currentSpeed.toFixed(1)} m/s movement).
+                Write a 3,000 word massive and descriptive Chapter ${chapterCount} for a ${currentGenre} novel.
+                User context: ${customPlot || "Start the saga."}
+                Current Pacing: ${pace} (Movement detected at ${currentSpeed.toFixed(1)} m/s).
                 
-                REQUIREMENTS:
-                1. Length: Attempt to write 3,000 words. Be verbose, descriptive, and immersive.
-                2. Previous chapters context: ${storyHistory.slice(-1).join(' ').substring(0, 1000)}
-                3. Return ONLY a JSON object: {"title": "Title", "text": "The full long chapter text..."}
+                Previous: ${storyHistory.slice(-1).join(' ').substring(0, 1000)}
+                
+                Format as JSON: {"title": "The Chapter Title", "text": "The full expansive text..."}
             `;
 
             try {
@@ -265,7 +293,7 @@
                 chapterSeconds = 0;
             } catch (err) {
                 console.error(err);
-                document.getElementById('loading-text').innerText = "Signal lost. Retrying narration...";
+                document.getElementById('loading-text').innerText = "Link unstable. Retrying synchronization...";
             } finally {
                 loading.classList.add('hidden');
             }
@@ -277,19 +305,17 @@
             if (chapterCount === 1) content.innerHTML = '';
             
             const div = document.createElement('div');
-            div.className = "fade-in";
             div.innerHTML = `<h3 class="font-black text-xs uppercase text-emerald-600 mt-8 mb-2">Segment ${chapterCount}</h3>
-                             <h2 class="text-2xl font-black mb-4 uppercase italic text-slate-900">${story.title}</h2>
-                             <p class="mb-8 text-slate-800">${story.text.replace(/\n/g, '<br><br>')}</p>`;
+                             <h2 class="text-3xl font-black mb-4 uppercase italic text-slate-900 leading-tight">${story.title}</h2>
+                             <p class="mb-10 text-slate-800">${story.text.replace(/\n/g, '<br><br>')}</p>`;
             content.prepend(div);
             document.getElementById('chapter-val').innerText = chapterCount;
 
-            // Narrate approximately the first 1500 chars (API limit for single speech turn usually)
             narrateText(`Chapter ${chapterCount}: ${story.title}. ${story.text.substring(0, 1500)}`);
         }
 
         async function narrateText(text) {
-            document.getElementById('voice-state').innerText = "Synthesizing...";
+            document.getElementById('voice-state').innerText = "Synthesizing Speech...";
             document.getElementById('audio-icon').classList.add('audio-pulse');
 
             try {
@@ -310,9 +336,9 @@
                 const sampleRate = parseInt(data.candidates[0].content.parts[0].inlineData.mimeType.split('rate=')[1]) || 24000;
 
                 playAudio(pcmData, sampleRate);
-                document.getElementById('voice-state').innerText = "Narrating...";
+                document.getElementById('voice-state').innerText = "Narrating Saga...";
             } catch (err) {
-                document.getElementById('voice-state').innerText = "Narrator Offline";
+                document.getElementById('voice-state').innerText = "Voice Link Lost";
                 document.getElementById('audio-icon').classList.remove('audio-pulse');
             }
         }
@@ -332,7 +358,7 @@
             isAudioPlaying = true;
             audioSource.onended = () => {
                 document.getElementById('audio-icon').classList.remove('audio-pulse');
-                document.getElementById('voice-state').innerText = "Active Sync...";
+                document.getElementById('voice-state').innerText = "Monitoring Pace...";
             };
         }
 
