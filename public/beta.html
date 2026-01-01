@@ -76,19 +76,19 @@
                 <div class="text-center md:text-right border-r border-gray-800 pr-4 last:border-0 last:pr-0">
                     <p class="text-[10px] uppercase text-gray-400 tracking-wider">Speed</p>
                     <p id="speed-display" class="text-2xl font-bold speed-low">0.0 <span
-                            class="text-xs font-normal text-gray-500">m/s</span></p>
+                            class="text-xs font-normal text-gray-500">mph</span></p>
                 </div>
 
                 <div class="text-center md:text-right border-r border-gray-800 pr-4 last:border-0 last:pr-0">
                     <p class="text-[10px] uppercase text-gray-400 tracking-wider">Distance</p>
                     <p id="distance-display" class="text-2xl font-bold text-gray-200">0.00 <span
-                            class="text-xs font-normal text-gray-500">km</span></p>
+                            class="text-xs font-normal text-gray-500">mi</span></p>
                 </div>
 
                 <div class="text-center md:text-right border-r border-gray-800 pr-4 last:border-0 last:pr-0">
                     <p class="text-[10px] uppercase text-gray-400 tracking-wider">CO₂ Saved</p>
-                    <p id="emissions-display" class="text-2xl font-bold text-green-400">0 <span
-                            class="text-xs font-normal text-green-700">g</span></p>
+                    <p id="emissions-display" class="text-2xl font-bold text-green-400">0.00 <span
+                            class="text-xs font-normal text-green-700">lb</span></p>
                 </div>
 
                 <div class="text-center md:text-right">
@@ -194,9 +194,10 @@
         <div id="workout-timer" class="font-mono text-xl tabular-nums hidden sm:block">00:00</div>
         <div class="h-8 w-[1px] bg-gray-700" id="manual-speed-divider"></div>
         <div id="manual-speed-ctrl" class="flex items-center gap-2">
-            <input type="range" id="speed-slider" min="0" max="8" step="0.5" value="0"
+            <!-- Updated simulator slider for MPH -->
+            <input type="range" id="speed-slider" min="0" max="15" step="0.5" value="0"
                 class="w-24 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-red-500">
-            <span class="text-xs text-gray-400">SIM</span>
+            <span class="text-xs text-gray-400">MPH SIM</span>
         </div>
 
         <!-- End Run button -->
@@ -214,8 +215,8 @@
             apiKey: '',
             genre: '',
             plot: '',
-            currentSpeed: 0,
-            totalDistance: 0, // in meters
+            currentSpeed: 0, // Always stored as m/s internally for consistency
+            totalDistance: 0, // Always stored as meters internally
             startTime: null,
             timerId: null,
             chapters: [],
@@ -309,7 +310,7 @@
                         // auto-switch to GPS when valid updates come in, unless user touches slider (explicit)
                         state.usingSimulatedSpeed = false;
 
-                        const reported = pos.coords.speed;
+                        const reported = pos.coords.speed; // This is always m/s from browser
                         let distDelta = 0;
 
                         // Calculate distance from previous point if available
@@ -362,45 +363,49 @@
 
         elements.simSlider.addEventListener('input', (e) => {
             state.usingSimulatedSpeed = true;
-            state.currentSpeed = parseFloat(e.target.value);
+            // Slider is now in MPH. Convert to m/s for internal logic
+            // 1 mph = 0.44704 m/s
+            const mph = parseFloat(e.target.value);
+            state.currentSpeed = mph * 0.44704;
             updateUI();
         });
 
         function updateUI() {
-            // Speed Update
-            const s = state.currentSpeed || 0;
-            elements.speed.innerText = s.toFixed(1) + " ";
+            // Speed Update (Internal m/s -> Display MPH)
+            const s_ms = state.currentSpeed || 0;
+            const s_mph = s_ms * 2.23694;
+
+            elements.speed.innerText = s_mph.toFixed(1) + " ";
             if (!elements.speed.querySelector('span')) {
                 const unit = document.createElement('span');
                 unit.className = 'text-sm font-normal text-gray-500';
-                unit.innerText = 'm/s';
+                unit.innerText = 'mph';
                 elements.speed.appendChild(unit);
             }
 
-            // Distance Update
-            const distKm = state.totalDistance / 1000;
-            elements.distance.innerHTML = `${distKm.toFixed(2)} <span class="text-xs font-normal text-gray-500">km</span>`;
+            // Distance Update (Internal Meters -> Display Miles)
+            // 1 meter = 0.000621371 miles
+            const distMiles = state.totalDistance * 0.000621371;
+            elements.distance.innerHTML = `${distMiles.toFixed(2)} <span class="text-xs font-normal text-gray-500">mi</span>`;
 
             // CO2 Emissions Saved Update
-            // Avg passenger vehicle ~250g CO2 per km (EPA approximation for simplified tracking)
-            const savedGrams = distKm * 250;
-            if (savedGrams < 1000) {
-                elements.emissions.innerHTML = `${Math.round(savedGrams)} <span class="text-xs font-normal text-green-700">g</span>`;
-            } else {
-                elements.emissions.innerHTML = `${(savedGrams / 1000).toFixed(2)} <span class="text-xs font-normal text-green-700">kg</span>`;
-            }
+            // Avg passenger vehicle ~404 grams CO2 per mile ~ 0.89 lbs per mile.
+            // Let's use 0.9 lbs per mile for estimation.
+            const savedLbs = distMiles * 0.9;
+            elements.emissions.innerHTML = `${savedLbs.toFixed(2)} <span class="text-xs font-normal text-green-700">lb</span>`;
 
-            // Styling based on speed
+
+            // Styling based on speed (still using m/s thresholds)
             elements.speed.classList.remove('speed-low', 'speed-med', 'speed-high');
-            if (s > 4.5) {
+            if (s_ms > 4.5) { // ~10mph
                 elements.speed.classList.add('speed-high');
                 elements.intensity.innerText = "CLIMAX - High Tension";
-            } else if (s > 2.5) {
+            } else if (s_ms > 2.5) { // ~5.6mph
                 elements.speed.classList.add('speed-med');
                 elements.intensity.innerText = "RISING ACTION - Moderate";
             } else {
                 elements.speed.classList.add('speed-low');
-                elements.intensity.innerText = s > 0.1 ? "EXPOSITION - Calm" : "STATIONARY";
+                elements.intensity.innerText = s_ms > 0.1 ? "EXPOSITION - Calm" : "STATIONARY";
             }
         }
 
