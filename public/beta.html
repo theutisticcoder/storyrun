@@ -3,408 +3,369 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StoryRunner Pro | AI Audio Narrator</title>
+    <title>PacePulse: AI Run-Narrator</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+        import { EdgeTTS } from 'https://cdn.jsdelivr.net/npm/edge-tts-universal/dist/browser.js';
+        window.EdgeTTS = EdgeTTS;
+    </script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #020617; }
-        .serif { font-family: 'Crimson Pro', serif; }
-        .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=Lora:ital,wght@0,400;1,400&display=swap');
         
-        .spinner {
-            border: 3px solid rgba(16, 185, 129, 0.2);
-            border-top: 3px solid #10b981;
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        body { font-family: 'Space Grotesk', sans-serif; }
+        .prose-font { font-family: 'Lora', serif; }
         
-        .audio-pulse { animation: pulse 1.5s ease-in-out infinite; }
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.5; }
-            50% { transform: scale(1.1); opacity: 1; }
+        .speed-glow {
+            transition: text-shadow 0.3s ease;
         }
+        .speed-high { text-shadow: 0 0 20px #ef4444; color: #ef4444; }
+        .speed-med { text-shadow: 0 0 20px #f59e0b; color: #f59e0b; }
+        .speed-low { text-shadow: 0 0 20px #10b981; color: #10b981; }
 
-        button, textarea { touch-action: manipulation; }
-        
-        .genre-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 0.75rem;
+        .loading-shimmer {
+            background: linear-gradient(90deg, #1f2937 25%, #374151 50%, #1f2937 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
         }
     </style>
 </head>
-<body class="text-slate-100 min-h-screen selection:bg-emerald-500/30">
+<body class="bg-gray-950 text-gray-100 min-h-screen flex flex-col">
 
-    <div id="app" class="max-w-2xl mx-auto min-h-screen flex flex-col p-4 md:p-8">
-        <!-- Setup Screen -->
-        <div id="setup-screen" class="space-y-8 py-8">
-            <header class="text-center space-y-2">
-                <div class="inline-block p-3 bg-emerald-500/10 rounded-full mb-2">
-                    <svg class="w-8 h-8 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                </div>
-                <h1 class="text-5xl font-black tracking-tighter text-white uppercase italic leading-none">Story<span class="text-emerald-500">Stride</span></h1>
-                <p class="text-slate-400 font-medium italic">Narrated sagas synced to your biometric pace.</p>
-            </header>
-
-            <div class="space-y-4">
-                <div class="flex items-center justify-between">
-                    <label class="text-xs font-black uppercase tracking-[0.2em] text-slate-500">1. Select Your Reality</label>
-                    <span id="selected-label" class="text-[10px] font-bold text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-2 py-1 rounded">Cyberpunk</span>
-                </div>
-                <div class="genre-grid">
-                    <button onclick="setGenre('Cyberpunk Fugitive', '🏙️')" class="genre-btn group p-4 rounded-2xl bg-slate-900 border-2 border-emerald-500 transition-all text-left">
-                        <span class="text-2xl mb-1 block">🏙️</span>
-                        <span class="font-bold text-sm block group-hover:text-emerald-400">Cyberpunk</span>
-                    </button>
-                    <button onclick="setGenre('Grim Fantasy Quest', '⚔️')" class="genre-btn group p-4 rounded-2xl bg-slate-900 border-2 border-slate-800 hover:border-emerald-500 transition-all text-left">
-                        <span class="text-2xl mb-1 block">⚔️</span>
-                        <span class="font-bold text-sm block group-hover:text-emerald-400">Dark Fantasy</span>
-                    </button>
-                    <button onclick="setGenre('Eldritch Horror', '🐙')" class="genre-btn group p-4 rounded-2xl bg-slate-900 border-2 border-slate-800 hover:border-emerald-500 transition-all text-left">
-                        <span class="text-2xl mb-1 block">🐙</span>
-                        <span class="font-bold text-sm block group-hover:text-emerald-400">Eldritch</span>
-                    </button>
-                    <button onclick="setGenre('Samurai Ronin', '🏮')" class="genre-btn group p-4 rounded-2xl bg-slate-900 border-2 border-slate-800 hover:border-emerald-500 transition-all text-left">
-                        <span class="text-2xl mb-1 block">🏮</span>
-                        <span class="font-bold text-sm block group-hover:text-emerald-400">Ronin</span>
-                    </button>
-                    <button onclick="setGenre('Victorian Gothic', '🏰')" class="genre-btn group p-4 rounded-2xl bg-slate-900 border-2 border-slate-800 hover:border-emerald-500 transition-all text-left">
-                        <span class="text-2xl mb-1 block">🦇</span>
-                        <span class="font-bold text-sm block group-hover:text-emerald-400">Gothic</span>
-                    </button>
-                    <button onclick="setGenre('Space Western', '🤠')" class="genre-btn group p-4 rounded-2xl bg-slate-900 border-2 border-slate-800 hover:border-emerald-500 transition-all text-left">
-                        <span class="text-2xl mb-1 block">🛸</span>
-                        <span class="font-bold text-sm block group-hover:text-emerald-400">Star-Wilds</span>
-                    </button>
-                    <button onclick="setGenre('Zombie Survival', '🧟')" class="genre-btn group p-4 rounded-2xl bg-slate-900 border-2 border-slate-800 hover:border-emerald-500 transition-all text-left">
-                        <span class="text-2xl mb-1 block">🧟</span>
-                        <span class="font-bold text-sm block group-hover:text-emerald-400">Apocalypse</span>
-                    </button>
-                    <button onclick="setGenre('Noir Detective', '🕵️')" class="genre-btn group p-4 rounded-2xl bg-slate-900 border-2 border-slate-800 hover:border-emerald-500 transition-all text-left">
-                        <span class="text-2xl mb-1 block">🕵️</span>
-                        <span class="font-bold text-sm block group-hover:text-emerald-400">Hardboiled</span>
-                    </button>
-                    <button onclick="setGenre('Greek Mythos', '⚡')" class="genre-btn group p-4 rounded-2xl bg-slate-900 border-2 border-slate-800 hover:border-emerald-500 transition-all text-left">
-                        <span class="text-2xl mb-1 block">⚡</span>
-                        <span class="font-bold text-sm block group-hover:text-emerald-400">Olympian</span>
-                    </button>
-                    <button onclick="setGenre('WWII Commando', '🪖')" class="genre-btn group p-4 rounded-2xl bg-slate-900 border-2 border-slate-800 hover:border-emerald-500 transition-all text-left">
-                        <span class="text-2xl mb-1 block">🪖</span>
-                        <span class="font-bold text-sm block group-hover:text-emerald-400">Commando</span>
-                    </button>
-                </div>
-            </div>
-
-            <div class="space-y-4">
-                <label class="block text-xs font-black uppercase tracking-[0.2em] text-slate-500">2. Custom Mission Parameters (Optional)</label>
-                <textarea id="custom-plot" placeholder="e.g. 'I am a messenger carrying the antidote through a city of neon and rain...'" class="w-full bg-slate-900 border-2 border-slate-800 rounded-2xl p-4 focus:border-emerald-500 outline-none h-24 transition-all text-sm leading-relaxed"></textarea>
-            </div>
-
-            <div class="pt-4">
-                <button id="main-start-btn" onclick="requestPermissionsAndStart()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-6 rounded-3xl text-2xl shadow-[0_0_40px_-10px_rgba(16,185,129,0.5)] transition-all active:scale-[0.98] group flex items-center justify-center gap-3">
-                    INITIATE RUN
-                    <svg class="w-6 h-6 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                </button>
-                <p class="text-[10px] text-slate-600 text-center uppercase tracking-widest mt-4">Calibrating Audio & Satellite Uplink</p>
-            </div>
-        </div>
-
-        <!-- Workout Screen -->
-        <div id="workout-screen" class="hidden flex-col flex-1 space-y-4">
-            <div class="glass p-5 rounded-[2rem] flex justify-between items-center shadow-xl border-emerald-500/20">
-                <div>
-                    <div class="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1">
-                        <span id="gps-indicator" class="w-2 h-2 rounded-full bg-red-500"></span> Speed m/s
-                    </div>
-                    <div id="speed-val" class="text-4xl font-black text-white italic">0.0</div>
+    <!-- Header & Dashboard -->
+    <header class="p-6 border-b border-gray-800 bg-gray-900/50 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <h1 class="text-2xl font-bold tracking-tighter italic">PACE<span class="text-red-500">PULSE</span></h1>
+            
+            <div class="flex gap-6 items-center">
+                <div class="text-center">
+                    <p class="text-xs uppercase text-gray-400">Current Speed</p>
+                    <p id="speed-display" class="text-3xl font-bold speed-low">0.0 <span class="text-sm font-normal">m/s</span></p>
                 </div>
                 <div class="text-center">
-                    <div id="timer" class="font-mono font-bold text-emerald-400 text-2xl">00:00</div>
-                    <div id="next-chapter-timer" class="text-[10px] text-slate-500 font-bold">Waiting...</div>
-                </div>
-                <div class="text-right">
-                    <div class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Chapter</div>
-                    <div id="chapter-val" class="text-4xl font-black text-white italic">1</div>
+                    <p class="text-xs uppercase text-gray-400">Intensity</p>
+                    <p id="intensity-display" class="text-sm font-medium text-gray-300 italic">Waiting...</p>
                 </div>
             </div>
+        </div>
+    </header>
 
-            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div id="audio-icon" class="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500">
-                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"></path></svg>
+    <main class="flex-grow p-4 md:p-8 max-w-4xl mx-auto w-full">
+        <!-- Error Toast -->
+        <div id="error-toast" class="hidden bg-red-900/80 border border-red-500 p-4 rounded-xl mb-6 text-sm text-red-200"></div>
+
+        <!-- Setup Form -->
+        <section id="setup-panel" class="bg-gray-900 p-6 rounded-2xl border border-gray-800 shadow-2xl">
+            <h2 class="text-xl font-semibold mb-4">Initialize Adventure</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Gemini API Key (Free Tier)</label>
+                    <input type="password" id="api-key" placeholder="Enter your key..." class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 focus:ring-2 focus:ring-red-500 outline-none">
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Genre</label>
+                        <select id="genre" class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 outline-none">
+                            <option>Cyberpunk Noir</option>
+                            <option>Grimdark Fantasy</option>
+                            <option>Psychological Thriller</option>
+                            <option>Post-Apocalyptic Survival</option>
+                        </select>
                     </div>
                     <div>
-                        <div class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Narrator (Charon)</div>
-                        <div id="voice-state" class="text-xs font-bold text-emerald-500/80">Acquiring Story Signal...</div>
+                        <label class="block text-sm text-gray-400 mb-1">Custom Plot Hook</label>
+                        <input type="text" id="plot" placeholder="e.g. A heist on a moon base..." class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 outline-none">
                     </div>
                 </div>
-                <button onclick="toggleAudio()" class="p-3 bg-slate-800 rounded-xl hover:bg-slate-700 transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
+
+                <div class="p-3 bg-gray-800/50 rounded-lg text-xs text-gray-400">
+                    <p>Note: Speed tracking requires a GPS-enabled device and an HTTPS connection. If GPS is unavailable or stationary, use the simulator in the control bar below.</p>
+                </div>
+
+                <button id="start-btn" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-4 rounded-xl transition-all transform hover:scale-[1.02] active:scale-95">
+                    START WORKOUT & GENERATE
                 </button>
             </div>
+        </section>
 
-            <div class="flex-1 bg-white text-slate-900 rounded-[2.5rem] p-8 overflow-y-auto shadow-inner relative border-b-8 border-slate-200">
-                <div id="loading-overlay" class="hidden absolute inset-0 bg-white/95 backdrop-blur-md flex flex-col items-center justify-center z-10 p-10 text-center">
-                    <div class="spinner mb-6"></div>
-                    <h3 class="font-black text-xl uppercase tracking-tighter mb-2 text-slate-900">Synchronizing Plot</h3>
-                    <p id="loading-text" class="text-slate-500 text-sm italic">Forging approximately 3,000 words for your current pace...</p>
-                </div>
-                <div id="story-container" class="serif text-lg leading-relaxed space-y-6">
-                    <h2 id="story-title" class="text-3xl font-black tracking-tight mb-4 sans uppercase italic text-emerald-600">Calibration</h2>
-                    <div id="story-content" class="opacity-60">Uplink established. Start moving to trigger the opening chapter.</div>
-                </div>
+        <!-- Story Display -->
+        <section id="story-panel" class="hidden mt-8 space-y-8 pb-24">
+            <div id="loading-indicator" class="hidden space-y-3">
+                <div class="h-4 w-3/4 loading-shimmer rounded"></div>
+                <div class="h-4 w-full loading-shimmer rounded"></div>
+                <div class="h-4 w-5/6 loading-shimmer rounded"></div>
+                <p class="text-xs text-gray-500 animate-pulse text-center pt-2">AI is weaving your next chapter based on your current pace...</p>
             </div>
-            
-            <button onclick="location.reload()" class="py-2 text-slate-600 text-[10px] font-black uppercase tracking-[0.3em] hover:text-white transition-colors">Abort Mission</button>
+
+            <div id="chapters-container" class="space-y-12">
+                <!-- Chapters injected here -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Controls Overlay -->
+    <div id="player-controls" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 border border-gray-800 px-6 py-4 rounded-full shadow-2xl flex items-center gap-4 z-50">
+        <button id="tts-toggle" class="p-2 hover:bg-gray-800 rounded-full text-red-500">
+            <svg xmlns="http://www.w3.org/2000/svg" id="tts-icon" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+            </svg>
+        </button>
+        <div class="h-8 w-[1px] bg-gray-700"></div>
+        <div id="workout-timer" class="font-mono text-xl tabular-nums">00:00</div>
+        <div class="h-8 w-[1px] bg-gray-700" id="manual-speed-divider"></div>
+        <div id="manual-speed-ctrl" class="flex items-center gap-2">
+            <input type="range" id="speed-slider" min="0" max="8" step="0.5" value="0" class="w-24 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-red-500">
+            <span class="text-xs text-gray-400">SIM</span>
         </div>
     </div>
 
-    <script>
-        const apiKey = "";
-        let currentGenre = "Cyberpunk Fugitive";
-        let workoutActive = false;
-        let startTime = null;
-        let chapterCount = 1;
-        let currentSpeed = 0;
-        let storyHistory = [];
-        let timerInterval = null;
-        let chapterSeconds = 0;
-        const CHAPTER_TARGET = 600; // 10 minutes
-        
-        let audioSource;
-        let isAudioPlaying = false;
-        let watchId = null;
+    <script type="module">
+        // Global State
+        let state = {
+            active: false,
+            apiKey: '',
+            genre: '',
+            plot: '',
+            currentSpeed: 0,
+            startTime: null,
+            chapters: [],
+            fullStoryContext: '',
+            isGenerating: false,
+            ttsEnabled: true,
+            currentAudio: null,
+            usingSimulatedSpeed: true // Default to showing simulator for easier access
+        };
 
-        function setGenre(g, emoji) {
-            currentGenre = g;
-            document.querySelectorAll('.genre-btn').forEach(btn => btn.classList.remove('border-emerald-500', 'bg-slate-800'));
-            event.currentTarget.classList.add('border-emerald-500', 'bg-slate-800');
-            document.getElementById('selected-label').innerText = g.split(' ')[0];
+        const elements = {
+            speed: document.getElementById('speed-display'),
+            intensity: document.getElementById('intensity-display'),
+            setup: document.getElementById('setup-panel'),
+            story: document.getElementById('story-panel'),
+            loading: document.getElementById('loading-indicator'),
+            container: document.getElementById('chapters-container'),
+            timer: document.getElementById('workout-timer'),
+            controls: document.getElementById('player-controls'),
+            startBtn: document.getElementById('start-btn'),
+            ttsBtn: document.getElementById('tts-toggle'),
+            ttsIcon: document.getElementById('tts-icon'),
+            error: document.getElementById('error-toast'),
+            simDivider: document.getElementById('manual-speed-divider'),
+            simCtrl: document.getElementById('manual-speed-ctrl'),
+            simSlider: document.getElementById('speed-slider')
+        };
+
+        function showError(msg) {
+            elements.error.innerText = msg;
+            elements.error.classList.remove('hidden');
+            console.error("PacePulse Error:", msg);
+            setTimeout(() => elements.error.classList.add('hidden'), 8000);
         }
 
-        async function requestPermissionsAndStart() {
-            const btn = document.getElementById('main-start-btn');
-            btn.disabled = true;
-            btn.innerHTML = `CALIBRATING SENSORS...`;
+        // Initialize Geolocation Tracking
+        function setupTracking() {
+            if ("geolocation" in navigator) {
+                // Initial check
+                navigator.geolocation.getCurrentPosition(() => {}, (err) => {
+                   console.log("Initial check failed, awaiting watchPosition callback.");
+                });
 
-            document.getElementById('setup-screen').classList.add('hidden');
-            document.getElementById('workout-screen').classList.remove('hidden');
-
-            const gpsTimeout = setTimeout(() => {
-                if (!workoutActive) {
-                    console.log("GPS Warning: Forcing manual start...");
-                    startTracking();
-                }
-            }, 3000);
-
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
+                navigator.geolocation.watchPosition(
                     (pos) => {
-                        clearTimeout(gpsTimeout);
-                        startTracking();
+                        // If speed is null, we stick with simulator or treat as 0
+                        if (pos.coords.speed !== null && !state.usingSimulatedSpeed) {
+                            state.currentSpeed = pos.coords.speed;
+                            updateUI();
+                        }
                     },
                     (err) => {
-                        console.warn("GPS Signal Weak:", err);
-                        clearTimeout(gpsTimeout);
-                        startTracking();
+                        let msg = "Geolocation issue: ";
+                        switch(err.code) {
+                            case err.PERMISSION_DENIED: msg += "User denied location access."; break;
+                            case err.POSITION_UNAVAILABLE: msg += "Location information unavailable."; break;
+                            case err.TIMEOUT: msg += "Location request timed out."; break;
+                            default: msg += "Unknown error."; break;
+                        }
+                        showError(msg + " Please use the manual simulator if speed isn't updating.");
                     },
-                    { enableHighAccuracy: true, timeout: 5000 }
+                    { 
+                        enableHighAccuracy: true, 
+                        maximumAge: 1000, 
+                        timeout: 15000 
+                    }
                 );
             } else {
-                startTracking();
+                showError("Browser doesn't support Geolocation. Using manual simulator.");
             }
         }
 
-        function startTracking() {
-            if (workoutActive) return;
-            workoutActive = true;
-            startTime = Date.now();
+        // Manual Simulator logic
+        elements.simSlider.addEventListener('input', (e) => {
+            state.usingSimulatedSpeed = true;
+            state.currentSpeed = parseFloat(e.target.value);
+            updateUI();
+        });
+
+        function updateUI() {
+            const s = state.currentSpeed;
+            elements.speed.innerText = s.toFixed(1);
             
-            generateChapter();
-            startClock();
-
-            if (navigator.geolocation) {
-                document.getElementById('gps-indicator').classList.replace('bg-red-500', 'bg-emerald-500');
-                watchId = navigator.geolocation.watchPosition(
-                    (pos) => {
-                        currentSpeed = pos.coords.speed || 0;
-                        document.getElementById('speed-val').innerText = currentSpeed.toFixed(1);
-                        document.getElementById('gps-indicator').classList.add('animate-pulse');
-                    },
-                    (err) => {
-                        document.getElementById('gps-indicator').classList.replace('bg-emerald-500', 'bg-yellow-500');
-                    },
-                    { enableHighAccuracy: true }
-                );
+            elements.speed.classList.remove('speed-low', 'speed-med', 'speed-high');
+            if (s > 4.5) {
+                elements.speed.classList.add('speed-high');
+                elements.intensity.innerText = "MAX EFFORT - Action Peak";
+            } else if (s > 2.5) {
+                elements.speed.classList.add('speed-med');
+                elements.intensity.innerText = "Steady Pace - Rising Tension";
+            } else {
+                elements.speed.classList.add('speed-low');
+                elements.intensity.innerText = s > 0.1 ? "Recovery - World Building" : "Stationary - Atmospheric";
             }
         }
 
-        function startClock() {
-            timerInterval = setInterval(() => {
-                const elapsed = Math.floor((Date.now() - startTime) / 1000);
-                document.getElementById('timer').innerText = new Date(elapsed * 1000).toISOString().substr(14, 5);
+        function startTimer() {
+            state.startTime = Date.now();
+            setInterval(() => {
+                if (!state.active) return;
+                const elapsed = Math.floor((Date.now() - state.startTime) / 1000);
+                const mins = Math.floor(elapsed / 60).toString().padStart(2, '0');
+                const secs = (elapsed % 60).toString().padStart(2, '0');
+                elements.timer.innerText = `${mins}:${secs}`;
 
-                chapterSeconds++;
-                const remaining = Math.max(0, CHAPTER_TARGET - chapterSeconds);
-                document.getElementById('next-chapter-timer').innerText = `${Math.floor(remaining/60)}:${(remaining%60).toString().padStart(2, '0')} to next`;
-
-                if (chapterSeconds >= CHAPTER_TARGET) {
-                    generateChapter();
+                // Trigger new chapter every 5 minutes
+                if (elapsed > 0 && elapsed % 300 === 0 && !state.isGenerating) {
+                    generateNewChapter();
                 }
             }, 1000);
         }
 
-        async function generateChapter() {
-            const loading = document.getElementById('loading-overlay');
-            loading.classList.remove('hidden');
-            
-            const pace = currentSpeed > 3.0 ? "fast-paced, breathless action" : currentSpeed > 1.2 ? "moving with purpose, mounting suspense" : "slow, descriptive, and heavy with atmosphere";
-            const customPlot = document.getElementById('custom-plot').value;
+        async function generateNewChapter() {
+            if (state.isGenerating) return;
+            state.isGenerating = true;
+            elements.loading.classList.remove('hidden');
+
+            const speed = state.currentSpeed;
+            let pacing = "slow-burn, descriptive, and introspective";
+            if (speed > 2.5) pacing = "fast-paced, rhythmic, and high-tension";
+            if (speed > 4.5) pacing = "chaotic, adrenaline-fueled, and frantic";
 
             const prompt = `
-                Write a 3,000 word massive and descriptive Chapter ${chapterCount} for a ${currentGenre} novel.
-                User context: ${customPlot || "Start the saga."}
-                Current Pacing: ${pace} (Movement detected at ${currentSpeed.toFixed(1)} m/s).
-                
-                Previous: ${storyHistory.slice(-1).join(' ').substring(0, 1000)}
-                
-                Format as JSON: {"title": "The Chapter Title", "text": "The full expansive text..."}
+                Genre: ${state.genre}. 
+                Core Plot Idea: ${state.plot}.
+                Current Runner Intensity: ${pacing}.
+                Current Speed: ${speed.toFixed(1)} meters per second.
+                Task: Write Chapter ${state.chapters.length + 1}. 
+                Context: Continue the ongoing story based on these previous themes: ${state.fullStoryContext.slice(-1200)}.
+                Requirement: Write a very long, high-quality chapter. If the runner is fast, the prose should be short and punchy. If the runner is slow, use flowery and dense world-building.
             `;
 
             try {
-                const response = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: prompt }] }],
-                        generationConfig: { responseMimeType: "application/json" }
-                    })
-                });
-
-                const data = await response.json();
-                const story = JSON.parse(data.candidates[0].content.parts[0].text);
+                const chapterText = await fetchGemini(prompt);
+                state.fullStoryContext += `\n\nChapter ${state.chapters.length + 1}\n${chapterText}`;
+                state.chapters.push(chapterText);
                 
-                displayAndNarrate(story);
-                storyHistory.push(story.text);
-                chapterCount++;
-                chapterSeconds = 0;
+                renderChapter(chapterText);
+                if (state.ttsEnabled) speakText(chapterText);
+                
             } catch (err) {
-                console.error(err);
-                document.getElementById('loading-text').innerText = "Link unstable. Retrying synchronization...";
+                showError("AI Error: Check your Gemini API Key or network.");
             } finally {
-                loading.classList.add('hidden');
+                state.isGenerating = false;
+                elements.loading.classList.add('hidden');
             }
         }
 
-        function displayAndNarrate(story) {
-            document.getElementById('story-title').innerText = story.title;
-            const content = document.getElementById('story-content');
-            if (chapterCount === 1) content.innerHTML = '';
+        async function fetchGemini(prompt) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${state.apiKey}`;
             
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: { maxOutputTokens: 8192, temperature: 0.95 }
+                })
+            });
+
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.error?.message || "API Request Failed");
+            }
+            const data = await response.json();
+            return data.candidates[0].content.parts[0].text;
+        }
+
+        function renderChapter(text) {
+            const chapterNum = state.chapters.length;
             const div = document.createElement('div');
-            div.innerHTML = `<h3 class="font-black text-xs uppercase text-emerald-600 mt-8 mb-2">Segment ${chapterCount}</h3>
-                             <h2 class="text-3xl font-black mb-4 uppercase italic text-slate-900 leading-tight">${story.title}</h2>
-                             <p class="mb-10 text-slate-800">${story.text.replace(/\n/g, '<br><br>')}</p>`;
-            content.prepend(div);
-            document.getElementById('chapter-val').innerText = chapterCount;
-
-            narrateText(`Chapter ${chapterCount}: ${story.title}. ${story.text.substring(0, 1500)}`);
+            div.className = "bg-gray-900/40 p-8 rounded-3xl border border-gray-800 shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-1000";
+            div.innerHTML = `
+                <h3 class="text-red-500 font-bold uppercase tracking-widest text-sm mb-4">Chapter ${chapterNum}</h3>
+                <div class="prose-font text-lg text-gray-300 leading-relaxed first-letter:text-5xl first-letter:font-bold first-letter:mr-3 first-letter:float-left">
+                    ${text.replace(/\n/g, '<br>')}
+                </div>
+            `;
+            elements.container.prepend(div);
         }
 
-        async function narrateText(text) {
-            document.getElementById('voice-state').innerText = "Synthesizing Speech...";
-            document.getElementById('audio-icon').classList.add('audio-pulse');
-
+        async function speakText(text) {
+            if (state.currentAudio) {
+                state.currentAudio.pause();
+                state.currentAudio = null;
+            }
+            
             try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: text }] }],
-                        generationConfig: {
-                            responseModalities: ["AUDIO"],
-                            speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Charon" } } }
-                        }
-                    })
-                });
-
-                const data = await response.json();
-                const pcmData = data.candidates[0].content.parts[0].inlineData.data;
-                const sampleRate = parseInt(data.candidates[0].content.parts[0].inlineData.mimeType.split('rate=')[1]) || 24000;
-
-                playAudio(pcmData, sampleRate);
-                document.getElementById('voice-state').innerText = "Narrating Saga...";
-            } catch (err) {
-                document.getElementById('voice-state').innerText = "Voice Link Lost";
-                document.getElementById('audio-icon').classList.remove('audio-pulse');
+                const tts = new window.EdgeTTS();
+                const result = await tts.synthesize(text, 'en-US-GuyNeural');
+                
+                if (result && result.audio) {
+                    const url = URL.createObjectURL(result.audio);
+                    state.currentAudio = new Audio(url);
+                    state.currentAudio.onended = () => URL.revokeObjectURL(url);
+                    state.currentAudio.play();
+                }
+            } catch (e) {
+                console.warn("TTS Error:", e);
             }
         }
 
-        function playAudio(base64Data, sampleRate) {
-            const binaryString = atob(base64Data);
-            const len = binaryString.length;
-            const bytes = new Int16Array(len / 2);
-            for (let i = 0; i < len; i += 2) {
-                bytes[i / 2] = (binaryString.charCodeAt(i + 1) << 8) | binaryString.charCodeAt(i);
+        // Event Handlers
+        elements.startBtn.addEventListener('click', () => {
+            const key = document.getElementById('api-key').value.trim();
+            if (!key) {
+                showError("Gemini API Key is required.");
+                return;
             }
-            const wavBuffer = createWavBuffer(bytes.buffer, sampleRate);
-            const blob = new Blob([wavBuffer], { type: 'audio/wav' });
-            if (audioSource) audioSource.pause();
-            audioSource = new Audio(URL.createObjectURL(blob));
-            audioSource.play();
-            isAudioPlaying = true;
-            audioSource.onended = () => {
-                document.getElementById('audio-icon').classList.remove('audio-pulse');
-                document.getElementById('voice-state').innerText = "Monitoring Pace...";
-            };
-        }
 
-        function createWavBuffer(pcmBuffer, sampleRate) {
-            const numOfChannels = 1;
-            const bitsPerSample = 16;
-            const header = new ArrayBuffer(44);
-            const view = new DataView(header);
-            const writeString = (o, s) => { for (let i = 0; i < s.length; i++) view.setUint8(o + i, s.charCodeAt(i)); };
-            writeString(0, 'RIFF');
-            view.setUint32(4, 36 + pcmBuffer.byteLength, true);
-            writeString(8, 'WAVE');
-            writeString(12, 'fmt ');
-            view.setUint32(16, 16, true);
-            view.setUint16(20, 1, true);
-            view.setUint16(22, numOfChannels, true);
-            view.setUint32(24, sampleRate, true);
-            view.setUint32(28, sampleRate * numOfChannels * (bitsPerSample / 8), true);
-            view.setUint16(32, numOfChannels * (bitsPerSample / 8), true);
-            view.setUint16(34, bitsPerSample, true);
-            writeString(36, 'data');
-            view.setUint32(40, pcmBuffer.byteLength, true);
-            const final = new Uint8Array(header.byteLength + pcmBuffer.byteLength);
-            final.set(new Uint8Array(header), 0);
-            final.set(new Uint8Array(pcmBuffer), header.byteLength);
-            return final.buffer;
-        }
+            state.apiKey = key;
+            state.genre = document.getElementById('genre').value;
+            state.plot = document.getElementById('plot').value || "An unexpected journey begins.";
+            state.active = true;
 
-        function toggleAudio() {
-            if (audioSource) {
-                if (isAudioPlaying) { audioSource.pause(); isAudioPlaying = false; }
-                else { audioSource.play(); isAudioPlaying = true; }
+            elements.setup.classList.add('hidden');
+            elements.story.classList.remove('hidden');
+            elements.controls.classList.remove('hidden');
+
+            setupTracking();
+            startTimer();
+            generateNewChapter();
+        });
+
+        elements.ttsBtn.addEventListener('click', () => {
+            state.ttsEnabled = !state.ttsEnabled;
+            if (!state.ttsEnabled) {
+                if (state.currentAudio) state.currentAudio.pause();
+                elements.ttsIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />`;
+                elements.ttsBtn.classList.replace('text-red-500', 'text-gray-500');
+            } else {
+                elements.ttsIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />`;
+                elements.ttsBtn.classList.replace('text-gray-500', 'text-red-500');
             }
-        }
+        });
 
-        async function fetchWithRetry(url, options, retries = 5, backoff = 1000) {
-            try {
-                const res = await fetch(url, options);
-                if (!res.ok) throw new Error(res.statusText);
-                return res;
-            } catch (err) {
-                if (retries <= 0) throw err;
-                await new Promise(r => setTimeout(r, backoff));
-                return fetchWithRetry(url, options, retries - 1, backoff * 2);
-            }
-        }
     </script>
 </body>
 </html>
