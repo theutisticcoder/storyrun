@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PacePulse: AI Run-Narrator</title>
 
     <!-- Tailwind -->
@@ -17,25 +18,52 @@
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=Lora:ital,wght@0,400;1,400&display=swap');
-        body { font-family: 'Space Grotesk', sans-serif; }
-        .prose-font { font-family: 'Lora', serif; }
 
-        .speed-glow { transition: text-shadow 0.3s ease; }
-        .speed-high { text-shadow: 0 0 20px #ef4444; color: #ef4444; }
-        .speed-med { text-shadow: 0 0 20px #f59e0b; color: #f59e0b; }
-        .speed-low { text-shadow: 0 0 20px #10b981; color: #10b981; }
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .prose-font {
+            font-family: 'Lora', serif;
+        }
+
+        .speed-glow {
+            transition: text-shadow 0.3s ease;
+        }
+
+        .speed-high {
+            text-shadow: 0 0 20px #ef4444;
+            color: #ef4444;
+        }
+
+        .speed-med {
+            text-shadow: 0 0 20px #f59e0b;
+            color: #f59e0b;
+        }
+
+        .speed-low {
+            text-shadow: 0 0 20px #10b981;
+            color: #10b981;
+        }
 
         .loading-shimmer {
             background: linear-gradient(90deg, #1f2937 25%, #374151 50%, #1f2937 75%);
             background-size: 200% 100%;
             animation: shimmer 1.5s infinite;
         }
+
         @keyframes shimmer {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
         }
     </style>
 </head>
+
 <body class="bg-gray-950 text-gray-100 min-h-screen flex flex-col">
 
     <!-- Header & Dashboard -->
@@ -45,7 +73,8 @@
             <div class="flex gap-6 items-center">
                 <div class="text-center">
                     <p class="text-xs uppercase text-gray-400">Current Speed</p>
-                    <p id="speed-display" class="text-3xl font-bold speed-low">0.0 <span class="text-sm font-normal">m/s</span></p>
+                    <p id="speed-display" class="text-3xl font-bold speed-low">0.0 <span
+                            class="text-sm font-normal">m/s</span></p>
                 </div>
                 <div class="text-center">
                     <p class="text-xs uppercase text-gray-400">Intensity</p>
@@ -57,7 +86,8 @@
 
     <main class="flex-grow p-4 md:p-8 max-w-4xl mx-auto w-full">
         <!-- Error Toast -->
-        <div id="error-toast" class="hidden bg-red-900/80 border border-red-500 p-4 rounded-xl mb-6 text-sm text-red-200"></div>
+        <div id="error-toast"
+            class="hidden bg-red-900/80 border border-red-500 p-4 rounded-xl mb-6 text-sm text-red-200"></div>
 
         <!-- Setup Form -->
         <section id="setup-panel" class="bg-gray-900 p-6 rounded-2xl border border-gray-800 shadow-2xl">
@@ -65,13 +95,15 @@
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm text-gray-400 mb-1">Gemini API Key (Free Tier)</label>
-                    <input type="password" id="api-key" placeholder="Enter your key..." class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 focus:ring-2 focus:ring-red-500 outline-none">
+                    <input type="password" id="api-key" placeholder="Enter your key..."
+                        class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 focus:ring-2 focus:ring-red-500 outline-none">
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm text-gray-400 mb-1">Genre</label>
-                        <select id="genre" class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 outline-none">
+                        <select id="genre"
+                            class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 outline-none">
                             <option>Cyberpunk Noir</option>
                             <option>Grimdark Fantasy</option>
                             <option>Psychological Thriller</option>
@@ -80,15 +112,18 @@
                     </div>
                     <div>
                         <label class="block text-sm text-gray-400 mb-1">Custom Plot Hook</label>
-                        <input type="text" id="plot" placeholder="e.g. A heist on a moon base..." class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 outline-none">
+                        <input type="text" id="plot" placeholder="e.g. A heist on a moon base..."
+                            class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 outline-none">
                     </div>
                 </div>
 
                 <div class="p-3 bg-gray-800/50 rounded-lg text-xs text-gray-400">
-                    <p>Note: Speed tracking requires a GPS-enabled device and an HTTPS connection. If GPS is unavailable or stationary, use the simulator in the control bar below.</p>
+                    <p>Note: Speed tracking requires a GPS-enabled device and an HTTPS connection. If GPS is unavailable
+                        or stationary, use the simulator in the control bar below.</p>
                 </div>
 
-                <button id="start-btn" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-4 rounded-xl transition-all transform hover:scale-[1.02] active:scale-95">
+                <button id="start-btn"
+                    class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-4 rounded-xl transition-all transform hover:scale-[1.02] active:scale-95">
                     START WORKOUT & GENERATE
                 </button>
 
@@ -106,7 +141,8 @@
                 <div class="h-4 w-3/4 loading-shimmer rounded"></div>
                 <div class="h-4 w-full loading-shimmer rounded"></div>
                 <div class="h-4 w-5/6 loading-shimmer rounded"></div>
-                <p class="text-xs text-gray-500 animate-pulse text-center pt-2">The AI is observing your pace to set the narrative tone...</p>
+                <p class="text-xs text-gray-500 animate-pulse text-center pt-2">The AI is observing your pace to set the
+                    narrative tone...</p>
             </div>
 
             <div id="chapters-container" class="space-y-12">
@@ -116,13 +152,18 @@
     </main>
 
     <!-- Controls Overlay -->
-    <div id="player-controls" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 border border-gray-800 px-6 py-4 rounded-full shadow-2xl flex items-center gap-4 z-50">
+    <div id="player-controls"
+        class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 border border-gray-800 px-6 py-4 rounded-full shadow-2xl flex items-center gap-4 z-50">
         <button id="tts-toggle" class="p-2 hover:bg-gray-800 rounded-full text-red-500">
-            <svg xmlns="http://www.w3.org/2000/svg" id="tts-icon" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" id="tts-icon" class="h-8 w-8" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
                 <!-- Speaker (sound-on) icon -->
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.05 4.99 6.3 8.49H3.75A.75.75 0 0 0 3 9.24v5.52c0 .414.336.75.75.75h2.55l4.75 3.5c.412.304 1.025.01 1.025-.58V5.57c0-.59-.613-.884-1.025-.58z"/>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072"/>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.364 4.636a9 9 0 010 12.728"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M11.05 4.99 6.3 8.49H3.75A.75.75 0 0 0 3 9.24v5.52c0 .414.336.75.75.75h2.55l4.75 3.5c.412.304 1.025.01 1.025-.58V5.57c0-.59-.613-.884-1.025-.58z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15.536 8.464a5 5 0 010 7.072" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M19.364 4.636a9 9 0 010 12.728" />
             </svg>
         </button>
 
@@ -130,18 +171,21 @@
         <div id="workout-timer" class="font-mono text-xl tabular-nums">00:00</div>
         <div class="h-8 w-[1px] bg-gray-700" id="manual-speed-divider"></div>
         <div id="manual-speed-ctrl" class="flex items-center gap-2">
-            <input type="range" id="speed-slider" min="0" max="8" step="0.5" value="0" class="w-24 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-red-500">
+            <input type="range" id="speed-slider" min="0" max="8" step="0.5" value="0"
+                class="w-24 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-red-500">
             <span class="text-xs text-gray-400">SIM</span>
         </div>
 
         <!-- End Run button -->
-        <button id="end-run-btn" class="ml-4 bg-gray-800 hover:bg-gray-700 text-gray-200 px-3 py-2 rounded-md text-sm">End Run & Download EPUB</button>
+        <button id="end-run-btn"
+            class="ml-4 bg-gray-800 hover:bg-gray-700 text-gray-200 px-3 py-2 rounded-md text-sm">End Run & Download
+            EPUB</button>
     </div>
 
-<script type="module">
-        import { EdgeTTSClient } from 'https://cdn.jsdelivr.net/npm/edge-tts-client@1.0.2/+esm';
+    <script type="module">
+        import { EdgeTTSClient, ProsodyOptions, OUTPUT_FORMAT } from 'https://cdn.jsdelivr.net/npm/edge-tts-client@1.0.2/+esm';
         window.EdgeTTS = EdgeTTSClient;
-            // --- State ---
+        // --- State ---
         let state = {
             active: false,
             apiKey: '',
@@ -198,10 +242,10 @@
             const R = 6371000;
             const dLat = toRad(lat2 - lat1);
             const dLon = toRad(lon2 - lon1);
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-                      Math.sin(dLon/2) * Math.sin(dLon/2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
             return R * c;
         }
 
@@ -230,7 +274,7 @@
 
             function startWatch() {
                 if (state.watchId !== null) {
-                    try { navigator.geolocation.clearWatch(state.watchId); } catch (e) {}
+                    try { navigator.geolocation.clearWatch(state.watchId); } catch (e) { }
                     state.watchId = null;
                 }
 
@@ -414,15 +458,33 @@
             }
 
             try {
-                const tts = new window.EdgeTTS();
-                const result = await tts.synthesize(text, 'en-US-GuyNeural');
+                const ttsClient = new window.EdgeTTS();
 
-                if (result && result.audio) {
-                    const url = URL.createObjectURL(result.audio);
+                // Set metadata for synthesis
+                await ttsClient.setMetadata('en-US-AndrewMultilingualNeural', OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
+
+                // Define SSML options
+                const options = new ProsodyOptions();
+                options.pitch = 'medium';
+                options.rate = 1.0;
+                options.volume = 90;
+
+                // Synthesize text to a stream
+                const stream = ttsClient.toStream('Hello, world!', options);
+                var chunks = [];
+                // Handle the audio stream
+                stream.on('data', (audioChunk) => {
+                    chunks.push(audioChunk)
+                });
+
+                stream.on('end', () => {
+                    console.log('Synthesis complete.');
+                    const url = URL.createObjectURL(new Blob(chunks, {type: "audio/mp3"}));
                     state.currentAudio = new Audio(url);
                     state.currentAudio.onended = () => URL.revokeObjectURL(url);
                     state.currentAudio.play();
-                }
+                });
+                
             } catch (e) {
                 console.warn("TTS Error:", e);
             }
@@ -586,9 +648,9 @@
 
             // basic toc.ncx for EPUB 2 compatibility
             const tocNav = chapters.map((_, i) => {
-                return `<navPoint id="navPoint-${i+1}" playOrder="${i+1}">
-  <navLabel><text>Chapter ${i+1}</text></navLabel>
-  <content src="chapter${i+1}.xhtml"/>
+                return `<navPoint id="navPoint-${i + 1}" playOrder="${i + 1}">
+  <navLabel><text>Chapter ${i + 1}</text></navLabel>
+  <content src="chapter${i + 1}.xhtml"/>
 </navPoint>`;
             }).join('\n    ');
 
@@ -620,7 +682,7 @@
             state.active = false;
             stopTimer();
             if (state.watchId !== null) {
-                try { navigator.geolocation.clearWatch(state.watchId); } catch(e) {}
+                try { navigator.geolocation.clearWatch(state.watchId); } catch (e) { }
                 state.watchId = null;
             }
             if (state.currentAudio) { state.currentAudio.pause(); state.currentAudio = null; }
@@ -641,7 +703,7 @@
 
             try {
                 const epubBlob = await createEpub(title, chapters);
-                const filename = `${(state.genre || 'story').replace(/\s+/g,'_')}_${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.epub`;
+                const filename = `${(state.genre || 'story').replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.epub`;
                 const url = URL.createObjectURL(epubBlob);
                 const a = document.createElement('a');
                 a.href = url;
@@ -716,4 +778,5 @@
 
     </script>
 </body>
+
 </html>
