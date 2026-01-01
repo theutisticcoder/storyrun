@@ -468,7 +468,7 @@
                 
                 Task: Write Chapter ${state.chapters.length + 1}. 
                 Context: Continue the ongoing story based on these previous themes: ${state.fullStoryContext.slice(-1500)}.
-                Requirement: Write a very long, high-quality chapter, use 2nd person pov, and only return plain text, not markdown.
+                Requirement: Write a very long, high-quality chapter.
             `;
 
             try {
@@ -492,7 +492,7 @@
         }
 
         async function fetchGemini(prompt) {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${state.apiKey}`;
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${state.apiKey}`;
 
             const response = await fetch(url, {
                 method: 'POST',
@@ -578,7 +578,7 @@
                     audioEl.controls = true;
                     audioEl.src = url;
                     audioEl.className = "h-8 mt-2 w-full accent-red-500 opacity-80 hover:opacity-100 transition-opacity";
-                    audioEl.play();
+
                     // Replace progress bar with audio player
                     setTimeout(() => {
                         barBg.classList.add('hidden');
@@ -884,3 +884,5 @@
 </body>
 
 </html>
+
+
