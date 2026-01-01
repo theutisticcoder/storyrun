@@ -480,9 +480,9 @@
                 stream.on('end', () => {
                     console.log('Synthesis complete.');
                     const url = URL.createObjectURL(new Blob(chunks, {type: "audio/mp3"}));
-                    state.currentAudio = new Audio(url);
-                    state.currentAudio.onended = () => URL.revokeObjectURL(url);
-                    state.currentAudio.play();
+                var au = new Audio(url);
+                    au.onended = () => URL.revokeObjectURL(url);
+                    au.play();
                 });
                 
             } catch (e) {
