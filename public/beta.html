@@ -11,7 +11,7 @@
 
     <!-- Third-party libs (localForage for storage, JSZip for EPUB generation) -->
     <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jepub@2.1.4/dist/jepub.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jepub/dist/jepub.js"></script>
 
 
     <!-- EdgeTTS -->
@@ -690,80 +690,80 @@
         }
 
         // --- EPUB generation using JSZip ---
-   // --- EPUB generation using jepub ---
-async function createEpub(title, chapters) {
-    // 1. Initialize jepub with book metadata
-    const epub = new jepub();
-    
-    epub.init({
-        title: title,
-        author: 'PacePulse AI',
-        publisher: 'PacePulse App',
-        description: `An AI-generated ${state.genre} story based on a workout.`,
-        tags: [state.genre, 'AI Fiction', 'Fitness']
-    });
+        // --- EPUB generation using jepub ---
+        async function createEpub(title, chapters) {
+            // 1. Initialize jepub with book metadata
+            const epub = new jEpub();
 
-    // 2. Add Chapters
-    // jepub expects: epub.add(title, content)
-    chapters.forEach((ch, i) => {
-        const chapterTitle = `Chapter ${i + 1}`;
-        // Convert plain text breaks to HTML for the EPUB reader
-        const htmlContent = ch.replace(/\n/g, '<br/>');
-        epub.add(chapterTitle, htmlContent);
-    });
+            epub.init({
+                title: title,
+                author: 'PacePulse AI',
+                publisher: 'PacePulse App',
+                description: `An AI-generated ${state.genre} story based on a workout.`,
+                tags: [state.genre, 'AI Fiction', 'Fitness']
+            });
 
-    // 3. Generate Blob
-    const blob = await epub.generate('blob');
-    return blob;
-}
+            // 2. Add Chapters
+            // jepub expects: epub.add(title, content)
+            chapters.forEach((ch, i) => {
+                const chapterTitle = `Chapter ${i + 1}`;
+                // Convert plain text breaks to HTML for the EPUB reader
+                const htmlContent = ch.replace(/\n/g, '<br/>');
+                epub.add(chapterTitle, htmlContent);
+            });
 
-// --- End run behavior ---
-async function endRunAndDownload() {
-    state.active = false;
-    stopTimer();
-    
-    if (state.watchId !== null) {
-        try { navigator.geolocation.clearWatch(state.watchId); } catch (e) { }
-        state.watchId = null;
-    }
+            // 3. Generate Blob
+            const blob = await epub.generate('blob');
+            return blob;
+        }
 
-    await saveCurrentSessionToStorage();
+        // --- End run behavior ---
+        async function endRunAndDownload() {
+            state.active = false;
+            stopTimer();
 
-    const chapters = state.chapters.slice();
-    if (!chapters || chapters.length === 0) {
-        showError("No chapters to export.");
-        return;
-    }
+            if (state.watchId !== null) {
+                try { navigator.geolocation.clearWatch(state.watchId); } catch (e) { }
+                state.watchId = null;
+            }
 
-    elements.endRunBtn.disabled = true;
-    elements.endRunBtn.innerText = 'Preparing EPUB...';
+            await saveCurrentSessionToStorage();
 
-    try {
-        const title = `${state.genre || 'Untitled Story'}`;
-        const epubBlob = await createEpub(title, chapters);
-        
-        const filename = `${(state.genre || 'story').replace(/\s+/g, '_')}_${Date.now()}.epub`;
-        const url = URL.createObjectURL(epubBlob);
-        
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
-    } catch (e) {
-        console.error("EPUB error", e);
-        showError("Failed to create EPUB.");
-    } finally {
-        elements.endRunBtn.disabled = false;
-        elements.endRunBtn.innerText = 'End Run & Download EPUB';
-    }
-}
+            const chapters = state.chapters.slice();
+            if (!chapters || chapters.length === 0) {
+                showError("No chapters to export.");
+                return;
+            }
+
+            elements.endRunBtn.disabled = true;
+            elements.endRunBtn.innerText = 'Preparing EPUB...';
+
+            try {
+                const title = `${state.genre || 'Untitled Story'}`;
+                const epubBlob = await createEpub(title, chapters);
+
+                const filename = `${(state.genre || 'story').replace(/\s+/g, '_')}_${Date.now()}.epub`;
+                const url = URL.createObjectURL(epubBlob);
+
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+            } catch (e) {
+                console.error("EPUB error", e);
+                showError("Failed to create EPUB.");
+            } finally {
+                elements.endRunBtn.disabled = false;
+                elements.endRunBtn.innerText = 'End Run & Download EPUB';
+            }
+        }
 
 
         // --- End run behavior ---
-    
+
 
         // --- Utilities & initialization ---
         elements.startBtn.addEventListener('click', () => {
