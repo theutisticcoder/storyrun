@@ -408,7 +408,9 @@
                 // Save after each new chapter
                 await saveCurrentSessionToStorage();
 
-                if (state.ttsEnabled) speakText(chapterText.toString());
+                if (state.ttsEnabled) {
+                    speakText(chapterText.toString()); // 2. Then start audio generation
+                }
             } catch (err) {
                 showError("AI Error: Connection issue or invalid API key.");
             } finally {
@@ -440,57 +442,83 @@
         function renderChapter(text) {
             const chapterNum = state.chapters.length;
             const div = document.createElement('div');
+            div.id = `chapter-wrapper-${chapterNum}`; // Add ID for targeting
             div.className = "bg-gray-900/40 p-8 rounded-3xl border border-gray-800 shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-1000";
             div.innerHTML = `
-                <h3 class="text-red-500 font-bold uppercase tracking-widest text-sm mb-4">Chapter ${chapterNum}</h3>
-                <div class="prose-font text-lg text-gray-300 leading-relaxed first-letter:text-5xl first-letter:font-bold first-letter:mr-3 first-letter:float-left">
-                    ${text.replace(/\n/g, '<br>')}
+        <div class="flex justify-between items-start mb-4">
+            <h3 class="text-red-500 font-bold uppercase tracking-widest text-sm">Chapter ${chapterNum}</h3>
+            <div id="audio-container-${chapterNum}" class="w-1/2 flex flex-col items-end">
+                <div id="audio-status-${chapterNum}" class="text-[10px] text-gray-500 uppercase mb-1">Waiting for Voice...</div>
+                <div class="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden hidden" id="progress-bar-bg-${chapterNum}">
+                    <div id="progress-bar-fill-${chapterNum}" class="bg-red-600 h-full w-0 transition-all duration-300"></div>
                 </div>
-            `;
+            </div>
+        </div>
+        <div class="prose-font text-lg text-gray-300 leading-relaxed first-letter:text-5xl first-letter:font-bold first-letter:mr-3 first-letter:float-left">
+            ${text.replace(/\n/g, '<br>')}
+        </div>
+    `;
             elements.container.prepend(div);
         }
 
         // --- TTS ---
         async function speakText(text) {
-            if (state.currentAudio) {
-                state.currentAudio.pause();
-                state.currentAudio = null;
-            }
+            const chapterIdx = state.chapters.length;
+            const statusText = document.getElementById(`audio-status-${chapterIdx}`);
+            const barBg = document.getElementById(`progress-bar-bg-${chapterIdx}`);
+            const barFill = document.getElementById(`progress-bar-fill-${chapterIdx}`);
+            const audioContainer = document.getElementById(`audio-container-${chapterIdx}`);
 
             try {
-                const ttsClient = new window.EdgeTTS();
+                statusText.innerText = "Synthesizing Audio...";
+                barBg.classList.remove('hidden');
 
-                // Set metadata for synthesis
+                const ttsClient = new window.EdgeTTS();
                 await ttsClient.setMetadata('en-US-AndrewMultilingualNeural', OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
 
-                // Define SSML options
                 const options = new ProsodyOptions();
                 options.pitch = 'medium';
                 options.rate = 1.0;
-                options.volume = 90;
 
-                // Synthesize text to a stream
                 const stream = ttsClient.toStream(text, options);
-                var chunks = [];
-                // Handle the audio stream
+                let chunks = [];
+                let receivedBytes = 0;
+
                 stream.on('data', (audioChunk) => {
-                    console.log(audioChunk)
-                    chunks.push(audioChunk)
+                    chunks.push(audioChunk);
+                    receivedBytes += audioChunk.byteLength;
+
+                    // Artificial progress simulation since total stream length isn't always known immediately
+                    // We increase the bar as chunks arrive
+                    const progress = Math.min((chunks.length / (text.length / 10)) * 100, 95);
+                    barFill.style.width = `${progress}%`;
                 });
 
                 stream.on('end', () => {
-                    console.log('Synthesis complete.');
-                    const url = URL.createObjectURL(new Blob(chunks, {type: "audio/mp3"}));
-                var au = new Audio(url);
-                    au.onended = () => URL.revokeObjectURL(url);
-                    au.play();
+                    barFill.style.width = `100%`;
+                    statusText.innerText = "Audio Ready";
+
+                    const url = URL.createObjectURL(new Blob(chunks, { type: "audio/mp3" }));
+
+                    // Create the audio element
+                    const audioEl = document.createElement('audio');
+                    audioEl.controls = true;
+                    audioEl.src = url;
+                    audioEl.className = "h-8 mt-2 w-full accent-red-500 opacity-80 hover:opacity-100 transition-opacity";
+
+                    // Replace progress bar with audio player
+                    setTimeout(() => {
+                        barBg.classList.add('hidden');
+                        audioContainer.appendChild(audioEl);
+                    }, 500);
                 });
-                
+
             } catch (e) {
                 console.warn("TTS Error:", e);
+                statusText.innerText = "Audio Failed";
+                statusText.classList.add('text-red-500');
             }
         }
-
         // --- Storage (localForage) ---
         async function saveCurrentSessionToStorage() {
             // create a lightweight session object
