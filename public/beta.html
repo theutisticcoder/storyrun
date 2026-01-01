@@ -693,7 +693,7 @@
         // --- EPUB generation using jepub ---
         async function createEpub(title, chapters) {
             // 1. Initialize jepub with book metadata
-            const epub = new jEpub();
+            var epub = new jEpub();
 
             epub.init({
                 i18n: 'en',
