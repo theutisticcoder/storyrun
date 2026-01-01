@@ -111,7 +111,10 @@
     <div id="player-controls" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 border border-gray-800 px-6 py-4 rounded-full shadow-2xl flex items-center gap-4 z-50">
         <button id="tts-toggle" class="p-2 hover:bg-gray-800 rounded-full text-red-500">
             <svg xmlns="http://www.w3.org/2000/svg" id="tts-icon" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                <!-- Speaker (sound-on) icon -->
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.05 4.99 6.3 8.49H3.75A.75.75 0 0 0 3 9.24v5.52c0 .414.336.75.75.75h2.55l4.75 3.5c.412.304 1.025.01 1.025-.58V5.57c0-.59-.613-.884-1.025-.58z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.364 4.636a9 9 0 010 12.728"/>
             </svg>
         </button>
         <div class="h-8 w-[1px] bg-gray-700"></div>
@@ -137,7 +140,9 @@
             isGenerating: false,
             ttsEnabled: true,
             currentAudio: null,
-            usingSimulatedSpeed: true 
+            usingSimulatedSpeed: true, // start with simulator until GPS proves available
+            lastPos: null,
+            watchId: null
         };
 
         const elements = {
@@ -165,25 +170,110 @@
             setTimeout(() => elements.error.classList.add('hidden'), 8000);
         }
 
+        // Haversine: distance in meters between two lat/lon points
+        function haversineDistanceMeters(lat1, lon1, lat2, lon2) {
+            const toRad = (deg) => deg * Math.PI / 180;
+            const R = 6371000; // meters
+            const dLat = toRad(lat2 - lat1);
+            const dLon = toRad(lon2 - lon1);
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
         function setupTracking() {
-            if ("geolocation" in navigator) {
-                navigator.geolocation.watchPosition(
-                    (pos) => {
-                        if (pos.coords.speed !== null && !state.usingSimulatedSpeed) {
-                            state.currentSpeed = pos.coords.speed;
-                            updateUI();
+            if (!("geolocation" in navigator)) {
+                showError("Geolocation not supported in this browser. Use manual simulator.");
+                return;
+            }
+
+            const options = { enableHighAccuracy: true, maximumAge: 1000, timeout: 15000 };
+
+            // Try to query permission state if supported to give immediate feedback
+            if (navigator.permissions && navigator.permissions.query) {
+                navigator.permissions.query({ name: 'geolocation' })
+                    .then((perm) => {
+                        if (perm.state === 'denied') {
+                            showError("Geolocation permission denied. Using manual simulator.");
+                            // keep using simulated speed
+                            state.usingSimulatedSpeed = true;
                         }
+                        // Start watch regardless; if denied, the watch will trigger error callback
+                        startWatch();
+                    })
+                    .catch(() => startWatch()); // if permissions API not available, just start watch
+            } else {
+                startWatch();
+            }
+
+            function startWatch() {
+                // Clear existing watch if any
+                if (state.watchId !== null) {
+                    try { navigator.geolocation.clearWatch(state.watchId); } catch (e) {}
+                    state.watchId = null;
+                }
+
+                state.watchId = navigator.geolocation.watchPosition(
+                    (pos) => {
+                        // When we receive a position, we assume user intends GPS unless they explicitly use the slider
+                        // Only auto-switch if simulator isn't locked by direct user input (we treat slider input as explicit)
+                        state.usingSimulatedSpeed = false;
+
+                        // If device reports speed, use it (in m/s)
+                        const reported = pos.coords.speed;
+                        if (reported !== null && !isNaN(reported)) {
+                            state.currentSpeed = reported;
+                        } else {
+                            // compute speed from last known position if possible
+                            if (state.lastPos) {
+                                const dt = (pos.timestamp - state.lastPos.timestamp) / 1000; // seconds
+                                if (dt > 0.1) { // avoid noisy near-zero dt
+                                    const d = haversineDistanceMeters(
+                                        state.lastPos.lat, state.lastPos.lon,
+                                        pos.coords.latitude, pos.coords.longitude
+                                    );
+                                    const computed = d / dt; // meters per second
+                                    // very small jitter may be ignored
+                                    if (!isNaN(computed) && computed >= 0) {
+                                        state.currentSpeed = computed;
+                                    }
+                                }
+                            }
+                        }
+
+                        // store last position
+                        state.lastPos = {
+                            lat: pos.coords.latitude,
+                            lon: pos.coords.longitude,
+                            timestamp: pos.timestamp
+                        };
+
+                        updateUI();
                     },
                     (err) => {
-                        let msg = "Geolocation issue: Using manual simulator.";
-                        showError(msg);
+                        console.warn("Geolocation watchPosition error:", err);
+                        if (err.code === 1) {
+                            // permission denied
+                            showError("Geolocation permission denied. Use manual simulator.");
+                        } else if (err.code === 2) {
+                            showError("Geolocation unavailable. Use manual simulator.");
+                        } else if (err.code === 3) {
+                            showError("Geolocation timeout. Use manual simulator.");
+                        } else {
+                            showError("Geolocation issue: Using manual simulator.");
+                        }
+                        // fallback to simulator
+                        state.usingSimulatedSpeed = true;
                     },
-                    { enableHighAccuracy: true, maximumAge: 1000, timeout: 15000 }
+                    options
                 );
             }
         }
 
         elements.simSlider.addEventListener('input', (e) => {
+            // user explicitly touches the simulator slider -> priority to simulator
             state.usingSimulatedSpeed = true;
             state.currentSpeed = parseFloat(e.target.value);
             updateUI();
@@ -191,8 +281,16 @@
 
         function updateUI() {
             const s = state.currentSpeed;
-            elements.speed.innerText = s.toFixed(1);
-            
+            // show numeric value with one decimal and keep the unit visible
+            elements.speed.innerText = s.toFixed(1) + " ";
+            // append unit span if missing
+            if (!elements.speed.querySelector('span')) {
+                const unit = document.createElement('span');
+                unit.className = 'text-sm font-normal';
+                unit.innerText = 'm/s';
+                elements.speed.appendChild(unit);
+            }
+
             elements.speed.classList.remove('speed-low', 'speed-med', 'speed-high');
             if (s > 4.5) {
                 elements.speed.classList.add('speed-high');
@@ -231,11 +329,11 @@
             // Define stylistic instructions instead of literal speed reporting
             let stylisticInstruction = "";
             if (speed > 4.5) {
-                stylisticInstruction = "The story must reach a fever pitch of adrenaline. Use short, punchy sentences. Focus on urgent action, racing hearts, and immediate threats. The tension should be at an absolute maximum.";
+                stylisticInstruction = "The story must reach a fever pitch of adrenaline. Use short, punchy sentences. Focus on urgent action, racing hearts, and immediate threats. The tension should [...]";
             } else if (speed > 2.5) {
                 stylisticInstruction = "The story should build tension steadily. Use rhythmic prose with rising stakes. Focus on the momentum of the plot and the characters' forward progress.";
             } else {
-                stylisticInstruction = "The story should be atmospheric, descriptive, and introspective. Use longer, more complex sentences. Focus on world-building, sensory details, and character backstory.";
+                stylisticInstruction = "The story should be atmospheric, descriptive, and introspective. Use longer, more complex sentences. Focus on world-building, sensory details, and character bac[...]";
             }
 
             const prompt = `
@@ -245,7 +343,7 @@
                 WRITING STYLE MANDATE: 
                 ${stylisticInstruction}
                 
-                IMPORTANT: DO NOT mention that the user is running, working out, or mention their "speed", "meters per second", or "pace" literally. This is a fictional story. The energy of the writing should match the instruction above metaphorically.
+                IMPORTANT: DO NOT mention that the user is running, working out, or mention their "speed", "meters per second", or "pace" literally. This is a fictional story. The energy of the writin[...]
                 
                 Task: Write Chapter ${state.chapters.length + 1}. 
                 Context: Continue the ongoing story based on these previous themes: ${state.fullStoryContext.slice(-1500)}.
@@ -338,6 +436,8 @@
             elements.story.classList.remove('hidden');
             elements.controls.classList.remove('hidden');
 
+            // start with simulator by default; setupTracking will flip to GPS if available & permitted
+            state.usingSimulatedSpeed = true;
             setupTracking();
             startTimer();
             generateNewChapter();
@@ -347,10 +447,20 @@
             state.ttsEnabled = !state.ttsEnabled;
             if (!state.ttsEnabled) {
                 if (state.currentAudio) state.currentAudio.pause();
-                elements.ttsIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />`;
+                // muted icon (speaker with X)
+                elements.ttsIcon.innerHTML = `
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.05 4.99 6.3 8.49H3.75A.75.75 0 0 0 3 9.24v5.52c0 .414.336.75.75.75h2.55l4.75 3.5c.412.304 1.025.01 1.025-.58V5.57c0-.59-.613-.884-1.025-.58z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 9l6 6"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 9l-6 6"/>
+                `;
                 elements.ttsBtn.classList.replace('text-red-500', 'text-gray-500');
             } else {
-                elements.ttsIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />`;
+                // sound-on icon (speaker with waves)
+                elements.ttsIcon.innerHTML = `
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.05 4.99 6.3 8.49H3.75A.75.75 0 0 0 3 9.24v5.52c0 .414.336.75.75.75h2.55l4.75 3.5c.412.304 1.025.01 1.025-.58V5.57c0-.59-.613-.884-1.025-.58z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.364 4.636a9 9 0 010 12.728"/>
+                `;
                 elements.ttsBtn.classList.replace('text-gray-500', 'text-red-500');
             }
         });
