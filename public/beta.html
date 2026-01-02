@@ -706,23 +706,23 @@
                 tags: state.genre ? [state.genre, 'AI Fiction', 'Fitness'] : ['AI Fiction', 'Fitness']
             };
 
-            let epub;
+            let jepub;
             try {
                 // Some jEpub builds accept metadata in the constructor; try that first
                 try {
-                    epub = new jEpub(meta);
+                    jepub = new jEpub(meta);
                 } catch (e) {
                     // If constructor form fails, fall back to no-arg constructor
-                    epub = new jEpub();
+                    jepub = new jEpub();
                 }
 
                 // Only call init if it exists and is a function (guard against builds that set init in a different way)
-                if (typeof epub.init === 'function') {
+                if (typeof jepub.init === 'function') {
                     // Sanitize tags/strings to avoid internal instanceof checks failing
                     if (meta.tags && !Array.isArray(meta.tags)) meta.tags = [meta.tags];
                     // Call init inside try/catch to prevent library internal errors from bubbling raw
                     try {
-                        epub.init(meta);
+                        jepub.init(meta);
                     } catch (innerErr) {
                         console.warn('jEpub.init threw an error (continuing if constructor already applied metadata):', innerErr);
                         // don't rethrow here — continue if constructor already set metadata
@@ -733,7 +733,7 @@
                 console.error('Failed to initialize jEpub:', e);
                 throw new Error('EPUB library initialization failed. Try using a different jepub build (upgrade/downgrade CDN version).');
             }
-            console.log(epub)
+            console.log(jepub)
             // Add chapters (wrap text in minimal HTML)
             try {
                 chapters.forEach((ch, i) => {
@@ -748,26 +748,26 @@
                 </body>
                 </html>
             `;
-                    // jEpub expects epub.add(title, content)
-                    epub.add(chapterTitle.toString(), htmlContent.toString());
+                    // jEpub expects jepub.add(title, content)
+                    jepub.add(chapterTitle.toString(), htmlContent.toString());
                 });
 
                 // Generate the EPUB as a blob.
                 // jEpub.generate may return a Promise or accept a callback depending on build/version,
                 // so handle both forms.
                 let blob;
-                const gen = epub.generate;
+                const gen = jepub.generate;
                 if (!gen) throw new Error('jEpub.generate is not available on this build.');
 
                 // If generate returns a Promise when called, await it; otherwise wrap the callback form.
                 try {
                     // try promise-style
-                    blob = await epub.generate('blob');
+                    blob = await jepub.generate('blob');
                 } catch (promiseErr) {
                     // fallback to callback-style
                     blob = await new Promise((resolve, reject) => {
                         try {
-                            epub.generate('blob', function (err, result) {
+                            jepub.generate('blob', function (err, result) {
                                 if (err) reject(err);
                                 else resolve(result);
                             });
@@ -807,10 +807,10 @@
 
             try {
                 const title = `${state.genre || 'Untitled Story'}`;
-                const epubBlob = await createEpub(title, chapters);
+                const jepubBlob = await createEpub(title, chapters);
 
                 const filename = `${(state.genre || 'story').replace(/\s+/g, '_')}_${Date.now()}.epub`;
-                const url = URL.createObjectURL(epubBlob);
+                const url = URL.createObjectURL(jepubBlob);
 
                 const a = document.createElement('a');
                 a.href = url;
