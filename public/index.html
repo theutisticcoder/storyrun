@@ -697,7 +697,7 @@
                 showError("No chapters to export.");
                 return;
             }
-            const filename = `${(state.genre || 'story').replace(/\s+/g, '_')}_${Date.now()}.epub`;
+            const filename = `${(state.genre || 'story').replace(/\s+/g, '_')}`;
             console.log(filename)
             const jepub = new jEpub();
             jepub.init({
