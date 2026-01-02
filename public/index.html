@@ -472,7 +472,7 @@
                 
                 Task: Write Chapter ${state.chapters.length + 1}. 
                 Context: Continue the ongoing story based on these previous themes: ${state.fullStoryContext.slice(-1500)}.
-                Requirement: Write a very long, 2k+ word, high-quality chapter, use second person and only return plain text, not markdown.
+                Requirement: Write a very long, at least 3000 words, high-quality chapter, use second person and only return plain text, not markdown.
             `;
 
                 const chapterText = await fetchGemini(prompt);
