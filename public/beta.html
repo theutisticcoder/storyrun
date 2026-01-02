@@ -733,7 +733,7 @@
                 console.error('Failed to initialize jEpub:', e);
                 throw new Error('EPUB library initialization failed. Try using a different jepub build (upgrade/downgrade CDN version).');
             }
-
+            console.log(epub)
             // Add chapters (wrap text in minimal HTML)
             try {
                 chapters.forEach((ch, i) => {
@@ -748,9 +748,8 @@
                 </body>
                 </html>
             `;
-            console.log(htmlContent)
                     // jEpub expects epub.add(title, content)
-                    epub.add(chapterTitle, htmlContent);
+                    epub.add(chapterTitle, htmlContent.toString());
                 });
 
                 // Generate the EPUB as a blob.
