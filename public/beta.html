@@ -201,13 +201,15 @@
             <span class="text-xs text-gray-400">MPH SIM</span>
         </div>
 
+        <!-- End Run button -->
+        <button id="end-run-btn"
+            class="ml-4 bg-gray-800 hover:bg-gray-700 text-gray-200 px-3 py-2 rounded-md text-sm whitespace-nowrap">End
+            Run</button>
     </div>
 
     <script type="module">
-        import Groq from 'https://cdn.jsdelivr.net/npm/groq-sdk@0.37.0/+esm'
         import { EdgeTTSClient, ProsodyOptions, OUTPUT_FORMAT } from 'https://cdn.jsdelivr.net/npm/edge-tts-client@1.0.2/+esm';
         window.EdgeTTS = EdgeTTSClient;
-
         // --- State ---
         let state = {
             active: false,
@@ -246,6 +248,7 @@
             error: document.getElementById('error-toast'),
             simSlider: document.getElementById('speed-slider'),
             savedList: document.getElementById('saved-list'),
+            endRunBtn: document.getElementById('end-run-btn')
         };
 
         // localForage config
@@ -533,7 +536,6 @@
 
         // --- TTS ---
         async function speakText(text) {
-
             const chapterIdx = state.chapters.length;
             const statusText = document.getElementById(`audio-status-${chapterIdx}`);
             const barBg = document.getElementById(`progress-bar-bg-${chapterIdx}`);
@@ -551,33 +553,39 @@
                 options.pitch = 'medium';
                 options.rate = 1.0;
 
+                const stream = ttsClient.toStream(text, options);
+                let chunks = [];
+                let receivedBytes = 0;
 
-                const groq = new Groq();
+                stream.on('data', (audioChunk) => {
+                    chunks.push(audioChunk);
+                    receivedBytes += audioChunk.byteLength;
 
-                const wav = await groq.audio.speech.create({
-                    model: "canopylabs/orpheus-v1-english",
-                    voice: "autumn",
-                    response_format: "mp3",
-                    input: text,
+                    // Artificial progress simulation since total stream length isn't always known immediately
+                    // We increase the bar as chunks arrive
+                    const progress = Math.min((chunks.length / (text.length / 10)) * 100, 95);
+                    barFill.style.width = `${progress}%`;
+                    console.log(audioChunk)
                 });
 
-                const buffer = Buffer.from(await wav.arrayBuffer());
-                barFill.style.width = `100%`;
-                statusText.innerText = "Audio Ready";
+                stream.on('end', () => {
+                    barFill.style.width = `100%`;
+                    statusText.innerText = "Audio Ready";
 
-                const url = URL.createObjectURL(new Blob(buffer, { type: "audio/mp3" }));
+                    const url = URL.createObjectURL(new Blob(chunks, { type: "audio/mp3" }));
 
-                // Create the audio element
-                const audioEl = document.createElement('audio');
-                audioEl.controls = true;
-                audioEl.src = url;
-                audioEl.className = "h-8 mt-2 w-full accent-red-500 opacity-80 hover:opacity-100 transition-opacity";
+                    // Create the audio element
+                    const audioEl = document.createElement('audio');
+                    audioEl.controls = true;
+                    audioEl.src = url;
+                    audioEl.className = "h-8 mt-2 w-full accent-red-500 opacity-80 hover:opacity-100 transition-opacity";
 
-                // Replace progress bar with audio player
-                setTimeout(() => {
-                    barBg.classList.add('hidden');
-                    audioContainer.appendChild(audioEl);
-                }, 500);
+                    // Replace progress bar with audio player
+                    setTimeout(() => {
+                        barBg.classList.add('hidden');
+                        audioContainer.appendChild(audioEl);
+                    }, 500);
+                });
 
             } catch (e) {
                 console.warn("TTS Error:", e);
@@ -776,7 +784,50 @@
             }
         }
 
-      
+        // --- End run behavior ---
+        async function endRunAndDownload() {
+            state.active = false;
+            stopTimer();
+
+            if (state.watchId !== null) {
+                try { navigator.geolocation.clearWatch(state.watchId); } catch (e) { }
+                state.watchId = null;
+            }
+
+            await saveCurrentSessionToStorage();
+
+            const chapters = state.chapters.slice();
+            if (!chapters || chapters.length === 0) {
+                showError("No chapters to export.");
+                return;
+            }
+
+            elements.endRunBtn.disabled = true;
+            elements.endRunBtn.innerText = 'Preparing EPUB...';
+
+            try {
+                const title = `${state.genre || 'Untitled Story'}`;
+                const epubBlob = await createEpub(title, chapters);
+
+                const filename = `${(state.genre || 'story').replace(/\s+/g, '_')}_${Date.now()}.epub`;
+                const url = URL.createObjectURL(epubBlob);
+
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+            } catch (e) {
+                console.error("EPUB error", e);
+                showError("Failed to create EPUB.");
+            } finally {
+                elements.endRunBtn.disabled = false;
+                elements.endRunBtn.innerText = 'End Run & Download EPUB';
+            }
+        }
+
 
         // --- End run behavior ---
 
@@ -829,6 +880,9 @@
             }
         });
 
+        elements.endRunBtn.addEventListener('click', () => {
+            endRunAndDownload();
+        });
 
         // load saved stories list on startup
         (async function init() {
