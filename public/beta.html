@@ -749,7 +749,7 @@
                 </html>
             `;
                     // jEpub expects epub.add(title, content)
-                    epub.add(chapterTitle, htmlContent.toString());
+                    epub.add(chapterTitle.toString(), htmlContent.toString());
                 });
 
                 // Generate the EPUB as a blob.
