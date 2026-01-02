@@ -496,6 +496,7 @@
         }
 
         async function fetchGemini(prompt) {
+            console.log(state.apiKey)
             const groq = new Groq({ apiKey: state.apiKey });
 
             const data = await groq.chat.completions.create({
