@@ -691,141 +691,38 @@
 
         // --- EPUB generation using JSZip ---
         // --- EPUB generation using jepub ---
-        async function createEpub(title, chapters) {
-            // Defensive checks
-            if (typeof jEpub === 'undefined') {
-                throw new Error('jEpub library is not loaded. Make sure https://cdn.jsdelivr.net/npm/jepub/dist/jepub.js is included.');
-            }
-
-            const meta = {
-                title: title || 'Untitled',
-                author: 'PacePulse AI',
-                publisher: 'PacePulse App',
-                description: `An AI-generated ${state.genre} story.`,
-                // Ensure tags is an array (some jEpub builds are picky)
-                tags: state.genre ? [state.genre, 'AI Fiction', 'Fitness'] : ['AI Fiction', 'Fitness']
-            };
-
-            let jepub;
-            try {
-                // Some jEpub builds accept metadata in the constructor; try that first
-                try {
-                    jepub = new jEpub(meta);
-                } catch (e) {
-                    // If constructor form fails, fall back to no-arg constructor
-                    jepub = new jEpub();
-                }
-
-                // Only call init if it exists and is a function (guard against builds that set init in a different way)
-                if (typeof jepub.init === 'function') {
-                    // Sanitize tags/strings to avoid internal instanceof checks failing
-                    if (meta.tags && !Array.isArray(meta.tags)) meta.tags = [meta.tags];
-                    // Call init inside try/catch to prevent library internal errors from bubbling raw
-                    try {
-                        jepub.init(meta);
-                    } catch (innerErr) {
-                        console.warn('jEpub.init threw an error (continuing if constructor already applied metadata):', innerErr);
-                        // don't rethrow here — continue if constructor already set metadata
-                    }
-                }
-            } catch (e) {
-                // If anything about jEpub instantiation fails, give a clearer error so you can try a different CDN/version
-                console.error('Failed to initialize jEpub:', e);
-                throw new Error('EPUB library initialization failed. Try using a different jepub build (upgrade/downgrade CDN version).');
-            }
-            console.log(jepub)
-            // Add chapters (wrap text in minimal HTML)
-            try {
-                chapters.forEach((ch, i) => {
-                    const chapterTitle = `Chapter ${i + 1}`;
-                    const htmlContent = `
-                <!doctype html>
-                <html lang="en">
-                <head><meta charset="utf-8"/></head>
-                <body>
-                    <h1>${chapterTitle}</h1>
-                    <div>${ch.replace(/\n/g, '<br/>')}</div>
-                </body>
-                </html>
-            `;
-                    // jEpub expects jepub.add(title, content)
-                    jepub.add(chapterTitle.toString(), htmlContent.toString());
-                });
-
-                // Generate the EPUB as a blob.
-                // jEpub.generate may return a Promise or accept a callback depending on build/version,
-                // so handle both forms.
-                let blob;
-                const gen = jepub.generate;
-                if (!gen) throw new Error('jEpub.generate is not available on this build.');
-
-                // If generate returns a Promise when called, await it; otherwise wrap the callback form.
-                try {
-                    // try promise-style
-                    blob = await jepub.generate('blob');
-                } catch (promiseErr) {
-                    // fallback to callback-style
-                    blob = await new Promise((resolve, reject) => {
-                        try {
-                            jepub.generate('blob', function (err, result) {
-                                if (err) reject(err);
-                                else resolve(result);
-                            });
-                        } catch (cbErr) {
-                            reject(cbErr);
-                        }
-                    });
-                }
-
-                return blob;
-            } catch (e) {
-                console.error('createEpub failed:', e);
-                throw e; // rethrow so caller shows friendly error
-            }
-        }
-
-        // --- End run behavior ---
-        async function endRunAndDownload() {
-            state.active = false;
-            stopTimer();
-
-            if (state.watchId !== null) {
-                try { navigator.geolocation.clearWatch(state.watchId); } catch (e) { }
-                state.watchId = null;
-            }
-
-            await saveCurrentSessionToStorage();
-
+        async function createEpub() {
             const chapters = state.chapters.slice();
             if (!chapters || chapters.length === 0) {
                 showError("No chapters to export.");
                 return;
             }
+            const filename = `${(state.genre || 'story').replace(/\s+/g, '_')}_${Date.now()}.epub`;
+            const jepub = new jEpub();
+            jepub.init({
+                i18n: 'en',
+                title: filename,
+                author: 'JourneyAI',
+                publisher: 'n/a',
+                description: 'a running story',
+                tags: ['epub', 'tag'],
+            });
+            var num = 0
+            state.storySegments.forEach(t => {
+                num++;
+                jepub.add("Chapter " + num, t)
+            })
 
-            elements.endRunBtn.disabled = true;
-            elements.endRunBtn.innerText = 'Preparing EPUB...';
+            const blob = await jepub.generate();
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
 
-            try {
-                const title = `${state.genre || 'Untitled Story'}`;
-                const jepubBlob = await createEpub(title, chapters);
+            link.href = url;
+            link.download = filename;
 
-                const filename = `${(state.genre || 'story').replace(/\s+/g, '_')}_${Date.now()}.epub`;
-                const url = URL.createObjectURL(jepubBlob);
+            link.click();
+            window.URL.revokeObjectURL(url);
 
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-                URL.revokeObjectURL(url);
-            } catch (e) {
-                console.error("EPUB error", e);
-                showError("Failed to create EPUB.");
-            } finally {
-                elements.endRunBtn.disabled = false;
-                elements.endRunBtn.innerText = 'End Run & Download EPUB';
-            }
         }
 
 
@@ -881,7 +778,7 @@
         });
 
         elements.endRunBtn.addEventListener('click', () => {
-            endRunAndDownload();
+            createEpub();
         });
 
         // load saved stories list on startup
