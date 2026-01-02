@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -494,12 +495,16 @@
         }
 
         async function fetchGemini(prompt) {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${state.apiKey}`;
+            const url = `https://api.groq.com/openai/v1/chat/completions`;
 
             const response = await fetch(url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    "Authorization": "Bearer " + state.apiKey,
+                },
                 body: JSON.stringify({
+                    model: "meta-llama/llama-4-scout-17b-16e-instruct",
                     contents: [{ parts: [{ text: prompt }] }],
                     generationConfig: { maxOutputTokens: 8192, temperature: 0.85 }
                 })
@@ -510,7 +515,7 @@
                 throw new Error(errData.error?.message || "API Request Failed");
             }
             const data = await response.json();
-            return data.candidates[0].content.parts[0].text;
+            return data.choices[0].message.content
         }
 
         function renderChapter(text) {
