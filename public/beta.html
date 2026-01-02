@@ -475,7 +475,6 @@
                 Requirement: Write a very long, high-quality chapter, use second person and only return plain text, not markdown.
             `;
 
-            try {
                 const chapterText = await fetchGemini(prompt);
                 state.fullStoryContext += `\n\nChapter ${state.chapters.length + 1}\n${chapterText}`;
                 state.chapters.push(chapterText);
@@ -487,12 +486,9 @@
                 if (state.ttsEnabled) {
                     speakText(chapterText.toString()); // 2. Then start audio generation
                 }
-            } catch (err) {
-                showError("AI Error: Connection issue or invalid API key.");
-            } finally {
                 state.isGenerating = false;
                 elements.loading.classList.add('hidden');
-            }
+            
         }
 
         async function fetchGemini(prompt) {
