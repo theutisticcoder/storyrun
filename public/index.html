@@ -472,7 +472,7 @@
                 
                 Task: Write Chapter ${state.chapters.length + 1}. 
                 Context: Continue the ongoing story based on these previous themes: ${state.fullStoryContext.slice(-1500)}.
-                Requirement: Write a very long, at least 2000 words, high-quality chapter not broken up, use second person and only return plain text, not markdown.
+                Requirement: Write a very long, at least 3000 words, high-quality chapter not broken up, use second person and only return plain text, not markdown.
             `;
 
                 const chapterText = await fetchGemini(prompt);
@@ -504,7 +504,7 @@
                 ],
                 "model": "meta-llama/llama-4-scout-17b-16e-instruct",
                 "temperature": 1,
-                "max_completion_tokens": 3000,
+                "max_completion_tokens": 5000,
                 "top_p": 1,
                 "stream": false,
                 "stop": null
