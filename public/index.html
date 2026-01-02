@@ -435,7 +435,7 @@
                 }
 
                 // AI Chapter Trigger
-                if (elapsed > 0 && elapsed % 300 === 0 && !state.isGenerating) {
+                if (elapsed > 0 && elapsed % 600 === 0 && !state.isGenerating) {
                     generateNewChapter();
                 }
             }, 1000);
@@ -523,7 +523,7 @@
             <div id="audio-container-${chapterNum}" class="w-1/2 flex flex-col items-end">
                 <div id="audio-status-${chapterNum}" class="text-[10px] text-gray-500 uppercase mb-1">Waiting for Voice...</div>
                 <div class="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden hidden" id="progress-bar-bg-${chapterNum}">
-                    <div id="progress-bar-fill-${chapterNum}" class="bg-red-600 h-full w-0 transition-all duration-300"></div>
+                    <div id="progress-bar-fill-${chapterNum}" class="bg-red-600 h-full w-0 transition-all duration-600"></div>
                 </div>
             </div>
         </div>
