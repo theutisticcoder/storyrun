@@ -252,7 +252,9 @@
             savedList: document.getElementById('saved-list'),
             endRunBtn: document.getElementById('end-run-btn')
         };
+        import { Groq } from 'https://cdn.jsdelivr.net/npm/groq-sdk@0.37.0/+esm';
 
+        const groq = new Groq();
         // localForage config
         localforage.config({
             name: 'pacepulse',
@@ -495,26 +497,16 @@
         }
 
         async function fetchGemini(prompt) {
-            const url = `https://api.groq.com/openai/v1/chat/completions`;
-
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    "Authorization": "Bearer " + state.apiKey,
-                },
-                body: JSON.stringify({
-                    model: "meta-llama/llama-4-scout-17b-16e-instruct",
-                    contents: [{role: "user", content: prompt }],
-                    generationConfig: { maxOutputTokens: 8192, temperature: 0.85 }
-                })
+            const data = await groq.chat.completions.create({
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                "model": "meta-llama/llama-4-scout-17b-16e-instruct",
+                "temperature": 1,
             });
-
-            if (!response.ok) {
-                const errData = await response.json();
-                throw new Error(errData.error?.message || "API Request Failed");
-            }
-            const data = await response.json();
             return data.choices[0].message.content
         }
 
