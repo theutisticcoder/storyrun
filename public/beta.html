@@ -698,6 +698,7 @@
                 return;
             }
             const filename = `${(state.genre || 'story').replace(/\s+/g, '_')}_${Date.now()}.epub`;
+            console.log(filename)
             const jepub = new jEpub();
             jepub.init({
                 i18n: 'en',
@@ -708,7 +709,7 @@
                 tags: ['epub', 'tag'],
             });
             var num = 0
-            state.storySegments.forEach(t => {
+            chapters.forEach(t => {
                 num++;
                 jepub.add("Chapter " + num, t)
             })
