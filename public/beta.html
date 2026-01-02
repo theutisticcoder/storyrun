@@ -254,7 +254,6 @@
         };
         import { Groq } from 'https://cdn.jsdelivr.net/npm/groq-sdk@0.37.0/+esm';
 
-        const groq = new Groq();
         // localForage config
         localforage.config({
             name: 'pacepulse',
@@ -497,6 +496,8 @@
         }
 
         async function fetchGemini(prompt) {
+            const groq = new Groq({ apiKey: state.apiKey });
+
             const data = await groq.chat.completions.create({
                 "messages": [
                     {
