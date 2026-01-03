@@ -534,7 +534,7 @@
     `;
             if (state.audio.length > 0) {
                 var au = new Audio();
-                au.src = URL.createObjectURL(state.audio[chapterNum])
+                au.src = URL.createObjectURL(state.audio[chapterNum-1])
                 au.controls = true;
                 div.appendChild(au);
             }
