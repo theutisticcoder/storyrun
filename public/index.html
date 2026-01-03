@@ -208,14 +208,10 @@
             class="ml-4 bg-gray-800 hover:bg-gray-700 text-gray-200 px-3 py-2 rounded-md text-sm whitespace-nowrap">End
             Run</button>
     </div>
-    <script type="module">
-        import {KokoroTTS} from 'https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/+esm'
 
-            const model_id = "onnx-community/Kokoro-82M-v1.0-ONNX";
-            const tts = await KokoroTTS.from_pretrained(model_id, {
-                dtype: "q8",
-                device: "webgpu"
-            });
+    <script type="module">
+        import { EdgeTTS } from 'https://cdn.jsdelivr.net/npm/edge-tts-universal/dist/browser.js';
+        window.EdgeTTS = EdgeTTS;
         // --- State ---
         let state = {
             active: false,
@@ -554,12 +550,10 @@
             const audioContainer = document.getElementById(`audio-container-${chapterIdx}`);
 
 
+            const tts = new window.EdgeTTS(text, 'en-US-AndrewMultilingualNeural');
+            const result = await tts.synthesize();
 
-            const audio = await tts.generate(text, {
-                voice: "af_heart",
-            });
-            console.log(audio)
-            var blob = new Blob([audio], {type: "audio/mp3"})
+            var blob = new Blob([new ArrayBuffer(await result.audio.arrayBuffer())], { type: "audio/mp3" })
             state.audio.push(blob);
             const url = URL.createObjectURL(blob);
 
