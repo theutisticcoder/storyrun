@@ -549,7 +549,6 @@
             const barFill = document.getElementById(`progress-bar-fill-${chapterIdx}`);
             const audioContainer = document.getElementById(`audio-container-${chapterIdx}`);
 
-            try {
                 statusText.innerText = "Synthesizing Audio...";
                 barBg.classList.remove('hidden');
 
@@ -595,9 +594,6 @@
                     }, 500);
                 });
 
-            } catch (e) {
-                console.warn("TTS Error:", e);
-            }
         }
         // --- Storage (localForage) ---
         async function saveCurrentSessionToStorage() {
