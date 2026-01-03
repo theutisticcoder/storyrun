@@ -211,6 +211,11 @@
     <script type="module">
         import {KokoroTTS} from 'https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/+esm'
 
+            const model_id = "onnx-community/Kokoro-82M-v1.0-ONNX";
+            const tts = await KokoroTTS.from_pretrained(model_id, {
+                dtype: "q4",
+                device: "wasm"
+            });
         // --- State ---
         let state = {
             active: false,
@@ -549,17 +554,12 @@
             const audioContainer = document.getElementById(`audio-container-${chapterIdx}`);
 
 
-            const model_id = "onnx-community/Kokoro-82M-v1.0-ONNX";
-            const tts = await KokoroTTS.from_pretrained(model_id, {
-                dtype: "q4",
-                device: "wasm"
-            });
 
             const audio = await tts.generate(text, {
                 voice: "af_heart",
             });
             console.log(audio)
-            var blob = new Blob([new ArrayBuffer(audio)], {type: "audio/mp3"})
+            var blob = new Blob([audio], {type: "audio/mp3"})
             state.audio.push(blob);
             const url = URL.createObjectURL(blob);
 
