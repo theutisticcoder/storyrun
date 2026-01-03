@@ -473,7 +473,7 @@
                 
                 Task: Write Chapter ${state.chapters.length + 1}. 
                 Context: Continue the ongoing story based on these previous themes: ${state.fullStoryContext.slice(-1500)}.
-                Requirement: Write a very long, at least 2000 words, stay under 10 minutes of normal speed tts, high-quality chapter that is not cut off mid sentence, use second person and only return plain text, not markdown.
+                Requirement: Write a very long, at least 20 paragraphs, stay under 8 minutes of normal speed text to speech, high-quality chapter that is not cut off mid sentence, use second person and only return plain text, not markdown.
             `;
 
             const chapterText = await fetchGemini(prompt);
