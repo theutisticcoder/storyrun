@@ -230,7 +230,8 @@
             usingSimulatedSpeed: true,
             lastPos: null,
             watchId: null,
-            sessionId: null
+            sessionId: null,
+            audio: []
         };
 
         const elements = {
@@ -472,23 +473,23 @@
                 
                 Task: Write Chapter ${state.chapters.length + 1}. 
                 Context: Continue the ongoing story based on these previous themes: ${state.fullStoryContext.slice(-1500)}.
-                Requirement: Write a very long, at least 3000 words, high-quality chapter not broken up, use second person and only return plain text, not markdown.
+                Requirement: Write a very long, at least 3000 words, high-quality chapter that is not cut off, use second person and only return plain text, not markdown.
             `;
 
-                const chapterText = await fetchGemini(prompt);
-                state.fullStoryContext += `\n\nChapter ${state.chapters.length + 1}\n${chapterText}`;
-                state.chapters.push(chapterText);
-                renderChapter(chapterText);
+            const chapterText = await fetchGemini(prompt);
+            state.fullStoryContext += `\n\nChapter ${state.chapters.length + 1}\n${chapterText}`;
+            state.chapters.push(chapterText);
+            renderChapter(chapterText);
 
-                // Save after each new chapter
-                await saveCurrentSessionToStorage();
+            // Save after each new chapter
+            await saveCurrentSessionToStorage();
 
-                if (state.ttsEnabled) {
-                    speakText(chapterText.toString()); // 2. Then start audio generation
-                }
-                state.isGenerating = false;
-                elements.loading.classList.add('hidden');
-            
+            if (state.ttsEnabled) {
+                speakText(chapterText.toString()); // 2. Then start audio generation
+            }
+            state.isGenerating = false;
+            elements.loading.classList.add('hidden');
+
         }
 
         async function fetchGemini(prompt) {
@@ -531,6 +532,12 @@
             ${text.replace(/\n/g, '<br>')}
         </div>
     `;
+            if (state.audio.length > 0) {
+                var au = new Audio();
+                au.src = URL.createObjectURL(state.audio[chapterNum])
+                au.controls = true;
+                div.appendChild(au);
+            }
             elements.container.append(div);
         }
 
@@ -571,8 +578,9 @@
                 stream.on('end', () => {
                     barFill.style.width = `100%`;
                     statusText.innerText = "Audio Ready";
-
-                    const url = URL.createObjectURL(new Blob(chunks, { type: "audio/mp3" }));
+                    var blob = new Blob(chunks, { type: "audio/mp3" })
+                    state.audio.push(blob);
+                    const url = URL.createObjectURL(blob);
 
                     // Create the audio element
                     const audioEl = document.createElement('audio');
@@ -602,6 +610,7 @@
                 title: `${state.genre || 'Untitled'} - ${new Date().toISOString()}`,
                 genre: state.genre,
                 plot: state.plot,
+                audio: state.audio,
                 created_at: new Date().toISOString(),
                 chapters: state.chapters,
                 fullStoryContext: state.fullStoryContext
@@ -669,6 +678,7 @@
             state.plot = s.plot;
             state.chapters = s.chapters || [];
             state.fullStoryContext = s.fullStoryContext || '';
+            if (s.audio) state.audio = s.audio
             // show story panel and render chapters
             elements.setup.classList.add('hidden');
             elements.story.classList.remove('hidden');
