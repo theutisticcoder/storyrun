@@ -549,17 +549,11 @@
             const barFill = document.getElementById(`progress-bar-fill-${chapterIdx}`);
             const audioContainer = document.getElementById(`audio-container-${chapterIdx}`);
 
-            const groq = new Groq({ apiKey: state.apiKey, dangerouslyAllowBrowser: true });
 
-            const wav = await groq.audio.speech.create({
-                model: "canopylabs/orpheus-v1-english",
-                voice: "autumn",
-                response_format: "wav",
-                input: text,
-            });
+            const tts = new window.EdgeTTS(text, 'en-US-AndrewMultilingualNeural');
+            const result = await tts.synthesize();
 
-            const buffer = AudioBuffer.from(await wav.arrayBuffer());
-            var blob = new Blob(buffer, { type: "audio/mp3" })
+            var blob = new Blob([new ArrayBuffer(await result.audio.arrayBuffer())], { type: "audio/mp3" })
             state.audio.push(blob);
             const url = URL.createObjectURL(blob);
 
