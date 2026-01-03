@@ -549,50 +549,51 @@
             const barFill = document.getElementById(`progress-bar-fill-${chapterIdx}`);
             const audioContainer = document.getElementById(`audio-container-${chapterIdx}`);
 
-                statusText.innerText = "Synthesizing Audio...";
-                barBg.classList.remove('hidden');
+            statusText.innerText = "Synthesizing Audio...";
+            barBg.classList.remove('hidden');
 
-                const ttsClient = new window.EdgeTTS();
-                await ttsClient.setMetadata('en-US-AndrewMultilingualNeural', OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
+            const ttsClient = new window.EdgeTTS();
+            await ttsClient.setMetadata('en-US-AndrewMultilingualNeural', OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
 
-                const options = new ProsodyOptions();
-                options.pitch = 'medium';
-                options.rate = 1.0;
+            const options = new ProsodyOptions();
+            options.pitch = 'medium';
+            options.rate = 1.0;
 
-                const stream = ttsClient.toStream(text, options);
-                let chunks = [];
-                let receivedBytes = 0;
+            const stream = ttsClient.toStream(text, options);
+            let chunks = [];
+            let receivedBytes = 0;
 
-                stream.on('data', (audioChunk) => {
-                    chunks.push(audioChunk);
-                    receivedBytes += audioChunk.byteLength;
+            stream.on('data', (audioChunk) => {
+                chunks.push(audioChunk);
+                receivedBytes += audioChunk.byteLength;
 
-                    // Artificial progress simulation since total stream length isn't always known immediately
-                    // We increase the bar as chunks arrive
-                    const progress = Math.min((chunks.length / (text.length / 10)) * 100, 95);
-                    barFill.style.width = `${progress}%`;
-                    console.log(audioChunk)
-                });
+                // Artificial progress simulation since total stream length isn't always known immediately
+                // We increase the bar as chunks arrive
+                const progress = Math.min((chunks.length / (text.length / 10)) * 100, 95);
+                barFill.style.width = `${progress}%`;
+                console.log(audioChunk)
+            });
 
-                stream.on('end', () => {
-                    barFill.style.width = `100%`;
-                    statusText.innerText = "Audio Ready";
-                    var blob = new Blob(chunks, { type: "audio/mp3" })
-                    state.audio.push(blob);
-                    const url = URL.createObjectURL(blob);
+            stream.on('end', () => {
+                barFill.style.width = `100%`;
+                statusText.innerText = "Audio Ready";
+                var blob = new Blob(chunks, { type: "audio/mp3" })
+                state.audio.push(blob);
+                const url = URL.createObjectURL(blob);
 
-                    // Create the audio element
-                    const audioEl = document.createElement('audio');
-                    audioEl.controls = true;
-                    audioEl.src = url;
-                    audioEl.className = "h-8 mt-2 w-full accent-red-500 opacity-80 hover:opacity-100 transition-opacity";
+                // Create the audio element
+                const audioEl = document.createElement('audio');
+                audioEl.controls = true;
+                audioEl.src = url;
+                audioEl.className = "h-8 mt-2 w-full accent-red-500 opacity-80 hover:opacity-100 transition-opacity";
 
-                    // Replace progress bar with audio player
-                    setTimeout(() => {
-                        barBg.classList.add('hidden');
-                        audioContainer.appendChild(audioEl);
-                    }, 500);
-                });
+                // Replace progress bar with audio player
+                setTimeout(async () => {
+                    barBg.classList.add('hidden');
+                    audioContainer.appendChild(audioEl);
+                    await saveCurrentSessionToStorage();
+                }, 500);
+            });
 
         }
         // --- Storage (localForage) ---
