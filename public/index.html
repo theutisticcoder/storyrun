@@ -574,7 +574,7 @@
                     console.log(audioChunk)
                 });
 
-                stream.addEventListener('end', () => {
+                stream.on('end', () => {
                     barFill.style.width = `100%`;
                     statusText.innerText = "Audio Ready";
                     var blob = new Blob(chunks, { type: "audio/mp3" })
