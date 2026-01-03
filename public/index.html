@@ -536,7 +536,7 @@
                 var au = new Audio();
                 au.src = URL.createObjectURL(state.audio[chapterNum-1])
                 au.controls = true;
-                div.appendChild(au);
+                div.prepend(au);
             }
             elements.container.append(div);
         }
