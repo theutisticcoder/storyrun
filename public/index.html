@@ -213,8 +213,8 @@
 
             const model_id = "onnx-community/Kokoro-82M-v1.0-ONNX";
             const tts = await KokoroTTS.from_pretrained(model_id, {
-                dtype: "q4",
-                device: "wasm"
+                dtype: "q8",
+                device: "webgpu"
             });
         // --- State ---
         let state = {
