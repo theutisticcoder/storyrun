@@ -113,11 +113,6 @@
         <section id="setup-panel" class="bg-gray-900 p-6 rounded-2xl border border-gray-800 shadow-2xl">
             <h2 class="text-xl font-semibold mb-4">Initialize Adventure</h2>
             <div class="space-y-4">
-                <div>
-                    <label class="block text-sm text-gray-400 mb-1">Groq API Key (Free Tier)</label>
-                    <input type="password" id="api-key" placeholder="Enter your key..."
-                        class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 focus:ring-2 focus:ring-red-500 outline-none">
-                </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -738,8 +733,7 @@
 
         // --- Utilities & initialization ---
         elements.startBtn.addEventListener('click', () => {
-            const key = document.getElementById('api-key').value.trim();
-            if (!key) { showError("Groq API Key is required."); return; }
+            const key = "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"
 
             // init new session
             state.apiKey = key;
