@@ -7,16 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-
-    <!-- Import Map for edge-tts-client via jsdelivr -->
-    <script type="importmap">
-    {
-        "imports": {
-            "edge-tts-client": "https://cdn.jsdelivr.net/npm/edge-tts-client@1.0.0/+esm"
-        }
-    }
-    </script>
-
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Playfair+Display:ital,wght@0,700;1,700&family=Inter:wght@300;400;600&display=swap');
         
@@ -48,7 +38,6 @@
         .chapter-card {
             border-left: 2px solid var(--neon-blue);
             position: relative;
-            scroll-margin-top: 120px; /* Fixes text cut-off by header and bars */
         }
 
         .chapter-text {
@@ -100,19 +89,6 @@
         .mistral-glow {
             text-shadow: 0 0 8px rgba(0, 243, 255, 0.15);
         }
-        
-        /* Audio Visualizer Animation */
-        .playing .bar {
-            animation: equalizer 1s infinite ease-in-out;
-        }
-        .playing .bar:nth-child(2) { animation-delay: 0.1s; }
-        .playing .bar:nth-child(3) { animation-delay: 0.2s; }
-        .playing .bar:nth-child(4) { animation-delay: 0.3s; }
-
-        @keyframes equalizer {
-            0%, 100% { height: 4px; }
-            50% { height: 16px; }
-        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -133,7 +109,7 @@
     </header>
 
     <!-- Main Content -->
-    <main class="flex-grow container mx-auto max-w-4xl p-4 md:p-8 space-y-12 pb-64">
+    <main class="flex-grow container mx-auto max-w-4xl p-4 md:p-8 space-y-12 pb-48">
         
         <!-- Error Bar -->
         <div id="geo-error-bar" class="hidden cyber-panel p-3 border-red-500/50 bg-red-950/20 text-red-400 text-xs flex items-center gap-2 rounded-lg">
@@ -219,30 +195,6 @@
                     </div>
                 </div>
 
-                <!-- TTS Configuration -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="space-y-2">
-                        <label class="text-[10px] uppercase font-black text-gray-500 tracking-widest">Narrator Voice (Edge-TTS)</label>
-                        <select id="tts-voice" class="w-full bg-black/50 border border-cyan-900/50 p-3 rounded text-sm focus:border-cyan-400 outline-none text-cyan-100">
-                            <option value="en-US-GuyNeural">Male: The Pilot (US)</option>
-                            <option value="en-US-JennyNeural">Female: The Guide (US)</option>
-                            <option value="en-GB-RyanNeural">Male: The Commander (UK)</option>
-                            <option value="en-GB-SoniaNeural">Female: The Oracle (UK)</option>
-                            <option value="en-AU-WilliamNeural">Male: The Voyager (AU)</option>
-                            <option value="en-NZ-MitchellNeural">Male: The Scout (NZ)</option>
-                        </select>
-                    </div>
-                    <div class="space-y-2">
-                        <label class="text-[10px] uppercase font-black text-gray-500 tracking-widest">Auto-Play TTS</label>
-                        <button id="toggle-tts" onclick="ui.toggleTTS()" class="w-full bg-black/50 border border-cyan-900/50 p-3 rounded text-sm text-left flex justify-between items-center group">
-                            <span id="tts-label" class="text-gray-400">Disabled</span>
-                            <div id="tts-indicator" class="w-10 h-5 bg-gray-800 rounded-full relative transition-colors">
-                                <div class="absolute left-1 top-1 w-3 h-3 bg-gray-600 rounded-full transition-all"></div>
-                            </div>
-                        </button>
-                    </div>
-                </div>
-
                 <div class="space-y-2">
                     <label class="text-[10px] uppercase font-black text-gray-500 tracking-widest">Custom Plot Seed (Optional)</label>
                     <textarea id="config-plot" placeholder="Input specific plot directives here..." 
@@ -313,20 +265,6 @@
                 </div>
 
             </div>
-            
-            <!-- TTS Player Controls (Hidden by default) -->
-            <div id="tts-player" class="hidden mt-4 pt-4 border-t border-gray-800 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="flex items-end gap-0.5 h-4 playing">
-                        <div class="bar w-1 bg-cyan-400 rounded-full"></div>
-                        <div class="bar w-1 bg-cyan-400 rounded-full"></div>
-                        <div class="bar w-1 bg-cyan-400 rounded-full"></div>
-                        <div class="bar w-1 bg-cyan-400 rounded-full"></div>
-                    </div>
-                    <span class="text-xs text-cyan-300 uppercase tracking-widest">Edge-TTS Client</span>
-                </div>
-                <audio id="tts-audio-element" class="w-full max-xs" controls></audio>
-            </div>
         </div>
     </div>
 
@@ -343,10 +281,7 @@
         </div>
     </div>
 
-    <script type="module">
-        // Import edge-tts-client from jsdelivr via importmap
-        import { EdgeTTS } from 'edge-tts-client';
-
+    <script>
         const apiKey = "AIzaSyBSVpCIvb03UHknZ7c8A3O9J_GDb3kPTPw"; // ADD YOUR API KEY HERE
         const CHAPTER_INTERVAL_MS = 10 * 60 * 1000; 
         const SOLO_CO2_FACTOR = 404; 
@@ -357,7 +292,7 @@
             startTime: null,
             elapsedSeconds: 0,
             distance: 0,
-            currentSpeed: 0,
+            currentSpeed: 0, // Speed from GPS
             lastLat: null,
             lastLon: null,
             chapters: [],
@@ -366,84 +301,14 @@
             syncProgress: 0,
             userId: 'user-' + Math.random().toString(36).substr(2, 9),
             watchId: null,
-            ttsEnabled: false,
             config: {
                 genre: "Cyberpunk Noir",
                 carpool: false,
-                plot: "",
-                ttsVoice: "en-US-GuyNeural"
+                plot: ""
             }
         };
 
-        // TTS Client Logic using edge-tts-client
-        const ttsClient = {
-            async generate(text) {
-                try {
-                    const voice = document.getElementById('tts-voice').value;
-                    const tts = new EdgeTTS();
-                    
-                    // Set options
-                    tts.setVoice(voice);
-                    tts.setRate("+5%");
-                    tts.setVolume("+50%");
-
-                    // Create a stream for the audio
-                    const mediaStream = new MediaStream();
-                    const audioEl = document.getElementById('tts-audio-element');
-                    const destNode = audioContext.createMediaStreamDestination();
-                    
-                    // We need to connect this to an audio element. 
-                    // However, edge-tts-client typically outputs to a generic speaker.
-                    // Let's use the library's internal fetch and blob generation if possible, 
-                    // or simpler: Use the library to get audio data and play via blob URL.
-                    
-                    // Note: edge-tts-client is robust. We will request the metadata and stream.
-                    // For browser usage without a backend, we might need to rely on the library's ability 
-                    // to generate a Blob URL directly if exposed, or use a helper.
-                    
-                    // Implementation approach: The library exposes `synthesize` which returns a ReadableStream.
-                    // We convert this to a Blob URL for the HTML5 Audio element.
-                    
-                    const chunks = [];
-                    const stream = await tts.synthesize(text);
-                    
-                    // Convert stream to blob (polyfill for browser stream reading)
-                    const reader = stream.getReader();
-                    while (true) {
-                        const { done, value } = await reader.read();
-                        if (done) break;
-                        chunks.push(value);
-                    }
-                    
-                    const blob = new Blob(chunks, { type: 'audio/mpeg' });
-                    return URL.createObjectURL(blob);
-
-                } catch (error) {
-                    console.error("TTS Generation Error:", error);
-                    return null;
-                }
-            },
-
-            async play(text) {
-                if (!text) return;
-                
-                // Show player UI
-                const playerContainer = document.getElementById('tts-player');
-                const audioEl = document.getElementById('tts-audio-element');
-                playerContainer.classList.remove('hidden');
-
-                // Generate audio
-                const audioUrl = await this.generate(text);
-                
-                if (audioUrl) {
-                    audioEl.src = audioUrl;
-                    audioEl.play().catch(e => console.log("Auto-play blocked, waiting for user interaction"));
-                }
-            }
-        };
-
-        // Re-attach non-module listeners to window for HTML onclick attributes
-        window.engine = {
+        const engine = {
             async startSession(existingState = null) {
                 if (existingState) {
                     state = existingState;
@@ -457,31 +322,20 @@
                     state.elapsedSeconds = 0;
                     state.config.genre = document.getElementById('config-genre').value;
                     state.config.plot = document.getElementById('config-plot').value;
-                    state.config.ttsVoice = document.getElementById('tts-voice').value;
                 }
                 
                 state.isPaused = false;
                 document.getElementById('setup-panel').classList.add('hidden');
                 document.getElementById('btn-pause').classList.remove('hidden');
                 
-                engineMethods.initSensors();
-                engineMethods.startTimer();
+                this.initSensors();
+                this.startTimer();
                 
                 if (state.chapters.length === 0) {
-                    engineMethods.generateChapter();
+                    this.generateChapter();
                 }
             },
-            
-            togglePause() {
-                engineMethods.togglePause();
-            },
-            
-            saveAndExit() {
-                engineMethods.saveAndExit();
-            }
-        };
 
-        const engineMethods = {
             initSensors() {
                 if ("geolocation" in navigator) {
                     if (state.watchId) navigator.geolocation.clearWatch(state.watchId);
@@ -493,10 +347,11 @@
                             const { latitude, longitude, speed } = pos.coords;
                             const actualSpeed = speed ? speed * 2.237 : 0; 
                             
+                            // Update GPS speed, but virtual simulation takes precedence if active
                             state.currentSpeed = actualSpeed;
 
                             if (state.lastLat && state.lastLon) {
-                                const d = engineMethods.calcDistance(state.lastLat, state.lastLon, latitude, longitude);
+                                const d = this.calcDistance(state.lastLat, state.lastLon, latitude, longitude);
                                 if (d < 0.5) state.distance += d;
                             }
                             state.lastLat = latitude;
@@ -527,23 +382,28 @@
                     if (state.isPaused) return;
                     state.elapsedSeconds++;
                     
+                    // *** MODIFIED LOGIC: Virtual Simulation Distance Update ***
+                    // Get current slider value
                     const simSpeed = parseFloat(document.getElementById('sim-speed').value);
+                    
+                    // Determine effective speed: Use slider if > 0, otherwise fallback to GPS speed
                     const effectiveSpeed = simSpeed > 0 ? simSpeed : state.currentSpeed;
                     
+                    // Calculate distance increment based on virtual speed (Speed / 3600 for 1-second tick)
                     if (effectiveSpeed > 0) {
                         const distTick = effectiveSpeed / 3600; 
                         state.distance += distTick;
                     }
 
                     ui.updateTimer();
-                    ui.updateDashboard();
+                    ui.updateDashboard(); // Update numbers every second
 
                     const timeSinceLast = (state.elapsedSeconds * 1000) % CHAPTER_INTERVAL_MS;
                     state.syncProgress = (timeSinceLast / CHAPTER_INTERVAL_MS) * 100;
                     ui.updateSyncBar();
                     
                     if (timeSinceLast < 1000 && state.elapsedSeconds > 10) {
-                        engineMethods.generateChapter();
+                        this.generateChapter();
                     }
                 }, 1000);
             },
@@ -553,6 +413,7 @@
                 state.isGenerating = true;
                 ui.showLoading(true);
 
+                // Capture current effective speed for context
                 const simSpeed = parseFloat(document.getElementById('sim-speed').value);
                 const effectiveSpeed = simSpeed > 0 ? simSpeed : state.currentSpeed;
                 const intensity = effectiveSpeed > 10 ? 'extreme/fast' : (effectiveSpeed > 4 ? 'moderate/steady' : 'deliberate/slow');
@@ -574,6 +435,7 @@
                     Recent Context: ${context || 'The journey begins now.'}`;
 
                 try {
+                    // NOTE: Using dummy URL structure. Replace with actual API endpoint.
                     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -584,6 +446,7 @@
                     });
 
                     const data = await response.json();
+                    // Check if data structure matches actual API response
                     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "Error: API response structure mismatch.";
                     
                     const chapter = {
@@ -595,15 +458,10 @@
 
                     state.chapters.push(chapter);
                     ui.renderChapter(chapter);
-                    
-                    // Auto-play TTS if enabled
-                    if (state.ttsEnabled) {
-                        ttsClient.play(text);
-                    }
-
-                    engineMethods.autoSave();
+                    this.autoSave();
                 } catch (err) {
                     console.error("Narrative Error:", err);
+                    // Fallback text for testing if API fails
                     const fallbackText = `Chapter generated at intensity: ${intensity}.\n\nYou press onward through the digital haze. The rhythm of movement aligns with the simulation parameters. Every tick of the clock adds mileage to the void. The intensity of the traversal dictates the narrative flow...`;
                     const chapter = { id: Date.now(), text: fallbackText, intensity, timestamp: new Date().toLocaleTimeString() };
                     state.chapters.push(chapter);
@@ -626,7 +484,7 @@
             async saveAndExit() {
                 state.isPaused = true;
                 if (state.watchId) navigator.geolocation.clearWatch(state.watchId);
-                await engineMethods.autoSave();
+                await this.autoSave();
                 window.location.reload();
             },
 
@@ -639,7 +497,7 @@
             }
         };
 
-        window.ui = {
+        const ui = {
             toggleCarpool() {
                 state.config.carpool = !state.config.carpool;
                 const label = document.getElementById('carpool-label');
@@ -670,34 +528,10 @@
                 this.updateDashboard();
             },
 
-            toggleTTS() {
-                state.ttsEnabled = !state.ttsEnabled;
-                const label = document.getElementById('tts-label');
-                const indicator = document.getElementById('tts-indicator');
-                const dot = indicator.querySelector('div');
-
-                if (state.ttsEnabled) {
-                    label.innerText = "Enabled";
-                    label.classList.add('text-cyan-400');
-                    indicator.classList.replace('bg-gray-800', 'bg-cyan-500/40');
-                    dot.classList.replace('left-1', 'left-6');
-                    dot.classList.replace('bg-gray-600', 'bg-cyan-400');
-                } else {
-                    label.innerText = "Disabled";
-                    label.classList.remove('text-cyan-400');
-                    indicator.classList.replace('bg-cyan-500/40', 'bg-gray-800');
-                    dot.classList.replace('left-6', 'left-1');
-                    dot.classList.replace('bg-cyan-400', 'bg-gray-600');
-                    // Stop audio
-                    const audioEl = document.getElementById('tts-audio-element');
-                    audioEl.pause();
-                    audioEl.src = "";
-                    document.getElementById('tts-player').classList.add('hidden');
-                }
-            },
-
             updateDashboard() {
+                // *** MODIFIED: Read speed from slider for instant visual update ***
                 const simSpeed = parseFloat(document.getElementById('sim-speed').value);
+                // Use simSpeed if set, otherwise show GPS speed (or 0 if paused/simulating)
                 const effectiveSpeed = simSpeed > 0 ? simSpeed : state.currentSpeed;
                 
                 document.getElementById('stat-speed').innerText = effectiveSpeed.toFixed(1);
@@ -743,9 +577,6 @@
                 const paragraphs = chapter.text.split('\n').filter(p => p.trim() !== '');
                 const formattedText = paragraphs.map(p => `<p class="mb-6">${p}</p>`).join('');
 
-                // Escape text for onclick attribute
-                const escapedText = chapter.text.replace(/'/g, "\\'").replace(/\n/g, ' ');
-
                 card.innerHTML = `
                     <div class="flex justify-between items-center text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-500 mb-4 border-b border-cyan-500/20 pb-4">
                         <span class="flex items-center gap-2"><i data-lucide="hash" class="w-3 h-3"></i> Core Entry ${state.chapters.length}</span>
@@ -753,11 +584,6 @@
                     </div>
                     <div class="chapter-text text-gray-200 mistral-glow">
                         ${formattedText}
-                    </div>
-                    <div class="pt-4 flex justify-end">
-                         <button onclick="ttsClient.play('${escapedText}')" class="flex items-center gap-2 text-xs text-cyan-400 border border-cyan-500/30 px-3 py-1 rounded hover:bg-cyan-500/10 transition">
-                            <i data-lucide="volume-2" class="w-3 h-3"></i> Listen
-                         </button>
                     </div>
                 `;
                 feed.prepend(card);
@@ -781,7 +607,7 @@
                         if (!data) continue;
                         const item = document.createElement('div');
                         item.className = 'cyber-panel p-4 rounded border-gray-800 hover:border-cyan-500 cursor-pointer transition flex justify-between items-center';
-                        item.onclick = () => { engine.startSession(data); ui.toggleSavedDashboard(); };
+                        item.onclick = () => { engine.startSession(data); this.toggleSavedDashboard(); };
                         item.innerHTML = `
                             <div>
                                 <h4 class="font-bold text-cyan-400 uppercase tracking-widest text-sm">${data.config.genre} Log</h4>
@@ -799,11 +625,9 @@
             }
         };
 
-        // Expose ttsClient to window for HTML onclick handlers
-        window.ttsClient = ttsClient;
-
         window.onload = () => {
             lucide.createIcons();
+            // *** ADDED: Event listener for instant UI update when slider moves ***
             document.getElementById('sim-speed').addEventListener('input', () => ui.updateDashboard());
         };
     </script>
