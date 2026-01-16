@@ -431,7 +431,7 @@
                 const intensity = state.currentSpeed > 10 ? 'extreme/fast' : (state.currentSpeed > 4 ? 'moderate/steady' : 'deliberate/slow');
                 const context = state.chapters.map(c => c.text).slice(-1).join('\n\n');
 
-                const prompt = `Generate a new chapter in the style of a MISTRAL-AI model (dense, precise, philosophical, and highly descriptive).
+                const prompt = `Generate a new chapter in the style of a (dense, precise, philosophical, and highly descriptive).
                     Genre: ${state.config.genre}.
                     Plot Directives: ${state.config.plot || 'Standard survival expedition.'}
                     
@@ -442,6 +442,7 @@
                     4. Social Context: ${state.config.carpool ? 'Traveling with a group/squad.' : 'Traveling alone.'}
                     5. Each paragraph should be substantive (3-5 sentences each).
                     6. Maintain a consistent literary tone appropriate to the genre.
+                    7. foenat it as HTML, not markdown. 
                     
                     Context of previous events: ${context || 'The journey begins now.'}`;
 
