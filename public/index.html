@@ -470,7 +470,17 @@
                         }
 
                         const data = await response.json();
-                        console.log(data.choices[0].message.content);
+                        var text =data.choices[0].message.content
+                        const chapter = {
+                        id: Date.now(),
+                        text,
+                        intensity,
+                        timestamp: new Date().toLocaleTimeString()
+                    };
+
+                    state.chapters.push(chapter);
+                    ui.renderChapter(chapter);
+                    this.autoSave();
 
                     } catch (err) {
                         console.error("Narrative Error:", err);
