@@ -470,7 +470,7 @@
                         }
 
                         const data = await response.json();
-                        var text =data.choices[0].message.content
+                        var text =data.choices[0].message.content.replace("```html", '').replace("```", '').trim()
                         const chapter = {
                         id: Date.now(),
                         text,
