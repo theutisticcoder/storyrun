@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -41,7 +40,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-image:
+            background-image: 
                 linear-gradient(var(--grid-glow) 1px, transparent 1px),
                 linear-gradient(90deg, var(--grid-glow) 1px, transparent 1px);
             background-size: 50px 50px;
@@ -57,11 +56,13 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: repeating-linear-gradient(0deg,
-                    transparent,
-                    transparent 2px,
-                    rgba(0, 255, 255, 0.03) 2px,
-                    rgba(0, 255, 255, 0.03) 4px);
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 255, 255, 0.03) 2px,
+                rgba(0, 255, 255, 0.03) 4px
+            );
             z-index: -1;
             pointer-events: none;
         }
@@ -93,19 +94,9 @@
         }
 
         @keyframes glitch {
-
-            0%,
-            100% {
-                text-shadow: 0 0 30px var(--neon-cyan);
-            }
-
-            25% {
-                text-shadow: -2px 0 var(--neon-pink), 2px 0 var(--neon-cyan);
-            }
-
-            75% {
-                text-shadow: 2px 0 var(--neon-pink), -2px 0 var(--neon-cyan);
-            }
+            0%, 100% { text-shadow: 0 0 30px var(--neon-cyan); }
+            25% { text-shadow: -2px 0 var(--neon-pink), 2px 0 var(--neon-cyan); }
+            75% { text-shadow: 2px 0 var(--neon-pink), -2px 0 var(--neon-cyan); }
         }
 
         /* Dashboard Metrics */
@@ -387,15 +378,8 @@
         }
 
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .chapter-title {
@@ -434,13 +418,8 @@
         }
 
         @keyframes shimmer {
-            0% {
-                background-position: 200% 0;
-            }
-
-            100% {
-                background-position: -200% 0;
-            }
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
         }
 
         /* Bottom Control Overlay */
@@ -560,26 +539,26 @@
             .title {
                 font-size: 2rem;
             }
-
+            
             .dashboard {
                 grid-template-columns: repeat(2, 1fr);
             }
-
+            
             .controls {
                 flex-direction: column;
                 align-items: center;
             }
-
+            
             .btn {
                 width: 100%;
                 max-width: 300px;
             }
-
+            
             .bottom-overlay {
                 flex-direction: column;
                 gap: 15px;
             }
-
+            
             .genre-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
@@ -608,17 +587,9 @@
         }
 
         @keyframes pulse {
-            0% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.5;
-            }
-
-            100% {
-                opacity: 1;
-            }
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
         }
 
         .gps-indicator.error {
@@ -650,9 +621,8 @@
             border-color: var(--neon-cyan);
         }
     </style>
-    <base target="_blank">
+<base target="_blank">
 </head>
-
 <body>
     <div class="gps-status">
         <div class="gps-indicator" id="gpsIndicator"></div>
@@ -687,7 +657,7 @@
                 <div>
                     <label style="color: var(--text-secondary); font-size: 0.9rem;">API Provider:</label>
                     <select id="apiProvider" class="api-input">
-                        <option value="mistral">🔵 Mistral AI</option>
+                        <option value="mistral">🔵 Mistral AI (Your Key)</option>
                         <option value="openrouter">🔗 OpenRouter API</option>
                         <option value="google">🟢 Google AI Studio</option>
                         <option value="openai">🟢 OpenAI API</option>
@@ -697,6 +667,8 @@
                     <label style="color: var(--text-secondary); font-size: 0.9rem;">API Key:</label>
                     <input type="password" id="apiKey" class="api-input" placeholder="Enter your API key...">
                 </div>
+            </div>
+            <div id="apiStatus" class="api-status mock">
             </div>
             <div style="margin-top: 15px; font-size: 0.8rem; color: var(--text-secondary);">
             </div>
@@ -712,7 +684,7 @@
 
         <div class="genre-selection">
             <h3 style="color: var(--neon-cyan); margin-bottom: 15px;">Select Genre & Mode</h3>
-
+            
             <div class="mode-toggle">
                 <button class="mode-btn active" data-mode="normal">Normal Mode</button>
                 <button class="mode-btn" data-mode="carpool">Carpool Mode</button>
@@ -721,7 +693,7 @@
             <div class="genre-grid" id="genreGrid">
                 <!-- Genres will be populated by JavaScript -->
             </div>
-
+            
             <div class="custom-plot">
                 <label style="color: var(--text-secondary);">Custom Plot (Optional):</label>
                 <input type="text" id="customPlot" placeholder="Enter your custom story premise...">
@@ -737,6 +709,7 @@
 
         <div class="story-feed" id="storyFeed">
             <div style="text-align: center; color: var(--text-secondary); padding: 40px;">
+                <p>🚀 Configure your AI service and start your journey to begin the AI-generated adventure...</p>
             </div>
         </div>
     </div>
@@ -778,17 +751,17 @@
                 this.selectedGenre = 'cyberpunk';
                 this.customPlot = '';
                 this.mode = 'normal';
-
+                
                 // AI Configuration
                 this.apiProvider = 'mistral';
                 this.apiKey = '';
                 this.isApiConnected = false;
-
+                
                 // GPS tracking
                 this.gpsSpeed = 0;
                 this.lastPosition = null;
                 this.lastPositionTime = null;
-
+                
                 // Initialize
                 this.init();
             }
@@ -805,7 +778,7 @@
             setupAIConfiguration() {
                 // Pre-fill Mistral AI key if provided
                 const mistralKey = 'nUANEOGN4al5gS7pKPtu391tBxnVkfUQ';
-
+                
                 // Load saved API configuration
                 const savedConfig = localStorage.getItem('myJourneyAIConfig');
                 if (savedConfig) {
@@ -956,7 +929,7 @@
 
             handleGPSUpdate(position) {
                 const currentTime = Date.now();
-
+                
                 if (this.lastPosition && this.lastPositionTime) {
                     const timeDiff = (currentTime - this.lastPositionTime) / 1000 / 3600; // hours
                     const distance = this.calculateDistance(
@@ -965,7 +938,7 @@
                         position.coords.latitude,
                         position.coords.longitude
                     );
-
+                    
                     if (timeDiff > 0) {
                         this.gpsSpeed = distance / timeDiff; // mph
                         if (this.isActive && !this.isPaused) {
@@ -975,7 +948,7 @@
                         }
                     }
                 }
-
+                
                 this.lastPosition = {
                     latitude: position.coords.latitude,
                     longitude: position.coords.longitude
@@ -992,10 +965,10 @@
                 const R = 3959; // Earth's radius in miles
                 const dLat = (lat2 - lat1) * Math.PI / 180;
                 const dLon = (lon2 - lon1) * Math.PI / 180;
-                const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                          Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                          Math.sin(dLon/2) * Math.sin(dLon/2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
                 return R * c;
             }
 
@@ -1021,7 +994,7 @@
             updateDisplay() {
                 document.getElementById('speedDisplay').textContent = this.currentSpeed.toFixed(1);
                 document.getElementById('distanceDisplay').textContent = this.totalDistance.toFixed(2);
-
+                
                 // CO2 saved calculation (approximate: 0.9 lbs per mile for car vs walking/running)
                 const co2Saved = this.totalDistance * 0.9;
                 document.getElementById('co2Display').textContent = co2Saved.toFixed(1);
@@ -1030,9 +1003,9 @@
             checkChapterTrigger() {
                 const timeSinceLastChapter = this.sessionTime - this.lastChapterTime;
                 const distanceSinceLastChapter = this.totalDistance - this.lastChapterDistance;
-
+                
                 let shouldTrigger = false;
-
+                
                 if (this.mode === 'normal') {
                     // Normal mode: 10 minutes or 1 mile
                     if (timeSinceLastChapter >= 600 || distanceSinceLastChapter >= 1) {
@@ -1046,7 +1019,7 @@
                         shouldTrigger = true;
                     }
                 }
-
+                
                 if (shouldTrigger && this.isActive && !this.isPaused) {
                     this.generateChapter();
                     this.lastChapterTime = this.sessionTime;
@@ -1063,7 +1036,7 @@
                 const intensity = this.getIntensityLevel();
                 const stylePrompt = this.getStylePrompt(intensity);
                 const genrePrompt = this.getGenrePrompt();
-
+                
                 const prompt = `
                     ${stylePrompt}
                     ${genrePrompt}
@@ -1080,7 +1053,7 @@
                 try {
                     // Show loading shimmer
                     this.showLoadingChapter();
-
+                    
                     // Generate story based on selected provider
                     let chapterText;
                     if (this.apiProvider === 'mistral') {
@@ -1088,7 +1061,7 @@
                     } else {
                         chapterText = await this.callAIAPI(prompt);
                     }
-
+                    
                     // Create chapter object
                     const chapter = {
                         id: Date.now(),
@@ -1097,18 +1070,18 @@
                         intensity: intensity,
                         timestamp: new Date().toISOString()
                     };
-
+                    
                     // Add to story
                     this.currentStory.push(chapter);
                     this.currentChapter++;
-
+                    
                     // Generate audio
                     const audioBlob = await this.generateAudio(chapterText);
                     this.audioBlobs.push(audioBlob);
-
+                    
                     // Display chapter
                     this.displayChapter(chapter, audioBlob);
-
+                    
                 } catch (error) {
                     console.error('Error generating chapter:', error);
                     this.displayError(`Failed to generate chapter: ${error.message}`);
@@ -1153,7 +1126,6 @@
             }
 
            
-
             getIntensityLevel() {
                 if (this.currentSpeed < 3) return 'walking';
                 if (this.currentSpeed < 6) return 'jogging';
@@ -1262,12 +1234,12 @@
 
             startJourney() {
                 if (this.isActive) return;
-
+                
                 if (!this.isApiConnected) {
                     this.displayError('Please configure your AI service first!');
                     return;
                 }
-
+                
                 this.isActive = true;
                 this.isPaused = false;
                 this.sessionId = Date.now().toString();
@@ -1278,21 +1250,21 @@
                 this.audioBlobs = [];
                 this.lastChapterTime = 0;
                 this.lastChapterDistance = 0;
-
+                
                 // Update UI
                 document.getElementById('startBtn').disabled = true;
                 document.getElementById('pauseBtn').disabled = false;
                 document.getElementById('saveSessionBtn').disabled = false;
                 document.getElementById('clearSessionBtn').disabled = false;
                 document.getElementById('storyFeed').innerHTML = '';
-
+                
                 // Generate first chapter
                 this.generateChapter();
             }
 
             pauseJourney() {
                 if (!this.isActive || this.isPaused) return;
-
+                
                 this.isPaused = true;
                 document.getElementById('pauseBtn').disabled = true;
                 document.getElementById('resumeBtn').disabled = false;
@@ -1300,7 +1272,7 @@
 
             resumeJourney() {
                 if (!this.isActive || !this.isPaused) return;
-
+                
                 this.isPaused = false;
                 document.getElementById('pauseBtn').disabled = false;
                 document.getElementById('resumeBtn').disabled = true;
@@ -1308,7 +1280,7 @@
 
             clearSession() {
                 if (!this.isActive) return;
-
+                
                 this.isActive = false;
                 this.isPaused = false;
                 this.sessionTime = 0;
@@ -1316,7 +1288,7 @@
                 this.currentChapter = 0;
                 this.currentStory = [];
                 this.audioBlobs = [];
-
+                
                 // Update UI
                 document.getElementById('startBtn').disabled = false;
                 document.getElementById('pauseBtn').disabled = true;
@@ -1328,13 +1300,13 @@
                         <p>🚀 Configure your AI service and start your journey to begin the AI-generated adventure...</p>
                     </div>
                 `;
-
+                
                 this.updateDisplay();
             }
 
             saveSession() {
                 if (this.currentStory.length === 0) return;
-
+                
                 const sessionData = {
                     id: this.sessionId,
                     timestamp: new Date().toISOString(),
@@ -1346,12 +1318,12 @@
                     chapters: this.currentStory,
                     audioBlobs: this.audioBlobs.map(blob => blob ? blob.size : 0) // Store size reference
                 };
-
+                
                 // Save to localStorage
                 let savedStories = JSON.parse(localStorage.getItem('myJourneyAIStories') || '[]');
                 savedStories.unshift(sessionData);
                 localStorage.setItem('myJourneyAIStories', JSON.stringify(savedStories));
-
+                
                 // Show success message
                 this.showNotification('Session saved successfully! 🎉', 'success');
                 this.loadSavedStories();
@@ -1373,7 +1345,7 @@
                 `;
                 notification.textContent = message;
                 document.body.appendChild(notification);
-
+                
                 setTimeout(() => {
                     notification.remove();
                 }, 3000);
@@ -1382,12 +1354,12 @@
             loadSavedStories() {
                 const savedStories = JSON.parse(localStorage.getItem('myJourneyAIStories') || '[]');
                 const listContainer = document.getElementById('savedStoriesList');
-
+                
                 if (savedStories.length === 0) {
                     listContainer.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No saved stories yet.</p>';
                     return;
                 }
-
+                
                 listContainer.innerHTML = savedStories.map(story => `
                     <div class="saved-story-item" onclick="myJourneyAI.loadStory('${story.id}')">
                         <div class="story-meta">
@@ -1405,9 +1377,9 @@
             loadStory(sessionId) {
                 const savedStories = JSON.parse(localStorage.getItem('myJourneyAIStories') || '[]');
                 const story = savedStories.find(s => s.id === sessionId);
-
+                
                 if (!story) return;
-
+                
                 // Restore session
                 this.sessionId = story.id;
                 this.selectedGenre = story.genre;
@@ -1417,18 +1389,18 @@
                 this.sessionTime = story.sessionTime;
                 this.currentStory = story.chapters;
                 this.currentChapter = story.chapters.length;
-
+                
                 // Display all chapters
                 const storyFeed = document.getElementById('storyFeed');
                 storyFeed.innerHTML = '';
-
+                
                 this.currentStory.forEach((chapter, index) => {
                     this.displayChapter(chapter, this.audioBlobs[index] || new Blob());
                 });
-
+                
                 this.updateDisplay();
                 this.hideSavedStories();
-
+                
                 // Enable continue option
                 if (!this.isActive) {
                     document.getElementById('startBtn').disabled = false;
@@ -1459,7 +1431,7 @@
                 const hours = Math.floor(this.sessionTime / 3600);
                 const minutes = Math.floor((this.sessionTime % 3600) / 60);
                 const seconds = this.sessionTime % 60;
-
+                
                 const display = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
                 document.getElementById('timerDisplay').textContent = display;
             }
@@ -1482,7 +1454,7 @@
                 const sampleRate = 44100;
                 const duration = 1; // 1 second silent audio
                 const buffer = audioContext.createBuffer(1, sampleRate * duration, sampleRate);
-
+                
                 const wavBuffer = this.createWavBuffer(buffer);
                 return new Blob([wavBuffer], { type: 'audio/wav' });
             }
@@ -1565,5 +1537,4 @@
         document.head.appendChild(style);
     </script>
 </body>
-
 </html>
