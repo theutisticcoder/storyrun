@@ -489,7 +489,7 @@
 
         async function fetchGemini(prompt) {
             console.log(state.apiKey)
-            const misral = new Mistral({ apiKey: state.apiKey});
+            const mistral = new Mistral({ apiKey: state.apiKey});
 
             const data = await mistral.chat.completions.create({
                 "messages": [
