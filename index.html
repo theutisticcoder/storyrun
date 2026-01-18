@@ -248,7 +248,7 @@
             savedList: document.getElementById('saved-list'),
             endRunBtn: document.getElementById('end-run-btn')
         };
-        import { Groq } from 'https://cdn.jsdelivr.net/npm/groq-sdk@0.37.0/+esm';
+        import { Mistral } from 'https://cdn.jsdelivr.net/npm/@mistralai/mistralai/+esm';
 
         // localForage config
         localforage.config({
@@ -489,21 +489,16 @@
 
         async function fetchGemini(prompt) {
             console.log(state.apiKey)
-            const groq = new Groq({ apiKey: state.apiKey, dangerouslyAllowBrowser: true });
+            const misral = new Mistral({ apiKey: state.apiKey});
 
-            const data = await groq.chat.completions.create({
+            const data = await mistral.chat.completions.create({
                 "messages": [
                     {
                         "role": "user",
                         "content": prompt
                     }
                 ],
-                "model": "meta-llama/llama-4-scout-17b-16e-instruct",
-                "temperature": 1,
-                "max_completion_tokens": 2048,
-                "top_p": 1,
-                "stream": false,
-                "stop": null
+                "model": "mistral-small-latest"
             });
             return data.choices[0].message.content
         }
@@ -733,7 +728,7 @@
 
         // --- Utilities & initialization ---
         elements.startBtn.addEventListener('click', () => {
-            const key = "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"
+            const key = "nUANEOGN4al5gS7pKPtu391tBxnVkfUQ"
 
             // init new session
             state.apiKey = key;
