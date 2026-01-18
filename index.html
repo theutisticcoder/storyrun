@@ -491,7 +491,7 @@
             console.log(state.apiKey)
             const mistral = new Mistral({ apiKey: state.apiKey});
 
-            const data = await mistral.chat.completions.create({
+            const data = await mistral.chat.complete({
                 "messages": [
                     {
                         "role": "user",
