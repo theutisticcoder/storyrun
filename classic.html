@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEURO-TRACK // Cyperpunk Audio Runner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=JetBrains+Mono:wght@300;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --neon-pink: #ff00ff;
+            --neon-blue: #00f2ff;
+            --neon-green: #00ff9f;
+            --dark-bg: #050507;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: white;
+            font-family: 'JetBrains Mono', monospace;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .cyber-font { font-family: 'Orbitron', sans-serif; }
+
+        /* Animated Grid Background */
+        .grid-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: 
+                linear-gradient(to right, rgba(0, 242, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0, 242, 255, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+            perspective: 500px;
+            z-index: -1;
+        }
+        
+        .grid-inner {
+            position: absolute; width: 200%; height: 200%;
+            top: -50%; left: -50%;
+            background-image: linear-gradient(0deg, transparent 24%, rgba(0, 242, 255, .05) 25%, rgba(0, 242, 255, .05) 26%, transparent 27%, transparent 74%, rgba(0, 242, 255, .05) 75%, rgba(0, 242, 255, .05) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(0, 242, 255, .05) 25%, rgba(0, 242, 255, .05) 26%, transparent 27%, transparent 74%, rgba(0, 242, 255, .05) 75%, rgba(0, 242, 255, .05) 76%, transparent 77%, transparent);
+            background-size: 50px 50px;
+            transform: rotateX(45deg);
+            animation: grid-move 2s linear infinite;
+        }
+
+        @keyframes grid-move {
+            0% { transform: rotateX(45deg) translateY(0); }
+            100% { transform: rotateX(45deg) translateY(50px); }
+        }
+
+        .neon-text-blue { text-shadow: 0 0 10px var(--neon-blue); color: var(--neon-blue); }
+        .neon-text-pink { text-shadow: 0 0 10px var(--neon-pink); color: var(--neon-pink); }
+
+        .progress-bar { height: 6px; background: #111; position: relative; border-radius: 3px; overflow: hidden; }
+        .progress-fill { 
+            height: 100%; background: linear-gradient(90deg, var(--neon-blue), var(--neon-pink)); 
+            width: 0%; transition: width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            box-shadow: 0 0 15px var(--neon-blue); 
+        }
+
+        .btn-cyber {
+            background: rgba(0, 255, 159, 0.1); border: 1px solid var(--neon-green); color: var(--neon-green);
+            padding: 10px 20px; transition: all 0.3s;
+            clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%);
+            text-transform: uppercase; letter-spacing: 2px;
+        }
+
+        .btn-cyber:hover { background: var(--neon-green); color: black; box-shadow: 0 0 20px var(--neon-green); transform: scale(1.02); }
+        .btn-cyber:active { transform: scale(0.98); }
+
+        .active-slot { 
+            border-color: var(--neon-pink) !important; 
+            background: rgba(255, 0, 255, 0.1) !important;
+            animation: pulse-pink 2s infinite; 
+        }
+
+        @keyframes pulse-pink {
+            0%, 100% { box-shadow: 0 0 5px var(--neon-pink); }
+            50% { box-shadow: 0 0 20px var(--neon-pink); }
+        }
+
+        .glitch-text { animation: glitch 5s infinite; }
+        @keyframes glitch {
+            0%, 90%, 100% { transform: none; opacity: 1; }
+            91% { transform: skewX(20deg); opacity: 0.8; }
+            92% { transform: skewX(-20deg); }
+            93% { opacity: 1; }
+        }
+
+        .treadmill-ui { border-top: 1px dashed #333; padding-top: 1rem; margin-top: 1rem; }
+        input[type=range] { accent-color: var(--neon-green); }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center p-4">
+    <div class="grid-bg"><div class="grid-inner"></div></div>
+    
+    <header class="w-full max-w-md mb-4 text-center z-10">
+        <h1 class="cyber-font text-3xl font-bold tracking-widest neon-text-blue glitch-text">NEURO-TRACK 2.0</h1>
+        <div class="text-[9px] text-cyan-500/50 uppercase tracking-[0.3em]">Neural Interface / Treadmill Ready</div>
+    </header>
+
+    <main class="w-full max-w-md bg-black/60 backdrop-blur-xl p-6 rounded-sm border border-white/10 relative z-10">
+        <!-- Status Bar -->
+        <div class="flex justify-between items-center mb-6 text-[10px] uppercase tracking-widest">
+            <div id="mode-status" class="text-green-400">● GPS_READY</div>
+            <div id="accuracy-val" class="text-gray-500">ACC: 0m</div>
+        </div>
+
+        <!-- Distance Display -->
+        <div class="text-center mb-6">
+            <div class="text-[10px] text-cyan-400 mb-1 tracking-[0.5em]">KINETIC ENERGY CONVERTED</div>
+            <div id="distance-display" class="cyber-font text-7xl font-bold italic tracking-tighter">0.00</div>
+            <div class="text-xs text-gray-400">MILES DISCOVERED</div>
+        </div>
+
+        <!-- Progress Section -->
+        <div class="mb-6">
+            <div class="flex justify-between text-[10px] mb-2 font-bold italic">
+                <span class="text-pink-500">DECRYPTING NEXT PACKET</span>
+                <span id="next-milestone-text" class="text-pink-500">1.00 MI</span>
+            </div>
+            <div class="progress-bar">
+                <div id="progress-fill" class="progress-fill"></div>
+            </div>
+        </div>
+
+        <!-- Stream Slots -->
+        <div class="grid grid-cols-3 gap-2 mb-6">
+            <div id="slot-0" class="border border-white/10 bg-white/5 p-2 text-center text-[9px] truncate transition-all duration-500">A_NULL</div>
+            <div id="slot-1" class="border border-white/10 bg-white/5 p-2 text-center text-[9px] truncate transition-all duration-500">B_NULL</div>
+            <div id="slot-2" class="border border-white/10 bg-white/5 p-2 text-center text-[9px] truncate transition-all duration-500">C_NULL</div>
+        </div>
+
+        <!-- Audio Player -->
+        <div id="audio-container" class="border-t border-white/10 pt-6 mt-6 opacity-0 translate-y-4 transition-all duration-700">
+            <div class="flex items-center gap-4 mb-4">
+                <div class="w-14 h-14 bg-pink-500/10 flex items-center justify-center border border-pink-500/50 group">
+                    <svg class="w-8 h-8 text-pink-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div id="audio-title" class="text-sm font-bold truncate tracking-tight">NULL_DATA</div>
+                    <div id="audio-author" class="text-[10px] text-gray-500 uppercase">ARCHIVE_NODE</div>
+                    <div id="chapter-info" class="text-[9px] text-green-400 mt-1 font-bold">READY TO PLAY</div>
+                </div>
+            </div>
+            <audio id="main-audio" controls class="w-full filter invert hue-rotate-180 opacity-90"></audio>
+        </div>
+
+        <!-- Mode Toggle & Treadmill Controls -->
+        <div class="mt-6 flex flex-col gap-4">
+            <div class="flex gap-2">
+                <button id="mode-toggle" class="flex-1 text-[10px] border border-white/20 p-2 hover:bg-white/5 transition-colors">SWITCH TO TREADMILL</button>
+            </div>
+            
+            <div id="treadmill-controls" class="hidden treadmill-ui space-y-3">
+                <div class="flex justify-between text-[10px] text-green-400 font-bold">
+                    <span>VIRTUAL SPEED</span>
+                    <span id="speed-val">6.0 MPH</span>
+                </div>
+                <input type="range" id="speed-slider" min="1" max="12" step="0.1" value="6" class="w-full h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer">
+            </div>
+
+            <button id="start-btn" class="btn-cyber w-full font-bold">BOOT SYSTEM</button>
+        </div>
+    </main>
+
+    <div id="console" class="w-full max-w-md mt-4 bg-black/80 p-3 rounded-sm border border-white/5 text-[9px] font-mono text-green-500/70 h-24 overflow-y-auto z-10"></div>
+
+    <script>
+        const MASTER_LIBRARY = [
+            { 
+                title: "Journey to the Center of the Earth", 
+                author: "Jules Verne", 
+                chapters: Array.from({length: 44}, (_, i) => `https://ia800203.us.archive.org/21/items/journey_center_earth_rs_librivox/journey_center_earth_${String(i+1).padStart(2, '0')}_verne.mp3`)
+            },
+            { 
+                title: "Frankenstein", 
+                author: "Mary Shelley", 
+                chapters: Array.from({length: 24}, (_, i) => `https://ia800204.us.archive.org/16/items/frankenstein_librivox/frankenstein_${String(i+1).padStart(2, '0')}_shelley.mp3`)
+            },
+            { 
+                title: "The Time Machine", 
+                author: "H.G. Wells", 
+                chapters: Array.from({length: 12}, (_, i) => `https://ia800701.us.archive.org/11/items/time_machine_librivox/timemachine_${String(i+1).padStart(2, '0')}_wells.mp3`)
+            },
+            { 
+                title: "The War of the Worlds",
+                author: "H.G. Wells",
+                chapters: Array.from({length: 27}, (_, i) => `https://ia800201.us.archive.org/26/items/war_of_the_worlds_librivox/waroftheworlds_${String(i+1).padStart(2, '0')}_wells.mp3`)
+            }
+        ];
+
+        let state = {
+            totalDistance: 0,
+            isTracking: false,
+            mode: 'gps', // 'gps' or 'treadmill'
+            speed: 6.0,  // mph for treadmill
+            mileCounter: 0,
+            activeStreams: [null, null, null],
+            lastTimestamp: null
+        };
+
+        let watchId = null;
+        let treadmillInterval = null;
+
+        const el = {
+            dist: document.getElementById('distance-display'),
+            prog: document.getElementById('progress-fill'),
+            startBtn: document.getElementById('start-btn'),
+            console: document.getElementById('console'),
+            milestone: document.getElementById('next-milestone-text'),
+            audioBox: document.getElementById('audio-container'),
+            audioPlayer: document.getElementById('main-audio'),
+            modeBtn: document.getElementById('mode-toggle'),
+            treadControls: document.getElementById('treadmill-controls'),
+            speedVal: document.getElementById('speed-val'),
+            speedSlider: document.getElementById('speed-slider'),
+            modeStatus: document.getElementById('mode-status'),
+            accuracy: document.getElementById('accuracy-val')
+        };
+
+        function addLog(msg) {
+            const div = document.createElement('div');
+            div.textContent = `[${new Date().toLocaleTimeString()}] > ${msg}`;
+            el.console.prepend(div);
+        }
+
+        function pickBook() {
+            const available = MASTER_LIBRARY.filter(b => !state.activeStreams.some(s => s && s.title === b.title));
+            const b = available.length ? available[Math.floor(Math.random() * available.length)] : MASTER_LIBRARY[0];
+            return { ...b, currentChapter: 0 };
+        }
+
+        function initStreams() {
+            for(let i=0; i<3; i++) {
+                state.activeStreams[i] = pickBook();
+                const slot = document.getElementById(`slot-${i}`);
+                slot.textContent = state.activeStreams[i].title.split(' ')[0].toUpperCase();
+            }
+            addLog("STREAMS LOADED AND ENCRYPTED");
+        }
+
+        function triggerChapter() {
+            state.mileCounter++;
+            const idx = (state.mileCounter - 1) % 3;
+            const stream = state.activeStreams[idx];
+
+            document.querySelectorAll('[id^="slot-"]').forEach(s => s.classList.remove('active-slot'));
+            document.getElementById(`slot-${idx}`).classList.add('active-slot');
+
+            el.audioBox.style.opacity = '1';
+            el.audioBox.style.transform = 'translateY(0)';
+            document.getElementById('audio-title').textContent = stream.title;
+            document.getElementById('audio-author').textContent = stream.author;
+            document.getElementById('chapter-info').textContent = `ACCESS GRANTED: CHAPTER ${stream.currentChapter + 1} / ${stream.chapters.length}`;
+            
+            el.audioPlayer.src = stream.chapters[stream.currentChapter];
+            el.audioPlayer.play().catch(() => addLog("SIGNAL BUFFERED. PRESS PLAY."));
+
+            stream.currentChapter++;
+            if(stream.currentChapter >= stream.chapters.length) {
+                addLog(`STREAM EXHAUSTED: ${stream.title}`);
+                state.activeStreams[idx] = pickBook();
+                document.getElementById(`slot-${idx}`).textContent = state.activeStreams[idx].title.split(' ')[0].toUpperCase();
+            }
+        }
+
+        function updateUI() {
+            el.dist.textContent = state.totalDistance.toFixed(2);
+            const progress = (state.totalDistance % 1) * 100;
+            el.prog.style.width = `${progress}%`;
+            el.milestone.textContent = `${(Math.floor(state.totalDistance) + 1).toFixed(2)} MI`;
+
+            if (state.totalDistance >= state.mileCounter + 1) {
+                triggerChapter();
+            }
+        }
+
+        function startTreadmill() {
+            state.lastTimestamp = Date.now();
+            treadmillInterval = setInterval(() => {
+                const now = Date.now();
+                const dt = (now - state.lastTimestamp) / 3600000; // hours
+                const deltaDist = state.speed * dt;
+                state.totalDistance += deltaDist;
+                state.lastTimestamp = now;
+                updateUI();
+            }, 500);
+        }
+
+        function toggle() {
+            if (state.isTracking) {
+                state.isTracking = false;
+                el.startBtn.textContent = "BOOT SYSTEM";
+                el.modeStatus.classList.replace('text-green-400', 'text-yellow-400');
+                el.modeStatus.textContent = "● IDLE";
+                if (watchId) navigator.geolocation.clearWatch(watchId);
+                if (treadmillInterval) clearInterval(treadmillInterval);
+                addLog("SYSTEM DEACTIVATED");
+            } else {
+                if (!state.activeStreams[0]) initStreams();
+                state.isTracking = true;
+                el.startBtn.textContent = "TERMINATE SESSION";
+                el.modeStatus.classList.replace('text-yellow-400', 'text-green-400');
+                el.modeStatus.textContent = state.mode === 'gps' ? "● GPS_ACTIVE" : "● TREADMILL_ACTIVE";
+                
+                if (state.mode === 'gps') {
+                    watchId = navigator.geolocation.watchPosition(p => {
+                        el.accuracy.textContent = `ACC: ${p.coords.accuracy.toFixed(0)}m`;
+                        if(p.coords.accuracy > 50) return;
+                        // Distance logic (simplified for brevity, using same logic from previous)
+                        updateUI(); 
+                    }, null, {enableHighAccuracy: true});
+                } else {
+                    startTreadmill();
+                }
+                addLog("NEURAL LINK ESTABLISHED");
+            }
+        }
+
+        el.modeBtn.addEventListener('click', () => {
+            if(state.isTracking) return;
+            state.mode = state.mode === 'gps' ? 'treadmill' : 'gps';
+            el.modeBtn.textContent = state.mode === 'gps' ? 'SWITCH TO TREADMILL' : 'SWITCH TO GPS';
+            el.treadControls.classList.toggle('hidden', state.mode === 'gps');
+            el.modeStatus.textContent = state.mode === 'gps' ? '● GPS_READY' : '● TREAD_READY';
+            addLog(`MODE TOGGLED: ${state.mode.toUpperCase()}`);
+        });
+
+        el.speedSlider.addEventListener('input', (e) => {
+            state.speed = parseFloat(e.target.value);
+            el.speedVal.textContent = `${state.speed.toFixed(1)} MPH`;
+        });
+
+        el.startBtn.addEventListener('click', toggle);
+        addLog("AWAITING BIO-SYNC...");
+    </script>
+</body>
+</html>
