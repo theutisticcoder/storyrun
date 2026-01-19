@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NEURO-TRACK // Cyperpunk Audio Runner</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=JetBrains+Mono:wght@300;500&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -97,15 +98,15 @@
     <div class="grid-bg"><div class="grid-inner"></div></div>
     
     <header class="w-full max-w-md mb-4 text-center z-10">
-        <h1 class="cyber-font text-3xl font-bold tracking-widest neon-text-blue glitch-text">NEURO-TRACK 2.0</h1>
-        <div class="text-[9px] text-cyan-500/50 uppercase tracking-[0.3em]">Neural Interface / Treadmill Ready</div>
+        <h1 class="cyber-font text-3xl font-bold tracking-widest neon-text-blue glitch-text">NEURO-TRACK 2.1</h1>
+        <div class="text-[9px] text-cyan-500/50 uppercase tracking-[0.3em]">Persistent Neural Link Enabled</div>
     </header>
 
     <main class="w-full max-w-md bg-black/60 backdrop-blur-xl p-6 rounded-sm border border-white/10 relative z-10">
         <!-- Status Bar -->
         <div class="flex justify-between items-center mb-6 text-[10px] uppercase tracking-widest">
-            <div id="mode-status" class="text-green-400">● GPS_READY</div>
-            <div id="accuracy-val" class="text-gray-500">ACC: 0m</div>
+            <div id="mode-status" class="text-green-400">● SYSTEM_IDLE</div>
+            <div id="accuracy-val" class="text-gray-500">SAVED_STATE: LOADED</div>
         </div>
 
         <!-- Distance Display -->
@@ -142,7 +143,7 @@
                 <div class="flex-1 min-w-0">
                     <div id="audio-title" class="text-sm font-bold truncate tracking-tight">NULL_DATA</div>
                     <div id="audio-author" class="text-[10px] text-gray-500 uppercase">ARCHIVE_NODE</div>
-                    <div id="chapter-info" class="text-[9px] text-green-400 mt-1 font-bold">READY TO PLAY</div>
+                    <div id="chapter-info" class="text-[9px] text-green-400 mt-1 font-bold italic">RESTORING CLIP...</div>
                 </div>
             </div>
             <audio id="main-audio" controls class="w-full filter invert hue-rotate-180 opacity-90"></audio>
@@ -195,11 +196,13 @@
         let state = {
             totalDistance: 0,
             isTracking: false,
-            mode: 'gps', // 'gps' or 'treadmill'
-            speed: 6.0,  // mph for treadmill
+            mode: 'gps',
+            speed: 6.0,
             mileCounter: 0,
             activeStreams: [null, null, null],
-            lastTimestamp: null
+            lastTimestamp: null,
+            lastAudioUrl: null,
+            lastChapterText: ""
         };
 
         let watchId = null;
@@ -218,13 +221,71 @@
             speedVal: document.getElementById('speed-val'),
             speedSlider: document.getElementById('speed-slider'),
             modeStatus: document.getElementById('mode-status'),
-            accuracy: document.getElementById('accuracy-val')
+            accuracy: document.getElementById('accuracy-val'),
+            audioTitle: document.getElementById('audio-title'),
+            audioAuthor: document.getElementById('audio-author'),
+            chapterInfo: document.getElementById('chapter-info')
         };
 
         function addLog(msg) {
             const div = document.createElement('div');
             div.textContent = `[${new Date().toLocaleTimeString()}] > ${msg}`;
             el.console.prepend(div);
+        }
+
+        async function saveState() {
+            try {
+                await localforage.setItem('neuro_track_state', {
+                    totalDistance: state.totalDistance,
+                    mode: state.mode,
+                    speed: state.speed,
+                    mileCounter: state.mileCounter,
+                    activeStreams: state.activeStreams,
+                    lastAudioUrl: state.lastAudioUrl,
+                    lastChapterText: el.chapterInfo.textContent,
+                    lastAudioTitle: el.audioTitle.textContent,
+                    lastAudioAuthor: el.audioAuthor.textContent
+                });
+            } catch (e) {
+                console.error("Save Error", e);
+            }
+        }
+
+        async function loadState() {
+            const saved = await localforage.getItem('neuro_track_state');
+            if (saved) {
+                state.totalDistance = saved.totalDistance || 0;
+                state.mode = saved.mode || 'gps';
+                state.speed = saved.speed || 6.0;
+                state.mileCounter = saved.mileCounter || 0;
+                state.activeStreams = saved.activeStreams || [null, null, null];
+                
+                // Restore UI
+                el.speedSlider.value = state.speed;
+                el.speedVal.textContent = `${state.speed.toFixed(1)} MPH`;
+                el.modeBtn.textContent = state.mode === 'gps' ? 'SWITCH TO TREADMILL' : 'SWITCH TO GPS';
+                el.treadControls.classList.toggle('hidden', state.mode === 'gps');
+                
+                if (state.activeStreams[0]) {
+                    state.activeStreams.forEach((s, i) => {
+                        const slot = document.getElementById(`slot-${i}`);
+                        slot.textContent = s.title.split(' ')[0].toUpperCase();
+                    });
+                }
+
+                if (saved.lastAudioUrl) {
+                    state.lastAudioUrl = saved.lastAudioUrl;
+                    el.audioBox.style.opacity = '1';
+                    el.audioBox.style.transform = 'translateY(0)';
+                    el.audioTitle.textContent = saved.lastAudioTitle;
+                    el.audioAuthor.textContent = saved.lastAudioAuthor;
+                    el.chapterInfo.textContent = saved.lastChapterText;
+                    el.audioPlayer.src = saved.lastAudioUrl;
+                }
+
+                addLog("PREVIOUS SESSION RESTORED");
+                updateUI();
+            }
         }
 
         function pickBook() {
@@ -240,6 +301,7 @@
                 slot.textContent = state.activeStreams[i].title.split(' ')[0].toUpperCase();
             }
             addLog("STREAMS LOADED AND ENCRYPTED");
+            saveState();
         }
 
         function triggerChapter() {
@@ -252,11 +314,12 @@
 
             el.audioBox.style.opacity = '1';
             el.audioBox.style.transform = 'translateY(0)';
-            document.getElementById('audio-title').textContent = stream.title;
-            document.getElementById('audio-author').textContent = stream.author;
-            document.getElementById('chapter-info').textContent = `ACCESS GRANTED: CHAPTER ${stream.currentChapter + 1} / ${stream.chapters.length}`;
+            el.audioTitle.textContent = stream.title;
+            el.audioAuthor.textContent = stream.author;
+            el.chapterInfo.textContent = `ACCESS GRANTED: CHAPTER ${stream.currentChapter + 1} / ${stream.chapters.length}`;
             
-            el.audioPlayer.src = stream.chapters[stream.currentChapter];
+            state.lastAudioUrl = stream.chapters[stream.currentChapter];
+            el.audioPlayer.src = state.lastAudioUrl;
             el.audioPlayer.play().catch(() => addLog("SIGNAL BUFFERED. PRESS PLAY."));
 
             stream.currentChapter++;
@@ -265,6 +328,7 @@
                 state.activeStreams[idx] = pickBook();
                 document.getElementById(`slot-${idx}`).textContent = state.activeStreams[idx].title.split(' ')[0].toUpperCase();
             }
+            saveState();
         }
 
         function updateUI() {
@@ -282,11 +346,13 @@
             state.lastTimestamp = Date.now();
             treadmillInterval = setInterval(() => {
                 const now = Date.now();
-                const dt = (now - state.lastTimestamp) / 3600000; // hours
+                const dt = (now - state.lastTimestamp) / 3600000; 
                 const deltaDist = state.speed * dt;
                 state.totalDistance += deltaDist;
                 state.lastTimestamp = now;
                 updateUI();
+                // Periodic save while running
+                if (Math.random() > 0.95) saveState();
             }, 500);
         }
 
@@ -299,6 +365,7 @@
                 if (watchId) navigator.geolocation.clearWatch(watchId);
                 if (treadmillInterval) clearInterval(treadmillInterval);
                 addLog("SYSTEM DEACTIVATED");
+                saveState();
             } else {
                 if (!state.activeStreams[0]) initStreams();
                 state.isTracking = true;
@@ -310,7 +377,7 @@
                     watchId = navigator.geolocation.watchPosition(p => {
                         el.accuracy.textContent = `ACC: ${p.coords.accuracy.toFixed(0)}m`;
                         if(p.coords.accuracy > 50) return;
-                        // Distance logic (simplified for brevity, using same logic from previous)
+                        // Simple increment logic for demo; in real use would calculate distance between points
                         updateUI(); 
                     }, null, {enableHighAccuracy: true});
                 } else {
@@ -327,15 +394,19 @@
             el.treadControls.classList.toggle('hidden', state.mode === 'gps');
             el.modeStatus.textContent = state.mode === 'gps' ? '● GPS_READY' : '● TREAD_READY';
             addLog(`MODE TOGGLED: ${state.mode.toUpperCase()}`);
+            saveState();
         });
 
         el.speedSlider.addEventListener('input', (e) => {
             state.speed = parseFloat(e.target.value);
             el.speedVal.textContent = `${state.speed.toFixed(1)} MPH`;
+            saveState();
         });
 
         el.startBtn.addEventListener('click', toggle);
-        addLog("AWAITING BIO-SYNC...");
+
+        // Initial Boot
+        window.onload = loadState;
     </script>
 </body>
 </html>
