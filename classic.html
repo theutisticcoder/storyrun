@@ -92,13 +92,34 @@
 
         .treadmill-ui { border-top: 1px dashed #333; padding-top: 1rem; margin-top: 1rem; }
         input[type=range] { accent-color: var(--neon-green); }
+
+        /* Virtual Map Styling */
+        #virtual-map {
+            width: 100%;
+            height: 120px;
+            background: rgba(0, 20, 20, 0.4);
+            border: 1px solid rgba(0, 242, 255, 0.2);
+            position: relative;
+            margin-bottom: 1rem;
+            overflow: hidden;
+        }
+        .map-label {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            font-size: 8px;
+            color: var(--neon-blue);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body class="flex flex-col items-center justify-center p-4">
     <div class="grid-bg"><div class="grid-inner"></div></div>
     
     <header class="w-full max-w-md mb-4 text-center z-10">
-        <h1 class="cyber-font text-3xl font-bold tracking-widest neon-text-blue glitch-text">NEURO-TRACK 2.1</h1>
+        <h1 class="cyber-font text-3xl font-bold tracking-widest neon-text-blue glitch-text">NEURO-TRACK 2.2</h1>
         <div class="text-[9px] text-cyan-500/50 uppercase tracking-[0.3em]">Persistent Neural Link Enabled</div>
     </header>
 
@@ -107,6 +128,12 @@
         <div class="flex justify-between items-center mb-6 text-[10px] uppercase tracking-widest">
             <div id="mode-status" class="text-green-400">● SYSTEM_IDLE</div>
             <div id="accuracy-val" class="text-gray-500">SAVED_STATE: LOADED</div>
+        </div>
+
+        <!-- Virtual Map -->
+        <div id="virtual-map">
+            <span class="map-label">Neural Projection // Active Path</span>
+            <canvas id="map-canvas"></canvas>
         </div>
 
         <!-- Distance Display -->
@@ -202,11 +229,14 @@
             activeStreams: [null, null, null],
             lastTimestamp: null,
             lastAudioUrl: null,
-            lastChapterText: ""
+            lastChapterText: "",
+            sessionPath: [] // [{x, y}] for map
         };
 
         let watchId = null;
         let treadmillInterval = null;
+        let mapContext = null;
+        let mapAnimationId = null;
 
         const el = {
             dist: document.getElementById('distance-display'),
@@ -224,13 +254,111 @@
             accuracy: document.getElementById('accuracy-val'),
             audioTitle: document.getElementById('audio-title'),
             audioAuthor: document.getElementById('audio-author'),
-            chapterInfo: document.getElementById('chapter-info')
+            chapterInfo: document.getElementById('chapter-info'),
+            mapCanvas: document.getElementById('map-canvas')
         };
 
         function addLog(msg) {
             const div = document.createElement('div');
             div.textContent = `[${new Date().toLocaleTimeString()}] > ${msg}`;
             el.console.prepend(div);
+        }
+
+        // Map Initialization & Rendering
+        function initMap() {
+            const container = document.getElementById('virtual-map');
+            el.mapCanvas.width = container.clientWidth;
+            el.mapCanvas.height = container.clientHeight;
+            mapContext = el.mapCanvas.getContext('2d');
+            
+            // Start at center
+            if (state.sessionPath.length === 0) {
+                state.sessionPath.push({x: el.mapCanvas.width/2, y: el.mapCanvas.height/2});
+            }
+            
+            drawMap();
+        }
+
+        function drawMap() {
+            if (!mapContext) return;
+            const ctx = mapContext;
+            const w = el.mapCanvas.width;
+            const h = el.mapCanvas.height;
+
+            ctx.clearRect(0, 0, w, h);
+
+            // Draw Scanner Grid
+            ctx.strokeStyle = 'rgba(0, 242, 255, 0.1)';
+            ctx.lineWidth = 1;
+            for(let i=0; i<w; i+=20) {
+                ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, h); ctx.stroke();
+            }
+            for(let i=0; i<h; i+=20) {
+                ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(w, i); ctx.stroke();
+            }
+
+            // Draw Path
+            if (state.sessionPath.length > 1) {
+                ctx.beginPath();
+                ctx.setLineDash([]);
+                ctx.strokeStyle = '#00f2ff';
+                ctx.lineWidth = 2;
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#00f2ff';
+                ctx.moveTo(state.sessionPath[0].x, state.sessionPath[0].y);
+                for(let i=1; i < state.sessionPath.length; i++) {
+                    ctx.lineTo(state.sessionPath[i].x, state.sessionPath[i].y);
+                }
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+            }
+
+            // Draw Current Position Marker
+            const head = state.sessionPath[state.sessionPath.length - 1];
+            if (head) {
+                ctx.fillStyle = '#ff00ff';
+                ctx.beginPath();
+                ctx.arc(head.x, head.y, 4, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Pulsing outer ring
+                const pulse = (Date.now() % 1000) / 1000;
+                ctx.strokeStyle = `rgba(255, 0, 255, ${1 - pulse})`;
+                ctx.beginPath();
+                ctx.arc(head.x, head.y, 4 + (pulse * 10), 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            mapAnimationId = requestAnimationFrame(drawMap);
+        }
+
+        function updateMapPath(deltaDist) {
+            const last = state.sessionPath[state.sessionPath.length - 1];
+            let nextX, nextY;
+
+            if (state.mode === 'treadmill') {
+                // Procedural path for treadmill: move roughly "forward" with slight jitter
+                const angle = (Date.now() / 2000) + (Math.sin(Date.now() / 5000) * 0.5);
+                const step = deltaDist * 500; // Scale miles to pixels
+                nextX = last.x + Math.cos(angle) * step;
+                nextY = last.y + Math.sin(angle) * step;
+            } else {
+                // GPS path would use actual coordinates mapped to canvas bounds
+                // For this demo, we simulate a drift
+                nextX = last.x + (Math.random() - 0.5) * 5;
+                nextY = last.y + (Math.random() - 0.5) * 5;
+            }
+
+            // Keep in bounds with wrapping or bounce
+            if (nextX < 0) nextX = el.mapCanvas.width;
+            if (nextX > el.mapCanvas.width) nextX = 0;
+            if (nextY < 0) nextY = el.mapCanvas.height;
+            if (nextY > el.mapCanvas.height) nextY = 0;
+
+            state.sessionPath.push({x: nextX, y: nextY});
+            
+            // Limit path length for performance
+            if (state.sessionPath.length > 500) state.sessionPath.shift();
         }
 
         async function saveState() {
@@ -244,7 +372,8 @@
                     lastAudioUrl: state.lastAudioUrl,
                     lastChapterText: el.chapterInfo.textContent,
                     lastAudioTitle: el.audioTitle.textContent,
-                    lastAudioAuthor: el.audioAuthor.textContent
+                    lastAudioAuthor: el.audioAuthor.textContent,
+                    sessionPath: state.sessionPath
                 });
             } catch (e) {
                 console.error("Save Error", e);
@@ -259,6 +388,7 @@
                 state.speed = saved.speed || 6.0;
                 state.mileCounter = saved.mileCounter || 0;
                 state.activeStreams = saved.activeStreams || [null, null, null];
+                state.sessionPath = saved.sessionPath || [];
                 
                 // Restore UI
                 el.speedSlider.value = state.speed;
@@ -286,6 +416,7 @@
                 addLog("PREVIOUS SESSION RESTORED");
                 updateUI();
             }
+            initMap();
         }
 
         function pickBook() {
@@ -350,10 +481,12 @@
                 const deltaDist = state.speed * dt;
                 state.totalDistance += deltaDist;
                 state.lastTimestamp = now;
+                
+                updateMapPath(deltaDist);
                 updateUI();
-                // Periodic save while running
-                if (Math.random() > 0.95) saveState();
-            }, 500);
+                
+                if (Math.random() > 0.98) saveState();
+            }, 100); // Faster refresh for smoother map
         }
 
         function toggle() {
@@ -377,7 +510,9 @@
                     watchId = navigator.geolocation.watchPosition(p => {
                         el.accuracy.textContent = `ACC: ${p.coords.accuracy.toFixed(0)}m`;
                         if(p.coords.accuracy > 50) return;
-                        // Simple increment logic for demo; in real use would calculate distance between points
+                        // Mock increment for demo
+                        state.totalDistance += 0.001; 
+                        updateMapPath(0.001);
                         updateUI(); 
                     }, null, {enableHighAccuracy: true});
                 } else {
@@ -405,8 +540,8 @@
 
         el.startBtn.addEventListener('click', toggle);
 
-        // Initial Boot
         window.onload = loadState;
+        window.onresize = initMap;
     </script>
 </body>
 </html>
