@@ -19,8 +19,12 @@
             background-color: var(--dark-bg);
             color: white;
             font-family: 'JetBrains Mono', monospace;
-            overflow: scroll;
-            height: 100vh;
+            /* Removed overflow: hidden to allow scrolling on smaller devices */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-bottom: 2rem;
         }
 
         .cyber-font { font-family: 'Orbitron', sans-serif; }
@@ -95,7 +99,7 @@
 
         #virtual-map {
             width: 100%;
-            height: 120px;
+            height: 140px;
             background: rgba(0, 20, 20, 0.4);
             border: 1px solid rgba(0, 242, 255, 0.2);
             position: relative;
@@ -111,23 +115,25 @@
             text-transform: uppercase;
             letter-spacing: 1px;
             pointer-events: none;
+            z-index: 5;
         }
     </style>
 </head>
-<body class="flex flex-col items-center justify-center p-4">
+<body class="p-4">
     <div class="grid-bg"><div class="grid-inner"></div></div>
     
     <header class="w-full max-w-md mb-4 text-center z-10">
-        <h1 class="cyber-font text-3xl font-bold tracking-widest neon-text-blue glitch-text">NEURO-TRACK 2.4</h1>
-        <div class="text-[9px] text-cyan-500/50 uppercase tracking-[0.3em]">Archive Proxy Established</div>
+        <h1 class="cyber-font text-3xl font-bold tracking-widest neon-text-blue glitch-text">NEURO-TRACK 2.5</h1>
+        <div class="text-[9px] text-cyan-500/50 uppercase tracking-[0.3em]">Full Archive Integration</div>
     </header>
 
     <main class="w-full max-w-md bg-black/60 backdrop-blur-xl p-6 rounded-sm border border-white/10 relative z-10">
         <div class="flex justify-between items-center mb-6 text-[10px] uppercase tracking-widest">
             <div id="mode-status" class="text-green-400">● SYSTEM_IDLE</div>
-            <div id="accuracy-val" class="text-gray-500">LIBRI_LINK: READY</div>
+            <div id="accuracy-val" class="text-gray-500">SYNC_LVL: OPTIMAL</div>
         </div>
 
+        <!-- Virtual Map -->
         <div id="virtual-map">
             <span class="map-label">Neural Projection // Active Path</span>
             <canvas id="map-canvas"></canvas>
@@ -149,19 +155,21 @@
             </div>
         </div>
 
+        <!-- Active Data Slots -->
         <div class="grid grid-cols-3 gap-2 mb-6">
             <div id="slot-0" class="border border-white/10 bg-white/5 p-2 text-center text-[9px] truncate transition-all duration-500">A_NULL</div>
             <div id="slot-1" class="border border-white/10 bg-white/5 p-2 text-center text-[9px] truncate transition-all duration-500">B_NULL</div>
             <div id="slot-2" class="border border-white/10 bg-white/5 p-2 text-center text-[9px] truncate transition-all duration-500">C_NULL</div>
         </div>
 
+        <!-- Audio Interface -->
         <div id="audio-container" class="border-t border-white/10 pt-6 mt-6 opacity-0 translate-y-4 transition-all duration-700">
             <div class="flex items-center gap-4 mb-4">
-                <div class="w-14 h-14 bg-pink-500/10 flex items-center justify-center border border-pink-500/50 group">
+                <div class="w-14 h-14 bg-pink-500/10 flex items-center justify-center border border-pink-500/50">
                     <svg class="w-8 h-8 text-pink-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>
                 </div>
                 <div class="flex-1 min-w-0">
-                    <div id="audio-title" class="text-sm font-bold truncate tracking-tight">NULL_DATA</div>
+                    <div id="audio-title" class="text-sm font-bold truncate tracking-tight uppercase">NULL_DATA</div>
                     <div id="audio-author" class="text-[10px] text-gray-500 uppercase">ARCHIVE_NODE</div>
                     <div id="chapter-info" class="text-[9px] text-green-400 mt-1 font-bold italic">RESTORING CLIP...</div>
                 </div>
@@ -169,6 +177,7 @@
             <audio id="main-audio" controls crossorigin="anonymous" class="w-full filter invert hue-rotate-180 opacity-90"></audio>
         </div>
 
+        <!-- Controls -->
         <div class="mt-6 flex flex-col gap-4">
             <div class="flex gap-2">
                 <button id="mode-toggle" class="flex-1 text-[10px] border border-white/20 p-2 hover:bg-white/5 transition-colors">SWITCH TO TREADMILL</button>
@@ -186,11 +195,22 @@
         </div>
     </main>
 
+    <!-- Scrolling Console / Teaser -->
     <div id="console" class="w-full max-w-md mt-4 bg-black/80 p-3 rounded-sm border border-white/5 text-[9px] font-mono text-green-500/70 h-24 overflow-y-auto z-10"></div>
 
     <script>
-        // Restoring Archive.org books with verified direct streaming links
         const MASTER_LIBRARY = [
+            { 
+                title: "Journey to the Center of the Earth",
+                author: "Jules Verne",
+                chapters: [
+                    "https://archive.org/download/journey_center_earth_rs_librivox/journey_center_earth_01_verne.mp3",
+                    "https://archive.org/download/journey_center_earth_rs_librivox/journey_center_earth_02_verne.mp3",
+                    "https://archive.org/download/journey_center_earth_rs_librivox/journey_center_earth_03_verne.mp3",
+                    "https://archive.org/download/journey_center_earth_rs_librivox/journey_center_earth_04_verne.mp3",
+                    "https://archive.org/download/journey_center_earth_rs_librivox/journey_center_earth_05_verne.mp3"
+                ]
+            },
             { 
                 title: "Frankenstein", 
                 author: "Mary Shelley", 
@@ -229,6 +249,19 @@
             }
         ];
 
+        const TEASER_MESSAGES = [
+            "SCANNING PERIMETER... NO HOSTILES DETECTED.",
+            "ENERGY CONVERSION RATIO: 1.2:1",
+            "NEURAL INTERFACE REMAINING STABLE.",
+            "WARNING: MEMORY FRAGMENTS DETECTED IN SECTOR 7.",
+            "SIGNAL FROM ARCHIVE_NODE RECOVERED.",
+            "KINETIC DATA BEING UPLOADED TO GRID.",
+            "BEYOND THE HORIZON, THE CITY BURNS COLD.",
+            "KEEP MOVING. THE SIGNAL REQUIRES MOMENTUM.",
+            "HEART RATE SYNC: 94%",
+            "DOWNLOADING CULTURAL ARTIFACTS..."
+        ];
+
         let state = {
             totalDistance: 0,
             isTracking: false,
@@ -238,7 +271,6 @@
             activeStreams: [null, null, null],
             lastTimestamp: null,
             lastAudioUrl: null,
-            lastChapterText: "",
             sessionPath: []
         };
 
@@ -246,6 +278,7 @@
         let treadmillInterval = null;
         let mapContext = null;
         let mapAnimationId = null;
+        let teaserInterval = null;
 
         const el = {
             dist: document.getElementById('distance-display'),
@@ -260,25 +293,23 @@
             speedVal: document.getElementById('speed-val'),
             speedSlider: document.getElementById('speed-slider'),
             modeStatus: document.getElementById('mode-status'),
-            accuracy: document.getElementById('accuracy-val'),
             audioTitle: document.getElementById('audio-title'),
             audioAuthor: document.getElementById('audio-author'),
             chapterInfo: document.getElementById('chapter-info'),
             mapCanvas: document.getElementById('map-canvas')
         };
 
-        function addLog(msg) {
+        function addLog(msg, color = 'green') {
             const div = document.createElement('div');
-            div.textContent = `[${new Date().toLocaleTimeString()}] > ${msg}`;
+            div.className = `text-${color}-500/70`;
+            div.textContent = `[${new Date().toLocaleTimeString([], {hour12: false})}] > ${msg}`;
             el.console.prepend(div);
+            if (el.console.children.length > 50) el.console.lastChild.remove();
         }
 
-        // Handle audio errors gracefully
         el.audioPlayer.onerror = () => {
-            addLog("NEURAL LINK CORRUPTED. RE-SYNCING PACKET...");
-            setTimeout(() => {
-                if(state.isTracking) triggerChapter();
-            }, 3000);
+            addLog("NEURAL LINK CORRUPTED. RE-SYNCING PACKET...", "red");
+            setTimeout(() => { if(state.isTracking) triggerChapter(); }, 3000);
         };
 
         function initMap() {
@@ -330,26 +361,24 @@
         function updateMapPath(deltaDist) {
             const last = state.sessionPath[state.sessionPath.length - 1];
             let nextX, nextY;
-            if (state.mode === 'treadmill') {
-                const angle = (Date.now() / 2000) + (Math.sin(Date.now() / 5000) * 0.5);
-                const step = deltaDist * 800;
-                nextX = last.x + Math.cos(angle) * step;
-                nextY = last.y + Math.sin(angle) * step;
-            } else {
-                nextX = last.x + (Math.random() - 0.5) * 5;
-                nextY = last.y + (Math.random() - 0.5) * 5;
-            }
+            const angle = (Date.now() / 3000) + (Math.sin(Date.now() / 4000) * 0.8);
+            const step = Math.max(0.5, deltaDist * 5000); 
+            
+            nextX = last.x + Math.cos(angle) * step;
+            nextY = last.y + Math.sin(angle) * step;
+
             if (nextX < 0) nextX = el.mapCanvas.width;
             if (nextX > el.mapCanvas.width) nextX = 0;
             if (nextY < 0) nextY = el.mapCanvas.height;
             if (nextY > el.mapCanvas.height) nextY = 0;
+
             state.sessionPath.push({x: nextX, y: nextY});
-            if (state.sessionPath.length > 500) state.sessionPath.shift();
+            if (state.sessionPath.length > 100) state.sessionPath.shift();
         }
 
         async function saveState() {
             try {
-                await localforage.setItem('neuro_track_state', {
+                await localforage.setItem('neuro_track_state_v2', {
                     totalDistance: state.totalDistance,
                     mode: state.mode,
                     speed: state.speed,
@@ -361,62 +390,73 @@
                     lastAudioAuthor: el.audioAuthor.textContent,
                     sessionPath: state.sessionPath
                 });
-            } catch (e) {}
+            } catch (e) { console.warn("Save failed", e); }
         }
 
         async function loadState() {
-            const saved = await localforage.getItem('neuro_track_state');
-            if (saved) {
-                state.totalDistance = saved.totalDistance || 0;
-                state.mode = saved.mode || 'gps';
-                state.speed = saved.speed || 6.0;
-                state.mileCounter = saved.mileCounter || 0;
-                state.activeStreams = saved.activeStreams || [null, null, null];
-                state.sessionPath = saved.sessionPath || [];
-                el.speedSlider.value = state.speed;
-                el.speedVal.textContent = `${state.speed.toFixed(1)} MPH`;
-                el.modeBtn.textContent = state.mode === 'gps' ? 'SWITCH TO TREADMILL' : 'SWITCH TO GPS';
-                el.treadControls.classList.toggle('hidden', state.mode === 'gps');
-                if (state.activeStreams[0]) {
-                    state.activeStreams.forEach((s, i) => {
-                        const slot = document.getElementById(`slot-${i}`);
-                        slot.textContent = s.title.split(' ')[0].toUpperCase();
-                    });
+            try {
+                const saved = await localforage.getItem('neuro_track_state_v2');
+                if (saved) {
+                    state.totalDistance = saved.totalDistance || 0;
+                    state.mode = saved.mode || 'gps';
+                    state.speed = saved.speed || 6.0;
+                    state.mileCounter = saved.mileCounter || 0;
+                    state.activeStreams = saved.activeStreams || [null, null, null];
+                    state.sessionPath = saved.sessionPath || [];
+                    
+                    el.speedSlider.value = state.speed;
+                    el.speedVal.textContent = `${state.speed.toFixed(1)} MPH`;
+                    el.modeBtn.textContent = state.mode === 'gps' ? 'SWITCH TO TREADMILL' : 'SWITCH TO GPS';
+                    el.treadControls.classList.toggle('hidden', state.mode === 'gps');
+                    
+                    if (state.activeStreams[0]) {
+                        state.activeStreams.forEach((s, i) => {
+                            if(s) document.getElementById(`slot-${i}`).textContent = s.title.split(' ')[0].toUpperCase();
+                        });
+                    }
+                    if (saved.lastAudioUrl) {
+                        state.lastAudioUrl = saved.lastAudioUrl;
+                        el.audioBox.style.opacity = '1';
+                        el.audioBox.style.transform = 'translateY(0)';
+                        el.audioTitle.textContent = saved.lastAudioTitle;
+                        el.audioAuthor.textContent = saved.lastAudioAuthor;
+                        el.chapterInfo.textContent = saved.lastChapterText;
+                        el.audioPlayer.src = saved.lastAudioUrl;
+                    }
+                    updateUI();
                 }
-                if (saved.lastAudioUrl) {
-                    state.lastAudioUrl = saved.lastAudioUrl;
-                    el.audioBox.style.opacity = '1';
-                    el.audioBox.style.transform = 'translateY(0)';
-                    el.audioTitle.textContent = saved.lastAudioTitle;
-                    el.audioAuthor.textContent = saved.lastAudioAuthor;
-                    el.chapterInfo.textContent = saved.lastChapterText;
-                    el.audioPlayer.src = saved.lastAudioUrl;
-                }
-                updateUI();
-            }
+            } catch (e) { console.warn("Load failed", e); }
             initMap();
         }
 
         function pickBook() {
             const available = MASTER_LIBRARY.filter(b => !state.activeStreams.some(s => s && s.title === b.title));
             const b = available.length ? available[Math.floor(Math.random() * available.length)] : MASTER_LIBRARY[0];
-            return { ...b, currentChapter: 0 };
+            return JSON.parse(JSON.stringify({ ...b, currentChapter: 0 }));
         }
 
         function triggerChapter() {
             state.mileCounter++;
             const idx = (state.mileCounter - 1) % 3;
             const stream = state.activeStreams[idx];
+            
             document.querySelectorAll('[id^="slot-"]').forEach(s => s.classList.remove('active-slot'));
-            document.getElementById(`slot-${idx}`).classList.add('active-slot');
+            const currentSlot = document.getElementById(`slot-${idx}`);
+            currentSlot.classList.add('active-slot');
+            
             el.audioBox.style.opacity = '1';
             el.audioBox.style.transform = 'translateY(0)';
             el.audioTitle.textContent = stream.title;
             el.audioAuthor.textContent = stream.author;
-            el.chapterInfo.textContent = `PULLING PACKET ${stream.currentChapter + 1} / ${stream.chapters.length}`;
+            
+            const chNum = stream.currentChapter + 1;
+            el.chapterInfo.textContent = `PULLING PACKET ${chNum} / ${stream.chapters.length}`;
+            
             state.lastAudioUrl = stream.chapters[stream.currentChapter];
             el.audioPlayer.src = state.lastAudioUrl;
-            el.audioPlayer.play().catch(() => addLog("SIGNAL BUFFERED."));
+            el.audioPlayer.play().catch(() => addLog("SIGNAL BUFFERED. MOVEMENT REQUIRED.", "blue"));
+            
+            addLog(`DECODED: ${stream.title.toUpperCase()} // CH_${chNum}`, "pink");
             stream.currentChapter = (stream.currentChapter + 1) % stream.chapters.length;
             saveState();
         }
@@ -426,7 +466,10 @@
             const progress = (state.totalDistance % 1) * 100;
             el.prog.style.width = `${progress}%`;
             el.milestone.textContent = `${(Math.floor(state.totalDistance) + 1).toFixed(2)} MI`;
-            if (state.totalDistance >= state.mileCounter + 1) triggerChapter();
+            
+            if (state.totalDistance >= state.mileCounter + 1) {
+                triggerChapter();
+            }
         }
 
         function startTreadmill() {
@@ -451,7 +494,8 @@
                 el.modeStatus.textContent = "● IDLE";
                 if (watchId) navigator.geolocation.clearWatch(watchId);
                 if (treadmillInterval) clearInterval(treadmillInterval);
-                addLog("SYSTEM DEACTIVATED");
+                if (teaserInterval) clearInterval(teaserInterval);
+                addLog("SYSTEM DEACTIVATED", "gray");
                 saveState();
             } else {
                 if (!state.activeStreams[0]) {
@@ -460,11 +504,21 @@
                         document.getElementById(`slot-${i}`).textContent = state.activeStreams[i].title.split(' ')[0].toUpperCase();
                     }
                 }
+                
                 state.isTracking = true;
                 el.startBtn.textContent = "TERMINATE SESSION";
                 el.modeStatus.classList.replace('text-yellow-400', 'text-green-400');
                 el.modeStatus.textContent = state.mode === 'gps' ? "● GPS_ACTIVE" : "● TREADMILL_ACTIVE";
+                
+                teaserInterval = setInterval(() => {
+                    if (Math.random() > 0.7) {
+                        const msg = TEASER_MESSAGES[Math.floor(Math.random() * TEASER_MESSAGES.length)];
+                        addLog(msg, "cyan");
+                    }
+                }, 8000);
+
                 if (state.mode === 'gps') {
+                    addLog("WAITING FOR GPS SATELLITE LOCK...");
                     watchId = navigator.geolocation.watchPosition(p => {
                         if(p.coords.accuracy > 50) return;
                         state.totalDistance += 0.001; 
@@ -474,7 +528,7 @@
                 } else {
                     startTreadmill();
                 }
-                addLog("NEURAL LINK ESTABLISHED");
+                addLog("NEURAL LINK ESTABLISHED. COMMENCING UPLOAD.");
             }
         }
 
