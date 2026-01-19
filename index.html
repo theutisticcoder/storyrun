@@ -1,273 +1,788 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEURO-TRACK // Cyperpunk Audio Runner</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MyEcoJourney: AI Run-Narrator</title>
+
+    <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=JetBrains+Mono:wght@300;500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/jszip/dist/jszip.min.js"></script>
+    <script src="https://unpkg.com/ejs/ejs.min.js"></script>
+
+    <!-- Third-party libs (localForage for storage, JSZip for EPUB generation) -->
+    <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jepub/dist/jepub.js"></script>
+
+
+    <!-- EdgeTTS -->
+
+
     <style>
-        :root {
-            --neon-pink: #ff00ff;
-            --neon-blue: #00f2ff;
-            --neon-green: #00ff9f;
-            --dark-bg: #0a0a0c;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=Lora:ital,wght@0,400;1,400&display=swap');
 
         body {
-            background-color: var(--dark-bg);
-            color: white;
-            font-family: 'JetBrains Mono', monospace;
-            overflow-x: hidden;
+            font-family: 'Space Grotesk', sans-serif;
         }
 
-        .cyber-font { font-family: 'Orbitron', sans-serif; }
-
-        .neon-text-pink { text-shadow: 0 0 5px var(--neon-pink); color: var(--neon-pink); }
-        .neon-text-blue { text-shadow: 0 0 5px var(--neon-blue); color: var(--neon-blue); }
-
-        .glitch-overlay {
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
-                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            background-size: 100% 2px, 3px 100%;
-            pointer-events: none;
+        .prose-font {
+            font-family: 'Lora', serif;
         }
 
-        .scanline {
-            width: 100%; height: 2px; background: rgba(0, 242, 255, 0.1);
-            position: absolute; animation: scan 4s linear infinite;
+        .speed-glow {
+            transition: text-shadow 0.3s ease;
         }
 
-        @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
-
-        .progress-bar { height: 4px; background: #222; position: relative; overflow: hidden; }
-        .progress-fill { height: 100%; background: var(--neon-blue); width: 0%; transition: width 0.3s ease; box-shadow: 0 0 15px var(--neon-blue); }
-
-        .btn-cyber {
-            background: transparent; border: 1px solid var(--neon-green); color: var(--neon-green);
-            padding: 10px 20px; transition: all 0.2s;
-            clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%);
+        .speed-high {
+            text-shadow: 0 0 20px #ef4444;
+            color: #ef4444;
         }
 
-        .btn-cyber:hover { background: var(--neon-green); color: black; box-shadow: 0 0 20px var(--neon-green); }
+        .speed-med {
+            text-shadow: 0 0 20px #f59e0b;
+            color: #f59e0b;
+        }
 
-        .active-slot { border-color: var(--neon-pink) !important; box-shadow: 0 0 10px var(--neon-pink); }
+        .speed-low {
+            text-shadow: 0 0 20px #10b981;
+            color: #10b981;
+        }
+
+        .loading-shimmer {
+            background: linear-gradient(90deg, #1f2937 25%, #374151 50%, #1f2937 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
+        }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-center p-4">
-    <div class="glitch-overlay fixed inset-0 z-50 opacity-20"></div>
-    <div class="scanline z-50"></div>
 
-    <header class="w-full max-w-md mb-6 text-center">
-        <h1 class="cyber-font text-3xl font-bold tracking-widest neon-text-blue mb-2">NEURO-TRACK v1.2</h1>
-        <div class="text-[10px] text-gray-500 uppercase tracking-tighter">Full Stream Sync // Creative Commons Node</div>
+<body class="bg-gray-950 text-gray-100 min-h-screen flex flex-col">
+
+    <!-- Header & Dashboard -->
+    <header class="p-6 border-b border-gray-800 bg-gray-900/50 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <h1 class="text-2xl font-bold tracking-tighter italic">MYECO<span class="text-red-500">JOURNEY</span></h1>
+
+            <!-- Dashboard Metrics -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 items-center w-full md:w-auto">
+                <div class="text-center md:text-right border-r border-gray-800 pr-4 last:border-0 last:pr-0">
+                    <p class="text-[10px] uppercase text-gray-400 tracking-wider">Speed</p>
+                    <p id="speed-display" class="text-2xl font-bold speed-low">0.0 <span
+                            class="text-xs font-normal text-gray-500">mph</span></p>
+                </div>
+
+                <div class="text-center md:text-right border-r border-gray-800 pr-4 last:border-0 last:pr-0">
+                    <p class="text-[10px] uppercase text-gray-400 tracking-wider">Distance</p>
+                    <p id="distance-display" class="text-2xl font-bold text-gray-200">0.00 <span
+                            class="text-xs font-normal text-gray-500">mi</span></p>
+                </div>
+
+                <div class="text-center md:text-right border-r border-gray-800 pr-4 last:border-0 last:pr-0">
+                    <p class="text-[10px] uppercase text-gray-400 tracking-wider">CO₂ Saved</p>
+                    <p id="emissions-display" class="text-2xl font-bold text-green-400">0.00 <span
+                            class="text-xs font-normal text-green-700">lb</span></p>
+                </div>
+
+                <div class="text-center md:text-right">
+                    <p class="text-[10px] uppercase text-gray-400 tracking-wider">Intensity</p>
+                    <p id="intensity-display"
+                        class="text-xs font-medium text-gray-300 italic max-w-[100px] md:max-w-[150px] truncate">
+                        Waiting...</p>
+                </div>
+            </div>
+        </div>
     </header>
 
-    <main class="w-full max-w-md bg-black/40 backdrop-blur-md p-6 rounded-lg border border-gray-800 relative">
-        <!-- Distance Counter -->
-        <div class="text-center mb-6">
-            <div class="text-xs text-cyan-400 mb-1">TOTAL TRAVERSE DISTANCE</div>
-            <div id="distance-display" class="cyber-font text-6xl font-bold">0.00</div>
-            <div class="text-sm text-gray-400">MILES</div>
-        </div>
+    <main class="flex-grow p-4 md:p-8 max-w-4xl mx-auto w-full">
+        <!-- Error Toast -->
+        <div id="error-toast"
+            class="hidden bg-red-900/80 border border-red-500 p-4 rounded-xl mb-6 text-sm text-red-200"></div>
 
-        <!-- Multi-Slot Indicators -->
-        <div class="grid grid-cols-3 gap-2 mb-6">
-            <div id="slot-0" class="border border-gray-800 p-2 text-center text-[8px] transition-all">STREAM_A</div>
-            <div id="slot-1" class="border border-gray-800 p-2 text-center text-[8px] transition-all">STREAM_B</div>
-            <div id="slot-2" class="border border-gray-800 p-2 text-center text-[8px] transition-all">STREAM_C</div>
-        </div>
+        <!-- Setup Form -->
+        <section id="setup-panel" class="bg-gray-900 p-6 rounded-2xl border border-gray-800 shadow-2xl">
+            <h2 class="text-xl font-semibold mb-4">Initialize Adventure</h2>
+            <div class="space-y-4">
 
-        <div class="mb-6">
-            <div class="flex justify-between text-[10px] mb-1 text-pink-500">
-                <span>NEXT DATA PACKET</span>
-                <span id="next-milestone-text">1.00 MILES</span>
-            </div>
-            <div class="progress-bar">
-                <div id="progress-fill" class="progress-fill"></div>
-            </div>
-        </div>
-
-        <!-- Audio Player -->
-        <div id="audio-container" class="border-t border-gray-800 pt-6 mt-6 hidden">
-            <div class="flex items-center gap-4 mb-4">
-                <div class="w-12 h-12 bg-pink-900/30 flex items-center justify-center border border-pink-500">
-                    <svg class="w-6 h-6 text-pink-400 animate-pulse" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Genre</label>
+                        <select id="genre"
+                            class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 outline-none">
+                            <option value="Fantasy Adventure">Fantasy Adventure</option>
+                            <option value="Sci-Fi Thriller">Sci-Fi Thriller</option>
+                            <option value="Mystery Detective">Mystery Detective</option>
+                            <option value="Horror Survival">Horror Survival</option>
+                            <option value="Horror Gothic">Horror Gothic</option>
+                            <option value="Horror Psychological">Horror Physchological</option>
+                            <option value="Romance Comedy">Romance Comedy</option>
+                            <option value="Historical Fiction">Historical Fiction</option>
+                            <option value="Superhero Action">Superhero Action</option>
+                            <option value="Dystopian Future">Dystopian Future</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Custom Plot Hook</label>
+                        <input type="text" id="plot" placeholder="e.g. A heist on a moon base..."
+                            class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 outline-none">
+                    </div>
                 </div>
-                <div class="flex-1 overflow-hidden">
-                    <div id="audio-title" class="text-sm font-bold truncate">Awaiting Milestone...</div>
-                    <div id="audio-author" class="text-xs text-gray-500 truncate">CC BY-NC</div>
-                    <div id="chapter-info" class="text-[9px] text-pink-400 mt-1 uppercase tracking-widest">Chapter Access Granted</div>
+
+                <div class="p-3 bg-gray-800/50 rounded-lg text-xs text-gray-400">
+                    <p>Note: Speed tracking requires a GPS-enabled device and an HTTPS connection. If GPS is unavailable
+                        or stationary, use the simulator in the control bar below.</p>
+                </div>
+
+                <button id="start-btn"
+                    class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-4 rounded-xl transition-all transform hover:scale-[1.02] active:scale-95">
+                    START WORKOUT & GENERATE
+                </button>
+
+                <!-- Saved Stories -->
+                <div id="saved-stories-section" class="mt-4">
+                    <h3 class="text-sm text-gray-400 mb-2 uppercase">Saved Stories</h3>
+                    <div id="saved-list" class="space-y-2 text-sm text-gray-300"></div>
                 </div>
             </div>
-            <audio id="main-audio" controls class="w-full filter invert opacity-80 brightness-150"></audio>
-        </div>
+        </section>
 
-        <button id="start-btn" class="btn-cyber w-full text-lg font-bold mt-6">INITIATE TRACKING</button>
+        <!-- Story Display -->
+        <section id="story-panel" class="hidden mt-8 space-y-8 pb-24">
+            <div id="loading-indicator" class="hidden space-y-3">
+                <div class="h-4 w-3/4 loading-shimmer rounded"></div>
+                <div class="h-4 w-full loading-shimmer rounded"></div>
+                <div class="h-4 w-5/6 loading-shimmer rounded"></div>
+                <p class="text-xs text-gray-500 animate-pulse text-center pt-2">The AI is observing your pace to set the
+                    narrative tone...</p>
+            </div>
+
+            <div id="chapters-container" class="space-y-12">
+                <!-- Chapters injected here -->
+            </div>
+        </section>
     </main>
 
-    <section class="w-full max-w-md mt-6 bg-black/80 p-3 rounded border border-gray-900 text-[10px] font-mono text-green-500 h-32 overflow-y-auto" id="console"></section>
+    <!-- Controls Overlay -->
+    <div id="player-controls"
+        class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 border border-gray-800 px-6 py-4 rounded-full shadow-2xl flex items-center gap-4 z-50 w-max max-w-[95vw]">
+        <button id="tts-toggle" class="p-2 hover:bg-gray-800 rounded-full text-red-500 flex-shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" id="tts-icon" class="h-8 w-8" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <!-- Speaker (sound-on) icon -->
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M11.05 4.99 6.3 8.49H3.75A.75.75 0 0 0 3 9.24v5.52c0 .414.336.75.75.75h2.55l4.75 3.5c.412.304 1.025.01 1.025-.58V5.57c0-.59-.613-.884-1.025-.58z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15.536 8.464a5 5 0 010 7.072" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M19.364 4.636a9 9 0 010 12.728" />
+            </svg>
+        </button>
 
-    <script>
-        // Full Chapter Lists for Classical Open Source Titles
-        const MASTER_LIBRARY = [
-            { 
-                title: "Journey to the Center of the Earth", 
-                author: "Jules Verne", 
-                chapters: Array.from({length: 44}, (_, i) => `https://ia800203.us.archive.org/21/items/journey_center_earth_rs_librivox/journey_center_earth_${String(i+1).padStart(2, '0')}_verne.mp3`)
-            },
-            { 
-                title: "Frankenstein", 
-                author: "Mary Shelley", 
-                chapters: Array.from({length: 24}, (_, i) => `https://ia800204.us.archive.org/16/items/frankenstein_librivox/frankenstein_${String(i+1).padStart(2, '0')}_shelley.mp3`)
-            },
-            { 
-                title: "The Time Machine", 
-                author: "H.G. Wells", 
-                chapters: Array.from({length: 12}, (_, i) => `https://ia800701.us.archive.org/11/items/time_machine_librivox/timemachine_${String(i+1).padStart(2, '0')}_wells.mp3`)
-            },
-            { 
-                title: "The Art of War", 
-                author: "Sun Tzu", 
-                chapters: Array.from({length: 13}, (_, i) => `https://ia801406.us.archive.org/11/items/art_of_war_librivox/art_of_war_${String(i+1).padStart(2, '0')}_tzu.mp3`)
-            },
-            { 
-                title: "The Metamorphosis", 
-                author: "Franz Kafka", 
-                chapters: [
-                    "https://ia801402.us.archive.org/21/items/metamorphosis_librivox/metamorphosis_1_kafka.mp3",
-                    "https://ia801402.us.archive.org/21/items/metamorphosis_librivox/metamorphosis_2_kafka.mp3",
-                    "https://ia801402.us.archive.org/21/items/metamorphosis_librivox/metamorphosis_3_kafka.mp3"
-                ]
-            },
-            {
-                title: "The War of the Worlds",
-                author: "H.G. Wells",
-                chapters: Array.from({length: 27}, (_, i) => `https://ia800201.us.archive.org/26/items/war_of_the_worlds_librivox/waroftheworlds_${String(i+1).padStart(2, '0')}_wells.mp3`)
+        <div class="h-8 w-[1px] bg-gray-700 hidden sm:block"></div>
+        <div id="workout-timer" class="font-mono text-xl tabular-nums hidden sm:block">00:00</div>
+        <div class="h-8 w-[1px] bg-gray-700" id="manual-speed-divider"></div>
+        <div id="manual-speed-ctrl" class="flex items-center gap-2">
+            <!-- Updated simulator slider for MPH -->
+            <input type="range" id="speed-slider" min="0" max="15" step="0.5" value="0"
+                class="w-24 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-red-500">
+            <span class="text-xs text-gray-400">MPH SIM</span>
+        </div>
+
+        <!-- End Run button -->
+        <button id="end-run-btn"
+            class="ml-4 bg-gray-800 hover:bg-gray-700 text-gray-200 px-3 py-2 rounded-md text-sm whitespace-nowrap">End
+            Run</button>
+    </div>
+
+    <script type="module">
+        import { EdgeTTSClient, ProsodyOptions, OUTPUT_FORMAT } from 'https://cdn.jsdelivr.net/npm/edge-tts-client@1.0.2/+esm';
+        window.EdgeTTS = EdgeTTSClient;
+        // --- State ---
+        let state = {
+            active: false,
+            apiKey: '',
+            genre: '',
+            plot: '',
+            currentSpeed: 0, // Always stored as m/s internally for consistency
+            totalDistance: 0, // Always stored as meters internally
+            startTime: null,
+            timerId: null,
+            chapters: [],
+            fullStoryContext: '',
+            isGenerating: false,
+            ttsEnabled: true,
+            currentAudio: null,
+            usingSimulatedSpeed: true,
+            lastPos: null,
+            watchId: null,
+            sessionId: null,
+            audio: []
+        };
+
+        const elements = {
+            speed: document.getElementById('speed-display'),
+            distance: document.getElementById('distance-display'),
+            emissions: document.getElementById('emissions-display'),
+            intensity: document.getElementById('intensity-display'),
+            setup: document.getElementById('setup-panel'),
+            story: document.getElementById('story-panel'),
+            loading: document.getElementById('loading-indicator'),
+            container: document.getElementById('chapters-container'),
+            timer: document.getElementById('workout-timer'),
+            controls: document.getElementById('player-controls'),
+            startBtn: document.getElementById('start-btn'),
+            ttsBtn: document.getElementById('tts-toggle'),
+            ttsIcon: document.getElementById('tts-icon'),
+            error: document.getElementById('error-toast'),
+            simSlider: document.getElementById('speed-slider'),
+            savedList: document.getElementById('saved-list'),
+            endRunBtn: document.getElementById('end-run-btn')
+        };
+        import { Mistral } from 'https://cdn.jsdelivr.net/npm/@mistralai/mistralai/+esm';
+
+        // localForage config
+        localforage.config({
+            name: 'pacepulse',
+            storeName: 'stories' // table/collection name
+        });
+
+        function showError(msg) {
+            elements.error.innerText = msg;
+            elements.error.classList.remove('hidden');
+            console.error("PacePulse Error:", msg);
+            setTimeout(() => elements.error.classList.add('hidden'), 8000);
+        }
+
+        // Haversine distance (meters)
+        function haversineDistanceMeters(lat1, lon1, lat2, lon2) {
+            const toRad = (deg) => deg * Math.PI / 180;
+            const R = 6371000;
+            const dLat = toRad(lat2 - lat1);
+            const dLon = toRad(lon2 - lon1);
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+
+        // --- Tracking setup ---
+        function setupTracking() {
+            if (!("geolocation" in navigator)) {
+                showError("Geolocation not supported in this browser. Use manual simulator.");
+                return;
             }
-        ];
 
-        // State Management
-        let totalDistance = 0;
-        let lastPosition = null;
-        let isTracking = false;
-        let watchId = null;
-        let mileCounter = 0;
-        
-        let activeStreams = [null, null, null]; 
+            const options = { enableHighAccuracy: true, maximumAge: 1000, timeout: 15000 };
 
-        const distDisplay = document.getElementById('distance-display');
-        const progFill = document.getElementById('progress-fill');
-        const startBtn = document.getElementById('start-btn');
-        const consoleLog = document.getElementById('console');
-        const nextMilestoneLabel = document.getElementById('next-milestone-text');
-        const audioContainer = document.getElementById('audio-container');
-        const audioPlayer = document.getElementById('main-audio');
-        const audioTitle = document.getElementById('audio-title');
-        const audioAuthor = document.getElementById('audio-author');
-        const chapterInfo = document.getElementById('chapter-info');
+            if (navigator.permissions && navigator.permissions.query) {
+                navigator.permissions.query({ name: 'geolocation' })
+                    .then((perm) => {
+                        if (perm.state === 'denied') {
+                            showError("Geolocation permission denied. Using manual simulator.");
+                            state.usingSimulatedSpeed = true;
+                        }
+                        startWatch();
+                    })
+                    .catch(() => startWatch());
+            } else {
+                startWatch();
+            }
 
-        function addLog(msg) {
-            const div = document.createElement('div');
-            div.textContent = `> ${msg}`;
-            consoleLog.prepend(div);
-        }
+            function startWatch() {
+                if (state.watchId !== null) {
+                    try { navigator.geolocation.clearWatch(state.watchId); } catch (e) { }
+                    state.watchId = null;
+                }
 
-        function pickNewBook() {
-            const available = MASTER_LIBRARY.filter(b => !activeStreams.some(s => s && s.title === b.title));
-            const picked = available.length > 0 
-                ? available[Math.floor(Math.random() * available.length)] 
-                : MASTER_LIBRARY[Math.floor(Math.random() * MASTER_LIBRARY.length)];
-            return { ...picked, currentChapter: 0 };
-        }
+                state.watchId = navigator.geolocation.watchPosition(
+                    (pos) => {
+                        // auto-switch to GPS when valid updates come in, unless user touches slider (explicit)
+                        state.usingSimulatedSpeed = false;
 
-        function initStreams() {
-            for(let i=0; i<3; i++) {
-                activeStreams[i] = pickNewBook();
-                addLog(`SLOT_${String.fromCharCode(65+i)} INITIALIZED: ${activeStreams[i].title}`);
-                document.getElementById(`slot-${i}`).textContent = activeStreams[i].title.substring(0, 10) + '...';
+                        const reported = pos.coords.speed; // This is always m/s from browser
+                        let distDelta = 0;
+
+                        // Calculate distance from previous point if available
+                        if (state.lastPos) {
+                            const d = haversineDistanceMeters(
+                                state.lastPos.lat, state.lastPos.lon,
+                                pos.coords.latitude, pos.coords.longitude
+                            );
+
+                            // Only count if accuracy is reasonable to prevent jumping
+                            if (pos.coords.accuracy < 100) {
+                                distDelta = d;
+                            }
+
+                            // Fallback speed calculation if native speed is null
+                            const dt = (pos.timestamp - state.lastPos.timestamp) / 1000;
+                            if (reported === null || isNaN(reported)) {
+                                if (dt > 0.1 && d > 0) {
+                                    const computed = d / dt;
+                                    // Basic filter for impossible speeds (e.g., GPS drift > 15m/s for running)
+                                    if (!isNaN(computed) && computed >= 0 && computed < 15) {
+                                        state.currentSpeed = computed;
+                                    }
+                                }
+                            } else {
+                                state.currentSpeed = reported;
+                            }
+                        } else if (reported !== null && !isNaN(reported)) {
+                            state.currentSpeed = reported;
+                        }
+
+                        // Accumulate Distance if not simulating
+                        if (!state.usingSimulatedSpeed && distDelta > 0) {
+                            state.totalDistance += distDelta;
+                        }
+
+                        state.lastPos = { lat: pos.coords.latitude, lon: pos.coords.longitude, timestamp: pos.timestamp };
+                        updateUI();
+                    },
+                    (err) => {
+                        console.warn("Geolocation error:", err);
+                        // Errors handled gracefully by falling back to simulation logic implicitly 
+                        // via the 'usingSimulatedSpeed' flag
+                        state.usingSimulatedSpeed = true;
+                    },
+                    options
+                );
             }
         }
 
-        function calculateDistance(lat1, lon1, lat2, lon2) {
-            const R = 3958.8;
-            const dLat = (lat2 - lat1) * Math.PI / 180;
-            const dLon = (lon2 - lon1) * Math.PI / 180;
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
-            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        }
-
-        function triggerNextChapter() {
-            mileCounter++;
-            const streamIndex = (mileCounter - 1) % 3;
-            let stream = activeStreams[streamIndex];
-
-            // Visual indicator
-            document.querySelectorAll('[id^="slot-"]').forEach(el => el.classList.remove('active-slot', 'neon-text-pink'));
-            const slotEl = document.getElementById(`slot-${streamIndex}`);
-            slotEl.classList.add('active-slot', 'neon-text-pink');
-
-            // Play chapter
-            audioContainer.classList.remove('hidden');
-            audioTitle.textContent = stream.title;
-            audioAuthor.textContent = stream.author;
-            chapterInfo.textContent = `CHAPTER ${stream.currentChapter + 1} OF ${stream.chapters.length} UNLOCKED`;
-            audioPlayer.src = stream.chapters[stream.currentChapter];
-            
-            addLog(`STREAM INTERCEPT [SLOT ${streamIndex}]: ${stream.title} - CH ${stream.currentChapter + 1}`);
-            
-            audioPlayer.play().catch(() => addLog("PLAYBACK BUFFERED - INTERACTION REQUIRED"));
-
-            // Increment or Replace
-            stream.currentChapter++;
-            if (stream.currentChapter >= stream.chapters.length) {
-                addLog(`BOOK COMPLETED: ${stream.title}. Decomissioning stream...`);
-                activeStreams[streamIndex] = pickNewBook();
-                addLog(`NEW STREAM LINKED: ${activeStreams[streamIndex].title}`);
-                slotEl.textContent = activeStreams[streamIndex].title.substring(0, 10) + '...';
-            }
-        }
+        elements.simSlider.addEventListener('input', (e) => {
+            state.usingSimulatedSpeed = true;
+            // Slider is now in MPH. Convert to m/s for internal logic
+            // 1 mph = 0.44704 m/s
+            const mph = parseFloat(e.target.value);
+            state.currentSpeed = mph * 0.44704;
+            updateUI();
+        });
 
         function updateUI() {
-            distDisplay.textContent = totalDistance.toFixed(2);
-            const progress = (totalDistance % 1) * 100;
-            progFill.style.width = `${progress}%`;
-            nextMilestoneLabel.textContent = `${(Math.floor(totalDistance) + 1).toFixed(2)} MILES`;
+            // Speed Update (Internal m/s -> Display MPH)
+            const s_ms = state.currentSpeed || 0;
+            const s_mph = s_ms * 2.23694;
 
-            if (totalDistance >= mileCounter + 1) {
-                triggerNextChapter();
+            elements.speed.innerText = s_mph.toFixed(1) + " ";
+            if (!elements.speed.querySelector('span')) {
+                const unit = document.createElement('span');
+                unit.className = 'text-sm font-normal text-gray-500';
+                unit.innerText = 'mph';
+                elements.speed.appendChild(unit);
             }
-        }
 
-        function toggleTracking() {
-            if (isTracking) {
-                navigator.geolocation.clearWatch(watchId);
-                isTracking = false;
-                startBtn.textContent = "INITIATE TRACKING";
-                addLog("CONNECTION DROPPED");
+            // Distance Update (Internal Meters -> Display Miles)
+            // 1 meter = 0.000621371 miles
+            const distMiles = state.totalDistance * 0.000621371;
+            elements.distance.innerHTML = `${distMiles.toFixed(2)} <span class="text-xs font-normal text-gray-500">mi</span>`;
+
+            // CO2 Emissions Saved Update
+            // Avg passenger vehicle ~404 grams CO2 per mile ~ 0.89 lbs per mile.
+            // Let's use 0.9 lbs per mile for estimation.
+            const savedLbs = distMiles * 0.9;
+            elements.emissions.innerHTML = `${savedLbs.toFixed(2)} <span class="text-xs font-normal text-green-700">lb</span>`;
+
+
+            // Styling based on speed (still using m/s thresholds)
+            elements.speed.classList.remove('speed-low', 'speed-med', 'speed-high');
+            if (s_ms > 4.5) { // ~10mph
+                elements.speed.classList.add('speed-high');
+                elements.intensity.innerText = "CLIMAX - High Tension";
+            } else if (s_ms > 2.5) { // ~5.6mph
+                elements.speed.classList.add('speed-med');
+                elements.intensity.innerText = "RISING ACTION - Moderate";
             } else {
-                if (!activeStreams[0]) initStreams();
-                isTracking = true;
-                startBtn.textContent = "TERMINATE LINK";
-                addLog("ESTABLISHING NEURAL LINK...");
-                
-                watchId = navigator.geolocation.watchPosition((pos) => {
-                    const { latitude, longitude, accuracy } = pos.coords;
-                    if (accuracy > 60) return;
-                    if (lastPosition) {
-                        const d = calculateDistance(lastPosition.latitude, lastPosition.longitude, latitude, longitude);
-                        if (d > 0.002) { 
-                            totalDistance += d;
-                            updateUI();
-                        }
-                    }
-                    lastPosition = { latitude, longitude };
-                }, (err) => addLog(`GPS ERR: ${err.message}`), { enableHighAccuracy: true });
+                elements.speed.classList.add('speed-low');
+                elements.intensity.innerText = s_ms > 0.1 ? "EXPOSITION - Calm" : "STATIONARY";
             }
         }
 
-        startBtn.addEventListener('click', toggleTracking);
-        addLog("SYSTEM IDLE. AWAITING USER AUTH...");
+        // --- Timer ---
+        function startTimer() {
+            state.startTime = Date.now();
+            if (state.timerId) clearInterval(state.timerId);
+            state.timerId = setInterval(() => {
+                if (!state.active) return;
+
+                // Timer Logic
+                const elapsed = Math.floor((Date.now() - state.startTime) / 1000);
+                const mins = Math.floor(elapsed / 60).toString().padStart(2, '0');
+                const secs = (elapsed % 60).toString().padStart(2, '0');
+                elements.timer.innerText = `${mins}:${secs}`;
+
+                // Simulator Distance Integration
+                // If using slider, we must accumulate distance manually based on time
+                if (state.usingSimulatedSpeed) {
+                    // add speed (m/s) * 1 second
+                    state.totalDistance += state.currentSpeed;
+                    updateUI(); // Refresh UI for the distance change
+                }
+
+                // AI Chapter Trigger
+                if (elapsed > 0 && elapsed % 600 === 0 && !state.isGenerating) {
+                    generateNewChapter();
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (state.timerId) { clearInterval(state.timerId); state.timerId = null; }
+        }
+
+        // --- AI generation (unchanged majorly) ---
+        async function generateNewChapter() {
+            if (state.isGenerating) return;
+            state.isGenerating = true;
+            elements.loading.classList.remove('hidden');
+
+            const speed = state.currentSpeed;
+            let stylisticInstruction = "";
+            if (speed > 4.5) {
+                stylisticInstruction = "The story must reach a fever pitch of adrenaline. Use short, punchy sentences. Focus on urgent action, racing hearts, and immediate threats. The tension should be immediate and visceral.";
+            } else if (speed > 2.5) {
+                stylisticInstruction = "The story should build tension steadily. Use rhythmic prose with rising stakes. Focus on the momentum of the plot and the characters' forward progress.";
+            } else {
+                stylisticInstruction = "The story should be atmospheric, descriptive, and introspective. Use longer, more complex sentences. Focus on world-building, sensory details, and character background.";
+            }
+
+            const prompt = `
+                Genre: ${state.genre}. 
+                Core Plot: ${state.plot}.
+                
+                WRITING STYLE MANDATE: 
+                ${stylisticInstruction}
+                
+                IMPORTANT: DO NOT mention that the user is running, working out, or mention their "speed", "meters per second", or "pace" literally. This is a fictional story.
+                
+                Task: Write Chapter ${state.chapters.length + 1}. 
+                Context: Continue the ongoing story based on these previous themes: ${state.fullStoryContext.slice(-1500)}.
+                Requirement: Write a very long, at least 20 paragraphs, stay under 8 minutes of normal speed text to speech, high-quality chapter that is not cut off mid sentence, use second person and only return plain text, not markdown.
+            `;
+
+            const chapterText = await fetchGemini(prompt);
+            state.fullStoryContext += `\n\nChapter ${state.chapters.length + 1}\n${chapterText}`;
+            state.chapters.push(chapterText);
+            renderChapter(chapterText);
+
+            // Save after each new chapter
+            await saveCurrentSessionToStorage();
+
+            if (state.ttsEnabled) {
+                speakText(chapterText.toString()); // 2. Then start audio generation
+            }
+            state.isGenerating = false;
+            elements.loading.classList.add('hidden');
+
+        }
+
+        async function fetchGemini(prompt) {
+            console.log(state.apiKey)
+            const mistral = new Mistral({ apiKey: state.apiKey});
+
+            const data = await mistral.chat.complete({
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                "model": "mistral-small-latest"
+            });
+            return data.choices[0].message.content
+        }
+
+        function renderChapter(text) {
+            const chapterNum = state.chapters.length;
+            const div = document.createElement('div');
+            div.id = `chapter-wrapper-${chapterNum}`; // Add ID for targeting
+            div.className = "bg-gray-900/40 p-8 rounded-3xl border border-gray-800 shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-1000";
+            div.innerHTML = `
+        <div class="flex justify-between items-start mb-4">
+            <h3 class="text-red-500 font-bold uppercase tracking-widest text-sm">Chapter ${chapterNum}</h3>
+            <div id="audio-container-${chapterNum}" class="w-1/2 flex flex-col items-end">
+                <div id="audio-status-${chapterNum}" class="text-[10px] text-gray-500 uppercase mb-1">Waiting for Voice...</div>
+                <div class="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden hidden" id="progress-bar-bg-${chapterNum}">
+                    <div id="progress-bar-fill-${chapterNum}" class="bg-red-600 h-full w-0 transition-all duration-600"></div>
+                </div>
+            </div>
+        </div>
+        <div class="prose-font text-lg text-gray-300 leading-relaxed first-letter:text-5xl first-letter:font-bold first-letter:mr-3 first-letter:float-left">
+            ${text.replace(/\n/g, '<br>')}
+        </div>
+    `;
+            if (state.audio.length > 0) {
+                var au = new Audio();
+                au.src = URL.createObjectURL(state.audio[chapterNum-1])
+                au.controls = true;
+                div.prepend(au);
+            }
+            elements.container.append(div);
+        }
+
+        // --- TTS ---
+        async function speakText(text) {
+            const chapterIdx = state.chapters.length;
+            const statusText = document.getElementById(`audio-status-${chapterIdx}`);
+            const barBg = document.getElementById(`progress-bar-bg-${chapterIdx}`);
+            const barFill = document.getElementById(`progress-bar-fill-${chapterIdx}`);
+            const audioContainer = document.getElementById(`audio-container-${chapterIdx}`);
+
+
+            statusText.innerText = "Synthesizing Audio...";
+            barBg.classList.remove('hidden');
+
+            const ttsClient = new window.EdgeTTS();
+            await ttsClient.setMetadata('en-US-AndrewMultilingualNeural', OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
+
+            const options = new ProsodyOptions();
+            options.pitch = 'medium';
+            options.rate = 1.0;
+
+            const stream = ttsClient.toStream(text, options);
+            let chunks = [];
+            let receivedBytes = 0;
+            stream.on('data', (audioChunk) => {
+                chunks.push(audioChunk);
+                receivedBytes += audioChunk.byteLength;
+
+                // Artificial progress simulation since total stream length isn't always known immediately
+                // We increase the bar as chunks arrive
+                const progress = Math.min((chunks.length / (text.length / 10)) * 100, 95);
+                barFill.style.width = `${progress}%`;
+                console.log(audioChunk)
+            });
+
+            stream.on('end', () => {
+                barFill.style.width = `100%`;
+                statusText.innerText = "Audio Ready";
+                var blob = new Blob(chunks, { type: "audio/mp3" })
+                state.audio.push(blob);
+                const url = URL.createObjectURL(blob);
+
+                // Create the audio element
+                const audioEl = document.createElement('audio');
+                audioEl.controls = true;
+                audioEl.src = url;
+                audioEl.className = "h-8 mt-2 w-full accent-red-500 opacity-80 hover:opacity-100 transition-opacity";
+
+                // Replace progress bar with audio player
+                setTimeout(async () => {
+                    barBg.classList.add('hidden');
+                    audioContainer.appendChild(audioEl);
+                    await saveCurrentSessionToStorage();
+
+                }, 500);
+            });
+
+        }
+        // --- Storage (localForage) ---
+        async function saveCurrentSessionToStorage() {
+            // create a lightweight session object
+            if (!state.sessionId) state.sessionId = `session-${Date.now()}`;
+            const item = {
+                id: state.sessionId,
+                title: `${state.genre || 'Untitled'} - ${new Date().toISOString()}`,
+                genre: state.genre,
+                plot: state.plot,
+                audio: state.audio,
+                created_at: new Date().toISOString(),
+                chapters: state.chapters,
+                fullStoryContext: state.fullStoryContext
+            };
+
+            try {
+                const saved = (await localforage.getItem('savedStories')) || [];
+                // replace existing by id or push new
+                const idx = saved.findIndex(s => s.id === item.id);
+                if (idx >= 0) saved[idx] = item;
+                else saved.push(item);
+                await localforage.setItem('savedStories', saved);
+                await displaySavedList();
+            } catch (e) {
+                console.error("save error", e);
+            }
+        }
+
+        async function displaySavedList() {
+            const saved = (await localforage.getItem('savedStories')) || [];
+            elements.savedList.innerHTML = '';
+            if (saved.length === 0) {
+                elements.savedList.innerHTML = `<div class="text-xs text-gray-500">No saved stories yet.</div>`;
+                return;
+            }
+
+            saved.slice().reverse().forEach(s => {
+                const row = document.createElement('div');
+                row.className = 'flex items-center justify-between gap-2 bg-gray-800/30 p-2 rounded';
+                row.innerHTML = `
+                    <div class="truncate text-xs">
+                        <div class="font-medium text-gray-200">${escapeHtml(s.title)}</div>
+                        <div class="text-xs text-gray-400 truncate">${escapeHtml(s.plot || '')}</div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button data-id="${s.id}" class="load-btn bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded text-xs">Load</button>
+                        <button data-id="${s.id}" class="del-btn bg-red-700 hover:bg-red-600 px-2 py-1 rounded text-xs">Delete</button>
+                    </div>
+                `;
+                elements.savedList.appendChild(row);
+            });
+
+            // attach listeners
+            elements.savedList.querySelectorAll('.load-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const id = e.currentTarget.dataset.id;
+                    await restoreSavedStory(id);
+                });
+            });
+            elements.savedList.querySelectorAll('.del-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const id = e.currentTarget.dataset.id;
+                    await deleteSavedStory(id);
+                });
+            });
+        }
+
+        async function restoreSavedStory(id) {
+            const saved = (await localforage.getItem('savedStories')) || [];
+            const s = saved.find(x => x.id === id);
+            if (!s) return showError("Saved story not found.");
+            // populate state and render
+            state.sessionId = s.id;
+            state.genre = s.genre;
+            state.plot = s.plot;
+            state.chapters = s.chapters || [];
+            state.fullStoryContext = s.fullStoryContext || '';
+            if (s.audio) state.audio = s.audio
+            // show story panel and render chapters
+            elements.setup.classList.add('hidden');
+            elements.story.classList.remove('hidden');
+            elements.controls.classList.remove('hidden');
+            elements.container.innerHTML = '';
+            state.chapters.forEach((c) => renderChapter(c));
+        }
+
+        async function deleteSavedStory(id) {
+            const saved = (await localforage.getItem('savedStories')) || [];
+            const filtered = saved.filter(s => s.id !== id);
+            await localforage.setItem('savedStories', filtered);
+            await displaySavedList();
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+        }
+
+        // --- EPUB generation using JSZip ---
+        // --- EPUB generation using jepub ---
+        async function createEpub() {
+            const chapters = state.chapters.slice();
+            if (!chapters || chapters.length === 0) {
+                showError("No chapters to export.");
+                return;
+            }
+            const filename = `${(state.genre || 'story').replace(/\s+/g, '_')}`;
+            console.log(filename)
+            const jepub = new jEpub();
+            jepub.init({
+                i18n: 'en',
+                title: filename,
+                author: 'JourneyAI',
+                publisher: 'n/a',
+                description: 'a running story',
+                tags: ['epub', 'tag'],
+            });
+            var num = 0
+            chapters.forEach(t => {
+                num++;
+                jepub.add("Chapter " + num, t)
+            })
+
+            const blob = await jepub.generate();
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+
+            link.href = url;
+            link.download = filename;
+
+            link.click();
+            window.URL.revokeObjectURL(url);
+
+        }
+
+
+        // --- End run behavior ---
+
+
+        // --- Utilities & initialization ---
+        elements.startBtn.addEventListener('click', () => {
+            const key = "nUANEOGN4al5gS7pKPtu391tBxnVkfUQ"
+
+            // init new session
+            state.apiKey = key;
+            state.genre = document.getElementById('genre').value;
+            state.plot = document.getElementById('plot').value || "An unexpected journey begins.";
+            state.active = true;
+            state.chapters = [];
+            state.fullStoryContext = '';
+            state.totalDistance = 0; // reset
+            state.sessionId = `session-${Date.now()}`;
+
+            elements.setup.classList.add('hidden');
+            elements.story.classList.remove('hidden');
+            elements.controls.classList.remove('hidden');
+            elements.container.innerHTML = '';
+
+            // start with simulator until GPS available
+            state.usingSimulatedSpeed = true;
+            setupTracking();
+            startTimer();
+            generateNewChapter();
+            updateUI(); // immediate UI init
+        });
+
+        elements.ttsBtn.addEventListener('click', () => {
+            state.ttsEnabled = !state.ttsEnabled;
+            if (!state.ttsEnabled) {
+                if (state.currentAudio) state.currentAudio.pause();
+                elements.ttsIcon.innerHTML = `
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.05 4.99 6.3 8.49H3.75A.75.75 0 0 0 3 9.24v5.52c0 .414.336.75.75.75h2.55l4.75 3.5c.412.304 1.025.01 1.025-.58V5.57c0-.59-.613-.884-1.025-.58z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 9l6 6"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 9l-6 6"/>
+                `;
+                elements.ttsBtn.classList.replace('text-red-500', 'text-gray-500');
+            } else {
+                elements.ttsIcon.innerHTML = `
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.05 4.99 6.3 8.49H3.75A.75.75 0 0 0 3 9.24v5.52c0 .414.336.75.75.75h2.55l4.75 3.5c.412.304 1.025.01 1.025-.58V5.57c0-.59-.613-.884-1.025-.58z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.364 4.636a9 9 0 010 12.728"/>
+                `;
+                elements.ttsBtn.classList.replace('text-gray-500', 'text-red-500');
+            }
+        });
+
+        elements.endRunBtn.addEventListener('click', () => {
+            createEpub();
+        });
+
+        // load saved stories list on startup
+        (async function init() {
+            await displaySavedList();
+        })();
+
     </script>
 </body>
+
 </html>
