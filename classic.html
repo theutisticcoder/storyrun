@@ -12,182 +12,220 @@
             --neon-pink: #ff00ff;
             --neon-blue: #00f2ff;
             --neon-green: #00ff9f;
-            --dark-bg: #030305;
+            --dark-bg: #050507;
         }
 
         body {
             background-color: var(--dark-bg);
             color: white;
             font-family: 'JetBrains Mono', monospace;
-            overflow: scroll;
+            overflow: hidden;
             height: 100vh;
         }
 
         .cyber-font { font-family: 'Orbitron', sans-serif; }
 
+        /* Animated Grid Background */
         .grid-bg {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             background-image: 
-                linear-gradient(to right, rgba(0, 242, 255, 0.03) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(0, 242, 255, 0.03) 1px, transparent 1px);
-            background-size: 60px 60px;
+                linear-gradient(to right, rgba(0, 242, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0, 242, 255, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+            perspective: 500px;
             z-index: -1;
+        }
+        
+        .grid-inner {
+            position: absolute; width: 200%; height: 200%;
+            top: -50%; left: -50%;
+            background-image: linear-gradient(0deg, transparent 24%, rgba(0, 242, 255, .05) 25%, rgba(0, 242, 255, .05) 26%, transparent 27%, transparent 74%, rgba(0, 242, 255, .05) 75%, rgba(0, 242, 255, .05) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(0, 242, 255, .05) 25%, rgba(0, 242, 255, .05) 26%, transparent 27%, transparent 74%, rgba(0, 242, 255, .05) 75%, rgba(0, 242, 255, .05) 76%, transparent 77%, transparent);
+            background-size: 50px 50px;
+            transform: rotateX(45deg);
+            animation: grid-move 2s linear infinite;
+        }
+
+        @keyframes grid-move {
+            0% { transform: rotateX(45deg) translateY(0); }
+            100% { transform: rotateX(45deg) translateY(50px); }
         }
 
         .neon-text-blue { text-shadow: 0 0 10px var(--neon-blue); color: var(--neon-blue); }
         .neon-text-pink { text-shadow: 0 0 10px var(--neon-pink); color: var(--neon-pink); }
 
-        .progress-bar { height: 8px; background: #0a0a0a; border: 1px solid #222; position: relative; border-radius: 4px; overflow: scroll; }
+        .progress-bar { height: 6px; background: #111; position: relative; border-radius: 3px; overflow: hidden; }
         .progress-fill { 
             height: 100%; background: linear-gradient(90deg, var(--neon-blue), var(--neon-pink)); 
-            width: 0%; transition: width 0.4s ease; 
-            box-shadow: 0 0 20px var(--neon-blue); 
+            width: 0%; transition: width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            box-shadow: 0 0 15px var(--neon-blue); 
         }
 
         .btn-cyber {
-            background: rgba(0, 255, 159, 0.05); border: 1px solid var(--neon-green); color: var(--neon-green);
-            padding: 12px 20px; transition: all 0.3s;
-            clip-path: polygon(5% 0, 100% 0, 100% 80%, 95% 100%, 0 100%, 0 20%);
-            text-transform: uppercase; font-weight: bold; letter-spacing: 2px;
+            background: rgba(0, 255, 159, 0.1); border: 1px solid var(--neon-green); color: var(--neon-green);
+            padding: 10px 20px; transition: all 0.3s;
+            clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%);
+            text-transform: uppercase; letter-spacing: 2px;
         }
 
-        .btn-cyber:hover { background: var(--neon-green); color: black; box-shadow: 0 0 30px var(--neon-green); transform: scale(1.02); }
+        .btn-cyber:hover { background: var(--neon-green); color: black; box-shadow: 0 0 20px var(--neon-green); transform: scale(1.02); }
+        .btn-cyber:active { transform: scale(0.98); }
 
         .active-slot { 
             border-color: var(--neon-pink) !important; 
-            background: rgba(255, 0, 255, 0.15) !important;
-            animation: pulse-pink 1.5s infinite; 
+            background: rgba(255, 0, 255, 0.1) !important;
+            animation: pulse-pink 2s infinite; 
         }
 
         @keyframes pulse-pink {
             0%, 100% { box-shadow: 0 0 5px var(--neon-pink); }
-            50% { box-shadow: 0 0 25px var(--neon-pink); }
+            50% { box-shadow: 0 0 20px var(--neon-pink); }
         }
+
+        .glitch-text { animation: glitch 5s infinite; }
+        @keyframes glitch {
+            0%, 90%, 100% { transform: none; opacity: 1; }
+            91% { transform: skewX(20deg); opacity: 0.8; }
+            92% { transform: skewX(-20deg); }
+            93% { opacity: 1; }
+        }
+
+        .treadmill-ui { border-top: 1px dashed #333; padding-top: 1rem; margin-top: 1rem; }
+        input[type=range] { accent-color: var(--neon-green); }
 
         #virtual-map {
             width: 100%;
-            height: 220px;
-            background: rgba(0, 10, 10, 0.8);
-            border: 1px solid rgba(0, 242, 255, 0.3);
+            height: 120px;
+            background: rgba(0, 20, 20, 0.4);
+            border: 1px solid rgba(0, 242, 255, 0.2);
             position: relative;
-            margin-bottom: 1.5rem;
-            overflow: scroll;
-            box-shadow: inset 0 0 20px rgba(0, 242, 255, 0.2);
+            margin-bottom: 1rem;
+            overflow: hidden;
         }
-        
         .map-label {
             position: absolute;
-            top: 8px; left: 10px;
-            font-size: 10px; color: var(--neon-blue);
-            text-transform: uppercase; letter-spacing: 2px;
-            pointer-events: none; opacity: 0.7;
+            top: 5px;
+            left: 5px;
+            font-size: 8px;
+            color: var(--neon-blue);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            pointer-events: none;
         }
-
-        .audio-wave {
-            display: flex; gap: 2px; height: 12px; align-items: flex-end;
-        }
-        .wave-bar { width: 2px; background: var(--neon-green); animation: wave 1s infinite alternate; }
-        @keyframes wave { from { height: 2px; } to { height: 12px; } }
     </style>
 </head>
 <body class="flex flex-col items-center justify-center p-4">
-    <div class="grid-bg"></div>
+    <div class="grid-bg"><div class="grid-inner"></div></div>
     
-    <header class="w-full max-w-lg mb-4 text-center z-10">
-        <h1 class="cyber-font text-3xl font-bold tracking-[0.2em] neon-text-blue">NEURO-TRACK 3.0</h1>
-        <div class="text-[10px] text-cyan-500 uppercase tracking-[0.4em] opacity-60">High-Velocity Neural Projection</div>
+    <header class="w-full max-w-md mb-4 text-center z-10">
+        <h1 class="cyber-font text-3xl font-bold tracking-widest neon-text-blue glitch-text">NEURO-TRACK 2.4</h1>
+        <div class="text-[9px] text-cyan-500/50 uppercase tracking-[0.3em]">Archive Proxy Established</div>
     </header>
 
-    <main class="w-full max-w-lg bg-black/80 backdrop-blur-2xl p-6 rounded-md border border-white/5 relative z-10 shadow-2xl">
+    <main class="w-full max-w-md bg-black/60 backdrop-blur-xl p-6 rounded-sm border border-white/10 relative z-10">
+        <div class="flex justify-between items-center mb-6 text-[10px] uppercase tracking-widest">
+            <div id="mode-status" class="text-green-400">● SYSTEM_IDLE</div>
+            <div id="accuracy-val" class="text-gray-500">LIBRI_LINK: READY</div>
+        </div>
+
         <div id="virtual-map">
-            <span class="map-label">Tactical Neural Projection // Path_Alpha</span>
+            <span class="map-label">Neural Projection // Active Path</span>
             <canvas id="map-canvas"></canvas>
         </div>
 
-        <div class="grid grid-cols-2 gap-4 mb-6">
-            <div class="bg-white/5 p-3 border-l-2 border-cyan-500">
-                <div class="text-[10px] text-cyan-400 mb-1 tracking-widest">KINETIC DISTANCE</div>
-                <div id="distance-display" class="cyber-font text-4xl font-bold italic">0.00</div>
-                <div class="text-[10px] text-gray-500">MILES</div>
-            </div>
-            <div class="bg-white/5 p-3 border-l-2 border-pink-500">
-                <div class="text-[10px] text-pink-400 mb-1 tracking-widest">NEXT DECRYPT</div>
-                <div id="next-milestone-text" class="cyber-font text-4xl font-bold italic">1.00</div>
-                <div class="text-[10px] text-gray-500">MILES</div>
-            </div>
+        <div class="text-center mb-6">
+            <div class="text-[10px] text-cyan-400 mb-1 tracking-[0.5em]">KINETIC ENERGY CONVERTED</div>
+            <div id="distance-display" class="cyber-font text-7xl font-bold italic tracking-tighter">0.00</div>
+            <div class="text-xs text-gray-400">MILES DISCOVERED</div>
         </div>
 
         <div class="mb-6">
+            <div class="flex justify-between text-[10px] mb-2 font-bold italic">
+                <span class="text-pink-500">DECRYPTING NEXT PACKET</span>
+                <span id="next-milestone-text" class="text-pink-500">1.00 MI</span>
+            </div>
             <div class="progress-bar">
                 <div id="progress-fill" class="progress-fill"></div>
             </div>
         </div>
 
         <div class="grid grid-cols-3 gap-2 mb-6">
-            <div id="slot-0" class="border border-white/10 bg-white/5 p-2 text-center text-[10px] font-bold truncate transition-all duration-500">A_NULL</div>
-            <div id="slot-1" class="border border-white/10 bg-white/5 p-2 text-center text-[10px] font-bold truncate transition-all duration-500">B_NULL</div>
-            <div id="slot-2" class="border border-white/10 bg-white/5 p-2 text-center text-[10px] font-bold truncate transition-all duration-500">C_NULL</div>
+            <div id="slot-0" class="border border-white/10 bg-white/5 p-2 text-center text-[9px] truncate transition-all duration-500">A_NULL</div>
+            <div id="slot-1" class="border border-white/10 bg-white/5 p-2 text-center text-[9px] truncate transition-all duration-500">B_NULL</div>
+            <div id="slot-2" class="border border-white/10 bg-white/5 p-2 text-center text-[9px] truncate transition-all duration-500">C_NULL</div>
         </div>
 
-        <!-- Enhanced Audio Player -->
-        <div id="audio-container" class="border-t border-white/10 pt-6 mt-6 transition-all duration-700">
+        <div id="audio-container" class="border-t border-white/10 pt-6 mt-6 opacity-0 translate-y-4 transition-all duration-700">
             <div class="flex items-center gap-4 mb-4">
-                <div class="w-16 h-16 bg-green-500/10 flex items-center justify-center border border-green-500/30">
-                    <div class="audio-wave">
-                        <div class="wave-bar" style="animation-delay: 0.1s"></div>
-                        <div class="wave-bar" style="animation-delay: 0.3s"></div>
-                        <div class="wave-bar" style="animation-delay: 0.5s"></div>
-                    </div>
+                <div class="w-14 h-14 bg-pink-500/10 flex items-center justify-center border border-pink-500/50 group">
+                    <svg class="w-8 h-8 text-pink-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>
                 </div>
                 <div class="flex-1 min-w-0">
-                    <div id="audio-title" class="text-md font-bold truncate tracking-tight text-white">READY_SYSTEM</div>
-                    <div id="audio-author" class="text-[11px] text-gray-400 uppercase tracking-widest">AWAITING_INPUT</div>
-                    <div id="chapter-info" class="text-[10px] text-green-400 mt-1 font-bold italic">SIGNAL READY</div>
+                    <div id="audio-title" class="text-sm font-bold truncate tracking-tight">NULL_DATA</div>
+                    <div id="audio-author" class="text-[10px] text-gray-500 uppercase">ARCHIVE_NODE</div>
+                    <div id="chapter-info" class="text-[9px] text-green-400 mt-1 font-bold italic">RESTORING CLIP...</div>
                 </div>
             </div>
-            <audio id="main-audio" controls class="w-full filter invert hue-rotate-180 opacity-90"></audio>
+            <audio id="main-audio" controls crossorigin="anonymous" class="w-full filter invert hue-rotate-180 opacity-90"></audio>
         </div>
 
         <div class="mt-6 flex flex-col gap-4">
-            <div id="treadmill-controls" class="hidden treadmill-ui space-y-3 p-3 bg-white/5 border border-white/10">
-                <div class="flex justify-between text-[11px] text-green-400 font-bold">
+            <div class="flex gap-2">
+                <button id="mode-toggle" class="flex-1 text-[10px] border border-white/20 p-2 hover:bg-white/5 transition-colors">SWITCH TO TREADMILL</button>
+            </div>
+            
+            <div id="treadmill-controls" class="hidden treadmill-ui space-y-3">
+                <div class="flex justify-between text-[10px] text-green-400 font-bold">
                     <span>VIRTUAL SPEED</span>
                     <span id="speed-val">6.0 MPH</span>
                 </div>
-                <input type="range" id="speed-slider" min="1" max="15" step="0.1" value="6" class="w-full h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer">
+                <input type="range" id="speed-slider" min="1" max="12" step="0.1" value="6" class="w-full h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer">
             </div>
 
-            <div class="flex gap-2">
-                <button id="mode-toggle" class="flex-1 text-[11px] border border-white/20 p-3 hover:bg-white/5 transition-colors uppercase font-bold tracking-widest">TREADMILL MODE</button>
-                <button id="start-btn" class="btn-cyber flex-[2]">BOOT NEURAL LINK</button>
-            </div>
+            <button id="start-btn" class="btn-cyber w-full font-bold">BOOT SYSTEM</button>
         </div>
     </main>
 
-    <div id="console" class="w-full max-lg mt-4 bg-black/90 p-3 rounded-sm border border-white/5 text-[10px] font-mono text-green-500/70 h-24 overflow-y-auto z-10"></div>
+    <div id="console" class="w-full max-w-md mt-4 bg-black/80 p-3 rounded-sm border border-white/5 text-[9px] font-mono text-green-500/70 h-24 overflow-y-auto z-10"></div>
 
     <script>
+        // Restoring Archive.org books with verified direct streaming links
         const MASTER_LIBRARY = [
-            { 
-                title: "Journey to the Center of the Earth", 
-                author: "Jules Verne", 
-                chapters: Array.from({length: 44}, (_, i) => `https://ia800203.us.archive.org/21/items/journey_center_earth_rs_librivox/journey_center_earth_${String(i+1).padStart(2, '0')}_verne.mp3`)
-            },
             { 
                 title: "Frankenstein", 
                 author: "Mary Shelley", 
-                chapters: Array.from({length: 24}, (_, i) => `https://ia800204.us.archive.org/16/items/frankenstein_librivox/frankenstein_${String(i+1).padStart(2, '0')}_shelley.mp3`)
+                chapters: [
+                    "https://archive.org/download/frankenstein_librivox/frankenstein_01_shelley.mp3",
+                    "https://archive.org/download/frankenstein_librivox/frankenstein_02_shelley.mp3",
+                    "https://archive.org/download/frankenstein_librivox/frankenstein_03_shelley.mp3",
+                    "https://archive.org/download/frankenstein_librivox/frankenstein_04_shelley.mp3"
+                ]
+            },
+            { 
+                title: "War of the Worlds", 
+                author: "H.G. Wells", 
+                chapters: [
+                    "https://archive.org/download/war_of_the_worlds_librivox/waroftheworlds_01_wells.mp3",
+                    "https://archive.org/download/war_of_the_worlds_librivox/waroftheworlds_02_wells.mp3",
+                    "https://archive.org/download/war_of_the_worlds_librivox/waroftheworlds_03_wells.mp3"
+                ]
+            },
+            { 
+                title: "Alice in Wonderland", 
+                author: "Lewis Carroll", 
+                chapters: [
+                    "https://archive.org/download/alice_in_wonderland_librivox/alice_in_wonderland_01_carroll.mp3",
+                    "https://archive.org/download/alice_in_wonderland_librivox/alice_in_wonderland_02_carroll.mp3",
+                    "https://archive.org/download/alice_in_wonderland_librivox/alice_in_wonderland_03_carroll.mp3"
+                ]
             },
             { 
                 title: "The Time Machine", 
                 author: "H.G. Wells", 
-                chapters: Array.from({length: 12}, (_, i) => `https://ia800701.us.archive.org/11/items/time_machine_librivox/timemachine_${String(i+1).padStart(2, '0')}_wells.mp3`)
-            },
-            { 
-                title: "The War of the Worlds",
-                author: "H.G. Wells",
-                chapters: Array.from({length: 27}, (_, i) => `https://ia800201.us.archive.org/26/items/war_of_the_worlds_librivox/waroftheworlds_${String(i+1).padStart(2, '0')}_wells.mp3`)
+                chapters: [
+                    "https://archive.org/download/time_machine_librivox/timemachine_01_wells.mp3",
+                    "https://archive.org/download/time_machine_librivox/timemachine_02_wells.mp3"
+                ]
             }
         ];
 
@@ -199,12 +237,15 @@
             mileCounter: 0,
             activeStreams: [null, null, null],
             lastTimestamp: null,
-            sessionPath: [] 
+            lastAudioUrl: null,
+            lastChapterText: "",
+            sessionPath: []
         };
 
         let watchId = null;
         let treadmillInterval = null;
         let mapContext = null;
+        let mapAnimationId = null;
 
         const el = {
             dist: document.getElementById('distance-display'),
@@ -212,11 +253,14 @@
             startBtn: document.getElementById('start-btn'),
             console: document.getElementById('console'),
             milestone: document.getElementById('next-milestone-text'),
+            audioBox: document.getElementById('audio-container'),
             audioPlayer: document.getElementById('main-audio'),
             modeBtn: document.getElementById('mode-toggle'),
             treadControls: document.getElementById('treadmill-controls'),
             speedVal: document.getElementById('speed-val'),
             speedSlider: document.getElementById('speed-slider'),
+            modeStatus: document.getElementById('mode-status'),
+            accuracy: document.getElementById('accuracy-val'),
             audioTitle: document.getElementById('audio-title'),
             audioAuthor: document.getElementById('audio-author'),
             chapterInfo: document.getElementById('chapter-info'),
@@ -225,9 +269,17 @@
 
         function addLog(msg) {
             const div = document.createElement('div');
-            div.textContent = `> ${msg}`;
+            div.textContent = `[${new Date().toLocaleTimeString()}] > ${msg}`;
             el.console.prepend(div);
         }
+
+        // Handle audio errors gracefully
+        el.audioPlayer.onerror = () => {
+            addLog("NEURAL LINK CORRUPTED. RE-SYNCING PACKET...");
+            setTimeout(() => {
+                if(state.isTracking) triggerChapter();
+            }, 3000);
+        };
 
         function initMap() {
             const container = document.getElementById('virtual-map');
@@ -237,7 +289,7 @@
             if (state.sessionPath.length === 0) {
                 state.sessionPath.push({x: el.mapCanvas.width/2, y: el.mapCanvas.height/2});
             }
-            requestAnimationFrame(drawMap);
+            drawMap();
         }
 
         function drawMap() {
@@ -245,21 +297,21 @@
             const ctx = mapContext;
             const w = el.mapCanvas.width;
             const h = el.mapCanvas.height;
+            ctx.clearRect(0, 0, w, h);
 
-            ctx.fillStyle = 'rgba(0, 5, 5, 0.2)';
-            ctx.fillRect(0, 0, w, h);
+            ctx.strokeStyle = 'rgba(0, 242, 255, 0.1)';
+            ctx.lineWidth = 1;
+            for(let i=0; i<w; i+=20) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, h); ctx.stroke(); }
+            for(let i=0; i<h; i+=20) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(w, i); ctx.stroke(); }
 
-            // Path tracing
             if (state.sessionPath.length > 1) {
                 ctx.beginPath();
                 ctx.strokeStyle = '#00f2ff';
-                ctx.lineWidth = 3;
-                ctx.shadowBlur = 15;
+                ctx.lineWidth = 2;
+                ctx.shadowBlur = 10;
                 ctx.shadowColor = '#00f2ff';
                 ctx.moveTo(state.sessionPath[0].x, state.sessionPath[0].y);
-                for(let i=1; i < state.sessionPath.length; i++) {
-                    ctx.lineTo(state.sessionPath[i].x, state.sessionPath[i].y);
-                }
+                for(let i=1; i < state.sessionPath.length; i++) { ctx.lineTo(state.sessionPath[i].x, state.sessionPath[i].y); }
                 ctx.stroke();
                 ctx.shadowBlur = 0;
             }
@@ -267,74 +319,82 @@
             const head = state.sessionPath[state.sessionPath.length - 1];
             if (head) {
                 ctx.fillStyle = '#ff00ff';
-                ctx.beginPath(); ctx.arc(head.x, head.y, 6, 0, Math.PI * 2); ctx.fill();
-                
+                ctx.beginPath(); ctx.arc(head.x, head.y, 4, 0, Math.PI * 2); ctx.fill();
                 const pulse = (Date.now() % 1000) / 1000;
                 ctx.strokeStyle = `rgba(255, 0, 255, ${1 - pulse})`;
-                ctx.beginPath(); ctx.arc(head.x, head.y, 6 + (pulse * 20), 0, Math.PI * 2); ctx.stroke();
+                ctx.beginPath(); ctx.arc(head.x, head.y, 4 + (pulse * 10), 0, Math.PI * 2); ctx.stroke();
             }
-            requestAnimationFrame(drawMap);
+            mapAnimationId = requestAnimationFrame(drawMap);
         }
 
         function updateMapPath(deltaDist) {
             const last = state.sessionPath[state.sessionPath.length - 1];
-            // Increased multiplier for faster dot movement
-            const step = deltaDist * 2500; 
-            
-            const angle = (Date.now() / 1500) + (Math.sin(Date.now() / 3000) * 0.8);
-            let nextX = last.x + Math.cos(angle) * step;
-            let nextY = last.y + Math.sin(angle) * step;
-
-            // Bounce mechanics
-            if (nextX < 10 || nextX > el.mapCanvas.width - 10) nextX = el.mapCanvas.width / 2;
-            if (nextY < 10 || nextY > el.mapCanvas.height - 10) nextY = el.mapCanvas.height / 2;
-
+            let nextX, nextY;
+            if (state.mode === 'treadmill') {
+                const angle = (Date.now() / 2000) + (Math.sin(Date.now() / 5000) * 0.5);
+                const step = deltaDist * 800;
+                nextX = last.x + Math.cos(angle) * step;
+                nextY = last.y + Math.sin(angle) * step;
+            } else {
+                nextX = last.x + (Math.random() - 0.5) * 5;
+                nextY = last.y + (Math.random() - 0.5) * 5;
+            }
+            if (nextX < 0) nextX = el.mapCanvas.width;
+            if (nextX > el.mapCanvas.width) nextX = 0;
+            if (nextY < 0) nextY = el.mapCanvas.height;
+            if (nextY > el.mapCanvas.height) nextY = 0;
             state.sessionPath.push({x: nextX, y: nextY});
-            if (state.sessionPath.length > 800) state.sessionPath.shift();
+            if (state.sessionPath.length > 500) state.sessionPath.shift();
         }
 
         async function saveState() {
-            await localforage.setItem('neuro_track_state_v3', state);
+            try {
+                await localforage.setItem('neuro_track_state', {
+                    totalDistance: state.totalDistance,
+                    mode: state.mode,
+                    speed: state.speed,
+                    mileCounter: state.mileCounter,
+                    activeStreams: state.activeStreams,
+                    lastAudioUrl: state.lastAudioUrl,
+                    lastChapterText: el.chapterInfo.textContent,
+                    lastAudioTitle: el.audioTitle.textContent,
+                    lastAudioAuthor: el.audioAuthor.textContent,
+                    sessionPath: state.sessionPath
+                });
+            } catch (e) {}
         }
 
         async function loadState() {
-            const saved = await localforage.getItem('neuro_track_state_v3');
+            const saved = await localforage.getItem('neuro_track_state');
             if (saved) {
-                state = { ...state, ...saved };
+                state.totalDistance = saved.totalDistance || 0;
+                state.mode = saved.mode || 'gps';
+                state.speed = saved.speed || 6.0;
+                state.mileCounter = saved.mileCounter || 0;
+                state.activeStreams = saved.activeStreams || [null, null, null];
+                state.sessionPath = saved.sessionPath || [];
+                el.speedSlider.value = state.speed;
+                el.speedVal.textContent = `${state.speed.toFixed(1)} MPH`;
+                el.modeBtn.textContent = state.mode === 'gps' ? 'SWITCH TO TREADMILL' : 'SWITCH TO GPS';
+                el.treadControls.classList.toggle('hidden', state.mode === 'gps');
+                if (state.activeStreams[0]) {
+                    state.activeStreams.forEach((s, i) => {
+                        const slot = document.getElementById(`slot-${i}`);
+                        slot.textContent = s.title.split(' ')[0].toUpperCase();
+                    });
+                }
+                if (saved.lastAudioUrl) {
+                    state.lastAudioUrl = saved.lastAudioUrl;
+                    el.audioBox.style.opacity = '1';
+                    el.audioBox.style.transform = 'translateY(0)';
+                    el.audioTitle.textContent = saved.lastAudioTitle;
+                    el.audioAuthor.textContent = saved.lastAudioAuthor;
+                    el.chapterInfo.textContent = saved.lastChapterText;
+                    el.audioPlayer.src = saved.lastAudioUrl;
+                }
                 updateUI();
-                state.activeStreams.forEach((s, i) => {
-                    if(s) document.getElementById(`slot-${i}`).textContent = s.title.split(' ')[0].toUpperCase();
-                });
             }
             initMap();
-        }
-
-        function triggerChapter(isTeaser = false) {
-            if (!isTeaser) state.mileCounter++;
-            
-            const idx = isTeaser ? 0 : (state.mileCounter - 1) % 3;
-            const stream = state.activeStreams[idx];
-
-            document.querySelectorAll('[id^="slot-"]').forEach(s => s.classList.remove('active-slot'));
-            document.getElementById(`slot-${idx}`).classList.add('active-slot');
-
-            el.audioTitle.textContent = stream.title;
-            el.audioAuthor.textContent = stream.author;
-            el.chapterInfo.textContent = `ACTIVE_LINK: CH ${stream.currentChapter + 1} / ${stream.chapters.length}`;
-            
-            el.audioPlayer.src = stream.chapters[stream.currentChapter];
-            
-            if (!isTeaser) {
-                el.audioPlayer.play().catch(() => addLog("INTERACTION REQ TO START AUDIO"));
-                stream.currentChapter++;
-                if(stream.currentChapter >= stream.chapters.length) {
-                    state.activeStreams[idx] = pickBook();
-                    document.getElementById(`slot-${idx}`).textContent = state.activeStreams[idx].title.split(' ')[0].toUpperCase();
-                }
-            } else {
-                addLog(`TEASER INITIALIZED: ${stream.title}`);
-            }
-            saveState();
         }
 
         function pickBook() {
@@ -343,24 +403,30 @@
             return { ...b, currentChapter: 0 };
         }
 
-        function initStreams() {
-            for(let i=0; i<3; i++) {
-                state.activeStreams[i] = pickBook();
-                document.getElementById(`slot-${i}`).textContent = state.activeStreams[i].title.split(' ')[0].toUpperCase();
-            }
-            addLog("NEURAL STREAMS SYNCED");
-            triggerChapter(true); // Load first chapter teaser
+        function triggerChapter() {
+            state.mileCounter++;
+            const idx = (state.mileCounter - 1) % 3;
+            const stream = state.activeStreams[idx];
+            document.querySelectorAll('[id^="slot-"]').forEach(s => s.classList.remove('active-slot'));
+            document.getElementById(`slot-${idx}`).classList.add('active-slot');
+            el.audioBox.style.opacity = '1';
+            el.audioBox.style.transform = 'translateY(0)';
+            el.audioTitle.textContent = stream.title;
+            el.audioAuthor.textContent = stream.author;
+            el.chapterInfo.textContent = `PULLING PACKET ${stream.currentChapter + 1} / ${stream.chapters.length}`;
+            state.lastAudioUrl = stream.chapters[stream.currentChapter];
+            el.audioPlayer.src = state.lastAudioUrl;
+            el.audioPlayer.play().catch(() => addLog("SIGNAL BUFFERED."));
+            stream.currentChapter = (stream.currentChapter + 1) % stream.chapters.length;
+            saveState();
         }
 
         function updateUI() {
             el.dist.textContent = state.totalDistance.toFixed(2);
             const progress = (state.totalDistance % 1) * 100;
             el.prog.style.width = `${progress}%`;
-            el.milestone.textContent = (Math.floor(state.totalDistance) + 1).toFixed(2);
-
-            if (state.totalDistance >= state.mileCounter + 1) {
-                triggerChapter();
-            }
+            el.milestone.textContent = `${(Math.floor(state.totalDistance) + 1).toFixed(2)} MI`;
+            if (state.totalDistance >= state.mileCounter + 1) triggerChapter();
         }
 
         function startTreadmill() {
@@ -373,45 +439,58 @@
                 state.lastTimestamp = now;
                 updateMapPath(deltaDist);
                 updateUI();
+                if (Math.random() > 0.99) saveState();
             }, 100);
         }
 
         function toggle() {
             if (state.isTracking) {
                 state.isTracking = false;
-                el.startBtn.textContent = "BOOT NEURAL LINK";
+                el.startBtn.textContent = "BOOT SYSTEM";
+                el.modeStatus.classList.replace('text-green-400', 'text-yellow-400');
+                el.modeStatus.textContent = "● IDLE";
                 if (watchId) navigator.geolocation.clearWatch(watchId);
                 if (treadmillInterval) clearInterval(treadmillInterval);
-                addLog("SESSION TERMINATED");
+                addLog("SYSTEM DEACTIVATED");
                 saveState();
             } else {
-                if (!state.activeStreams[0]) initStreams();
+                if (!state.activeStreams[0]) {
+                    for(let i=0; i<3; i++) {
+                        state.activeStreams[i] = pickBook();
+                        document.getElementById(`slot-${i}`).textContent = state.activeStreams[i].title.split(' ')[0].toUpperCase();
+                    }
+                }
                 state.isTracking = true;
-                el.startBtn.textContent = "DISCONNECT";
+                el.startBtn.textContent = "TERMINATE SESSION";
+                el.modeStatus.classList.replace('text-yellow-400', 'text-green-400');
+                el.modeStatus.textContent = state.mode === 'gps' ? "● GPS_ACTIVE" : "● TREADMILL_ACTIVE";
                 if (state.mode === 'gps') {
                     watchId = navigator.geolocation.watchPosition(p => {
-                        state.totalDistance += 0.0001; 
-                        updateMapPath(0.0001);
+                        if(p.coords.accuracy > 50) return;
+                        state.totalDistance += 0.001; 
+                        updateMapPath(0.001);
                         updateUI(); 
                     }, null, {enableHighAccuracy: true});
                 } else {
                     startTreadmill();
                 }
-                addLog("NEURAL SYNC ACTIVE");
+                addLog("NEURAL LINK ESTABLISHED");
             }
         }
 
         el.modeBtn.addEventListener('click', () => {
             if(state.isTracking) return;
             state.mode = state.mode === 'gps' ? 'treadmill' : 'gps';
-            el.modeBtn.textContent = state.mode === 'gps' ? 'TREADMILL MODE' : 'GPS MODE';
+            el.modeBtn.textContent = state.mode === 'gps' ? 'SWITCH TO TREADMILL' : 'SWITCH TO GPS';
             el.treadControls.classList.toggle('hidden', state.mode === 'gps');
-            addLog(`SWAPPING INTERFACE: ${state.mode.toUpperCase()}`);
+            addLog(`MODE TOGGLED: ${state.mode.toUpperCase()}`);
+            saveState();
         });
 
         el.speedSlider.addEventListener('input', (e) => {
             state.speed = parseFloat(e.target.value);
             el.speedVal.textContent = `${state.speed.toFixed(1)} MPH`;
+            saveState();
         });
 
         el.startBtn.addEventListener('click', toggle);
@@ -420,4 +499,3 @@
     </script>
 </body>
 </html>
-
