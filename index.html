@@ -26,17 +26,20 @@
       line-height: 1.8;
       font-size: 1.1rem;
     }
-    /* Journal scrollbar */
-    .journal-scroll::-webkit-scrollbar {
-      width: 8px;
+    .scrollbar-thin::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
     }
-    .journal-scroll::-webkit-scrollbar-track {
+    .scrollbar-thin::-webkit-scrollbar-track {
       background: rgba(0,0,0,0.2);
-      border-radius: 4px;
+      border-radius: 3px;
     }
-    .journal-scroll::-webkit-scrollbar-thumb {
+    .scrollbar-thin::-webkit-scrollbar-thumb {
       background: rgba(255,255,255,0.2);
-      border-radius: 4px;
+      border-radius: 3px;
+    }
+    .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+      background: rgba(255,255,255,0.3);
     }
   </style>
 </head>
@@ -65,18 +68,26 @@
     <!-- Active Books -->
     <div class="grid md:grid-cols-3 gap-4 mb-6" id="activeBooks"></div>
 
-    <!-- Eco Tracking -->
+    <!-- Eco Tracking & Live Mileage -->
     <div class="bg-black/30 p-4 rounded-xl mb-6">
-      <h3 class="font-semibold mb-2">Eco Tracking</h3>
+      <div class="flex justify-between items-center mb-2">
+        <h3 class="font-semibold">Eco Tracking</h3>
+        <div class="text-right">
+            <span id="liveDistance" class="text-2xl font-bold text-green-400">0.00</span>
+            <span class="text-xs text-gray-400">mi live</span>
+        </div>
+      </div>
+      
       <div class="mb-3">
         <div class="flex justify-between text-xs text-gray-300 mb-1">
-          <span>Distance Progress</span>
-          <span id="distanceLabel">0.00 mi</span>
+          <span>Unlock Progress (Next Chapter)</span>
+          <span id="distanceLabel">0.00 / 1.00 mi</span>
         </div>
         <div class="w-full bg-black/40 rounded-full h-3 overflow-hidden">
           <div id="distanceBar" class="h-full bg-green-500 transition-all duration-300" style="width:0%"></div>
         </div>
       </div>
+
       <div class="flex flex-wrap gap-2 mb-2">
         <button onclick="startTracking('walk')" class="bg-green-600 px-3 py-2 rounded-lg hover:bg-green-500 transition">🚶 Start Walk</button>
         <button onclick="startTracking('commute')" class="bg-blue-600 px-3 py-2 rounded-lg hover:bg-blue-500 transition">🚗 Eco Commute</button>
@@ -99,11 +110,35 @@
       </div>
     </div>
 
-    <!-- NEW: Journal / Logging Section -->
+    <!-- NEW: Mileage Logging Section -->
+    <div class="bg-black/30 p-4 rounded-xl mb-4">
+        <h3 class="font-semibold mb-2 flex items-center gap-2">📍 Mileage Log</h3>
+        <p class="text-xs text-gray-400 mb-2">History of completed tracking sessions.</p>
+        
+        <div class="overflow-x-auto scrollbar-thin">
+            <table class="w-full text-sm text-left text-gray-300">
+                <thead class="text-xs text-gray-400 uppercase bg-white/5">
+                    <tr>
+                        <th scope="col" class="px-3 py-2">Date</th>
+                        <th scope="col" class="px-3 py-2">Mode</th>
+                        <th scope="col" class="px-3 py-2">Distance</th>
+                        <th scope="col" class="px-3 py-2">Chapters</th>
+                    </tr>
+                </thead>
+                <tbody id="mileageTableBody">
+                    <!-- Rows injected here -->
+                    <tr class="border-b border-white/5">
+                        <td colspan="4" class="px-3 py-3 text-gray-500 italic text-center">No mileage recorded yet.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Journal / Reflections -->
     <div class="bg-black/30 p-4 rounded-xl mb-4">
       <h3 class="font-semibold mb-3 flex items-center gap-2">📝 Eco Journal</h3>
       
-      <!-- Add Entry Form -->
       <div class="mb-4 p-3 bg-white/5 rounded-lg">
         <textarea id="journalInput" class="w-full bg-transparent text-white placeholder-gray-400 focus:outline-none min-h-[60px]" placeholder="How did your eco-journey feel today? Reflect on your travel or the chapter you just listened to..."></textarea>
         <div class="flex justify-end mt-2">
@@ -111,10 +146,8 @@
         </div>
       </div>
 
-      <!-- Entries List -->
-      <div id="journalList" class="journal-scroll max-h-48 overflow-y-auto space-y-3 pr-2">
-        <!-- Entries injected here -->
-        <p class="text-gray-400 text-sm italic">No entries yet. Start tracking to unlock a chapter, then write your thoughts here.</p>
+      <div id="journalList" class="scrollbar-thin max-h-48 overflow-y-auto space-y-3 pr-2">
+        <p class="text-gray-400 text-sm italic">No entries yet.</p>
       </div>
     </div>
   </section>
@@ -148,10 +181,11 @@ const LIBRIVOX_LIBRARY = [
 
 let state = {
   books: [],
-  logs: [], // New: Array for journal entries
+  logs: [],       // Text reflections
+  mileageLog: [], // New: Tracking history
   trackingMode: null,
   lastPosition: null, 
-  distanceAccumulator: 0,
+  currentSessionDistance: 0, // Only active during tracking
   totalDistance: 0 
 };
 
@@ -163,8 +197,8 @@ localforage.config({ name: 'MyEcoJourney' });
 (async function init() {
   const saved = await localforage.getItem('state');
   if (saved) {
-    // Ensure logs array exists if updating from older version
     if (!saved.logs) saved.logs = [];
+    if (!saved.mileageLog) saved.mileageLog = []; // Ensure array exists
     state = saved;
     showDashboard();
   } else {
@@ -181,6 +215,7 @@ function showDashboard() {
   document.getElementById('dashboard').classList.remove('hidden');
   renderDashboard();
   renderJournal();
+  renderMileage();
 }
 
 /*********************************
@@ -222,7 +257,7 @@ function saveAndStart() {
 }
 
 /*********************************
- * LIBRIVOX FETCH (Audio)
+ * LIBRIVOX FETCH
  *********************************/
 async function fetchLibrivoxChapters(title) {
   try {
@@ -258,7 +293,7 @@ function renderDashboard() {
   });
 }
 
-function unlockChapter() {
+function unlockChapter(unlockedBookTitle) {
   const eligible = state.books.filter(b => b.current < b.chapters);
   if (!eligible.length) return;
 
@@ -338,11 +373,10 @@ function renderJournal() {
   list.innerHTML = '';
   
   if (state.logs.length === 0) {
-    list.innerHTML = '<p class="text-gray-400 text-sm italic">No entries yet. Start tracking to unlock a chapter, then write your thoughts here.</p>';
+    list.innerHTML = '<p class="text-gray-400 text-sm italic">No entries yet.</p>';
     return;
   }
 
-  // Sort by date descending
   const sortedLogs = [...state.logs].sort((a, b) => b.date - a.date);
 
   sortedLogs.forEach(log => {
@@ -376,14 +410,58 @@ function addJournalEntry() {
                  : null
   };
 
-  // Add to state
   state.logs.push(entry);
   
-  // Persist
   localforage.setItem('state', JSON.parse(JSON.stringify(state))).then(() => {
-    input.value = ''; // Clear input
-    renderJournal(); // Re-render list
+    input.value = '';
+    renderJournal();
   });
+}
+
+/*********************************
+ * MILEAGE LOGGING FEATURE
+ *********************************/
+function renderMileage() {
+    const tbody = document.getElementById('mileageTableBody');
+    tbody.innerHTML = '';
+
+    if (state.mileageLog.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="px-3 py-3 text-gray-500 italic text-center">No mileage recorded yet.</td></tr>`;
+        return;
+    }
+
+    // Sort by date descending
+    const sortedMiles = [...state.mileageLog].sort((a, b) => b.date - a.date);
+
+    sortedMiles.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.className = "border-b border-white/5 hover:bg-white/5 transition";
+        
+        const dateStr = new Date(row.date).toLocaleDateString();
+        const modeIcon = row.mode === 'walk' ? '🚶' : '🚗';
+        
+        tr.innerHTML = `
+            <td class="px-3 py-2 text-xs whitespace-nowrap">${dateStr}</td>
+            <td class="px-3 py-2 text-xs">${modeIcon} ${row.mode}</td>
+            <td class="px-3 py-2 text-xs font-bold text-green-400">${row.distance.toFixed(2)} mi</td>
+            <td class="px-3 py-2 text-xs text-gray-400">${row.unlockedCount || 0}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function logMileageEntry(mode, distance, chaptersUnlocked) {
+    const entry = {
+        date: Date.now(),
+        mode: mode,
+        distance: distance,
+        unlockedCount: chaptersUnlocked
+    };
+
+    state.mileageLog.push(entry);
+    localforage.setItem('state', JSON.parse(JSON.stringify(state))).then(() => {
+        renderMileage();
+    });
 }
 
 /*********************************
@@ -397,30 +475,50 @@ function startTracking(mode) {
     return;
   }
 
+  // Reset session specific counters
   state.trackingMode = mode;
   state.lastPosition = null;
-  state.distanceAccumulator = 0; 
+  state.currentSessionDistance = 0; 
   document.getElementById('trackingStatus').textContent = `Tracking started (${mode})`;
+  document.getElementById('liveDistance').textContent = "0.00";
+
+  // Update threshold label immediately
+  updateDistanceUI();
 
   watchId = navigator.geolocation.watchPosition(pos => {
     if (state.lastPosition) {
       const d = smoothDistance(haversine(state.lastPosition, pos.coords));
-      state.distanceAccumulator += d;
+      
+      // Accumulate for live display and threshold checking
+      state.currentSessionDistance += d;
       state.totalDistance += d;
-      updateDistanceUI();
+      
+      // Update live display
+      document.getElementById('liveDistance').textContent = state.currentSessionDistance.toFixed(2);
 
       const threshold = mode === 'walk' ? 1 : 5;
       
-      while (state.distanceAccumulator >= threshold) {
-        state.distanceAccumulator -= threshold;
-        unlockChapter();
+      // Check for chapter unlock
+      while (state.currentSessionDistance >= threshold) {
+        // Note: We subtract threshold but keep accumulating total distance
+        // For visual progress, we show 0 to threshold progress
+        // But the logic here is: every 1 mile (or 5) unlocks a chapter.
+        // We reset the accumulator relative to the threshold to show progress visually.
+        
+        // Logic: If we just passed 1.0, unlock one, now we are at 1.0 (effectively 0 for next).
+        // Let's simplify: Keep subtracting threshold to find "overflow" for unlocking.
+        state.currentSessionDistance -= threshold;
+        unlockChapter(); // Handles the UI update for the chapter
       }
+      
+      updateDistanceUI(); // Updates the progress bar
     }
 
     state.lastPosition = {
       latitude: pos.coords.latitude,
       longitude: pos.coords.longitude
     };
+    // Save state periodically
     localforage.setItem('state', JSON.parse(JSON.stringify(state)));
   }, (err) => {
       document.getElementById('trackingStatus').textContent = `Error: ${err.message}`;
@@ -432,7 +530,18 @@ function startTracking(mode) {
 function stopTracking() {
   if (watchId) navigator.geolocation.clearWatch(watchId);
   watchId = null;
-  document.getElementById('trackingStatus').textContent = 'Tracking stopped';
+  
+  // Log the session if distance > 0
+  if (state.currentSessionDistance > 0) {
+      // Count how many chapters were unlocked in this session (approximate based on threshold)
+      // This is a bit tricky because currentSessionDistance is reset relative to threshold. 
+      // We'll log the raw distance and the fact that tracking occurred.
+      logMileageEntry(state.trackingMode, state.currentSessionDistance, 0); 
+  }
+
+  state.trackingMode = null;
+  document.getElementById('trackingStatus').textContent = 'Tracking stopped. Session saved.';
+  document.getElementById('liveDistance').textContent = "0.00";
 }
 
 let lastDistances = [];
@@ -456,9 +565,10 @@ function haversine(a, b) {
 
 function updateDistanceUI() {
   const threshold = state.trackingMode === 'commute' ? 5 : 1;
-  const progress = Math.min((state.distanceAccumulator / threshold) * 100, 100);
+  // Calculate progress based on currentSessionDistance relative to the next unlock threshold
+  const progress = Math.min((state.currentSessionDistance / threshold) * 100, 100);
   document.getElementById('distanceBar').style.width = progress + '%';
-  document.getElementById('distanceLabel').textContent = state.distanceAccumulator.toFixed(2) + ' mi';
+  document.getElementById('distanceLabel').textContent = `${state.currentSessionDistance.toFixed(2)} / ${threshold.toFixed(1)} mi`;
 }
 
 function shuffle(arr) {
