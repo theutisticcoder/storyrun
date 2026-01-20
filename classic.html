@@ -11,8 +11,9 @@
   <!-- localForage -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
 
-  <!-- ResponsiveVoice (free tier) -->
-  <script src="https://code.responsivevoice.org/responsivevoice.js"></script>
+  <!-- ResponsiveVoice (requires API key) -->
+  <!-- IMPORTANT: Replace YOUR_API_KEY_HERE with your own key from https://responsivevoice.org/register -->
+  <script src="https://code.responsivevoice.org/responsivevoice.js?key=YOUR_API_KEY_HERE"></script>
 
   <style>
     body {
@@ -53,7 +54,6 @@
       </div>
       <p id="trackingStatus" class="text-xs mt-2 text-gray-200"></p>
     </div>
-    </div>
 
     <div id="unlockedChapter" class="hidden bg-green-900/40 p-4 rounded-xl">
       <h3 class="font-semibold">🎧 New Chapter Unlocked!</h3>
@@ -63,9 +63,14 @@
   </section>
 
 <script>
-// ----------------------
-// Mock LibriVox Metadata
-// ----------------------
+/*********************************
+ * CONFIG
+ *********************************/
+const USE_RESPONSIVE_VOICE = typeof responsiveVoice !== 'undefined' && responsiveVoice.voiceSupport();
+
+/*********************************
+ * LIBRIVOX METADATA
+ *********************************/
 const LIBRIVOX_LIBRARY = [
   { id: 1, title: "The Count of Monte Cristo", chapters: 117 },
   { id: 2, title: "Treasure Island", chapters: 34 },
@@ -80,7 +85,6 @@ const LIBRIVOX_LIBRARY = [
 
 let state = {
   books: [],
-  miles: 0,
   trackingMode: null,
   lastPosition: null,
   distanceAccumulator: 0
@@ -88,9 +92,9 @@ let state = {
 
 localforage.config({ name: 'MyEcoJourney' });
 
-// ----------------------
-// Init
-// ----------------------
+/*********************************
+ * INIT
+ *********************************/
 (async function init() {
   const saved = await localforage.getItem('state');
   if (saved) {
@@ -102,22 +106,20 @@ localforage.config({ name: 'MyEcoJourney' });
 })();
 
 function showOnboarding() {
-  document.getElementById('onboarding').classList.remove('hidden');
+  onboarding.classList.remove('hidden');
   renderBookOptions();
 }
 
 function showDashboard() {
-  document.getElementById('dashboard').classList.remove('hidden');
+  dashboard.classList.remove('hidden');
   renderDashboard();
 }
 
-// ----------------------
-// Onboarding
-// ----------------------
+/*********************************
+ * ONBOARDING
+ *********************************/
 function renderBookOptions() {
-  const container = document.getElementById('bookOptions');
-  container.innerHTML = '';
-
+  bookOptions.innerHTML = '';
   LIBRIVOX_LIBRARY.forEach(book => {
     const div = document.createElement('div');
     div.className = 'bg-black/30 p-4 rounded-xl';
@@ -126,12 +128,12 @@ function renderBookOptions() {
       <p class="text-xs">${book.chapters} chapters</p>
       <input type="checkbox" value="${book.id}" class="mt-2" />
     `;
-    container.appendChild(div);
+    bookOptions.appendChild(div);
   });
 }
 
 randomPick.onclick = () => {
-  state.books = shuffle([...LIBRIVOX_LIBRARY]).slice(0,3).map(b => ({...b, current: 0}));
+  state.books = shuffle([...LIBRIVOX_LIBRARY]).slice(0, 3).map(b => ({ ...b, current: 0 }));
   saveAndStart();
 };
 
@@ -139,41 +141,37 @@ startJourney.onclick = () => {
   const checked = [...document.querySelectorAll('#bookOptions input:checked')]
     .map(c => LIBRIVOX_LIBRARY.find(b => b.id == c.value));
 
-  if (checked.length === 0) return alert('Pick at least one book!');
-
-  state.books = shuffle(checked).slice(0,3).map(b => ({...b, current: 0}));
+  if (!checked.length) return alert('Pick at least one book!');
+  state.books = shuffle(checked).slice(0, 3).map(b => ({ ...b, current: 0 }));
   saveAndStart();
 };
 
 function saveAndStart() {
   localforage.setItem('state', state);
-  document.getElementById('onboarding').classList.add('hidden');
+  onboarding.classList.add('hidden');
   showDashboard();
 }
 
-// ----------------------
-// LibriVox Fetch
-// ----------------------
+/*********************************
+ * LIBRIVOX FETCH
+ *********************************/
 async function fetchLibrivoxChapters(title) {
   const url = `https://librivox.org/api/feed/audiobooks?format=json&title=${encodeURIComponent(title)}`;
   const res = await fetch(url);
   const data = await res.json();
-  if (!data.books || !data.books[0]) return [];
+  if (!data.books?.length) return [];
 
-  const book = data.books[0];
-  return book.sections.map(sec => ({
+  return data.books[0].sections.map(sec => ({
     title: sec.title,
     audioUrl: sec.listen_url
   }));
 }
 
-// ----------------------
-// Dashboard Logic
-// ----------------------
+/*********************************
+ * DASHBOARD
+ *********************************/
 function renderDashboard() {
-  const container = document.getElementById('activeBooks');
-  container.innerHTML = '';
-
+  activeBooks.innerHTML = '';
   state.books.forEach(book => {
     const div = document.createElement('div');
     div.className = 'bg-black/30 p-4 rounded-xl';
@@ -181,56 +179,90 @@ function renderDashboard() {
       <h3 class="font-semibold">${book.title}</h3>
       <p class="text-sm">Chapter ${book.current} / ${book.chapters}</p>
     `;
-    container.appendChild(div);
+    activeBooks.appendChild(div);
   });
-}
-
-function logMiles(m) {
-  state.miles += m;
-  unlockChapter();
-  localforage.setItem('state', state);
 }
 
 function unlockChapter() {
   const eligible = state.books.filter(b => b.current < b.chapters);
-  if (eligible.length === 0) return;
+  if (!eligible.length) return;
 
   const book = eligible[Math.floor(Math.random() * eligible.length)];
   book.current++;
-
   renderDashboard();
 
-  document.getElementById('unlockedChapter').classList.remove('hidden');
-  document.getElementById('chapterInfo').innerText = `${book.title} — Chapter ${book.current}`;
+  unlockedChapter.classList.remove('hidden');
+  chapterInfo.textContent = `${book.title} — Chapter ${book.current}`;
 
-  document.getElementById('playAudio').onclick = async () => {
+  playAudio.onclick = async () => {
     if (!book.chapterData) {
       book.chapterData = await fetchLibrivoxChapters(book.title);
       localforage.setItem('state', state);
     }
-    const chapter = book.chapterData[book.current - 1];
+
+    const chapter = book.chapterData?.[book.current - 1];
     if (chapter?.audioUrl) {
-      const audio = new Audio(chapter.audioUrl);
-      audio.play();
-    } else {
+      new Audio(chapter.audioUrl).play();
+    } else if (USE_RESPONSIVE_VOICE) {
       responsiveVoice.speak(`Now playing ${book.title}, chapter ${book.current}`, 'UK English Male');
+    } else {
+      alert('No audio available for this chapter.');
     }
   };
 }
+
+/*********************************
+ * TRACKING (SIMPLIFIED)
+ *********************************/
+let watchId = null;
+
+function startTracking(mode) {
+  if (!navigator.geolocation) {
+    alert('Geolocation not supported.');
+    return;
+  }
+
+  state.trackingMode = mode;
+  state.lastPosition = null;
+  state.distanceAccumulator = 0;
+  trackingStatus.textContent = `Tracking started (${mode})`;
+
+  watchId = navigator.geolocation.watchPosition(pos => {
+    if (state.lastPosition) {
+      const d = haversine(state.lastPosition, pos.coords);
+      state.distanceAccumulator += d;
+
+      const threshold = mode === 'walk' ? 1 : 5;
+      if (state.distanceAccumulator >= threshold) {
+        state.distanceAccumulator = 0;
+        unlockChapter();
+      }
+    }
+    state.lastPosition = pos.coords;
+    localforage.setItem('state', state);
+  });
 }
 
-function replaceFinishedBook(finished) {
-  const remaining = LIBRIVOX_LIBRARY.filter(b => !state.books.find(sb => sb.id === b.id));
-  if (remaining.length === 0) return;
-
-  const next = remaining[Math.floor(Math.random() * remaining.length)];
-  const idx = state.books.findIndex(b => b.id === finished.id);
-  state.books[idx] = {...next, current: 0};
+function stopTracking() {
+  if (watchId) navigator.geolocation.clearWatch(watchId);
+  watchId = null;
+  trackingStatus.textContent = 'Tracking stopped';
 }
 
-// ----------------------
-// Utils
-// ----------------------
+function haversine(a, b) {
+  const R = 3958.8; // miles
+  const dLat = (b.latitude - a.latitude) * Math.PI / 180;
+  const dLon = (b.longitude - a.longitude) * Math.PI / 180;
+  const lat1 = a.latitude * Math.PI / 180;
+  const lat2 = b.latitude * Math.PI / 180;
+
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+/*********************************
+ * UTILS
+ *********************************/
 function shuffle(arr) {
   return arr.sort(() => Math.random() - 0.5);
 }
