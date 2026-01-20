@@ -68,13 +68,13 @@
     <!-- Active Books -->
     <div class="grid md:grid-cols-3 gap-4 mb-6" id="activeBooks"></div>
 
-    <!-- Eco Tracking & Live Mileage -->
+    <!-- Tracking Status Display -->
     <div class="bg-black/30 p-4 rounded-xl mb-6">
       <div class="flex justify-between items-center mb-2">
         <h3 class="font-semibold">Eco Tracking</h3>
         <div class="text-right">
             <span id="liveDistance" class="text-2xl font-bold text-green-400">0.00</span>
-            <span class="text-xs text-gray-400">mi live</span>
+            <span class="text-xs text-gray-400">mi session</span>
         </div>
       </div>
       
@@ -89,8 +89,8 @@
       </div>
 
       <div class="flex flex-wrap gap-2 mb-2">
-        <button onclick="startTracking('walk')" class="bg-green-600 px-3 py-2 rounded-lg hover:bg-green-500 transition">🚶 Start Walk</button>
-        <button onclick="startTracking('commute')" class="bg-blue-600 px-3 py-2 rounded-lg hover:bg-blue-500 transition">🚗 Eco Commute</button>
+        <button onclick="startTracking('walk')" class="bg-green-600 px-3 py-2 rounded-lg hover:bg-green-500 transition">🚶 Start GPS Walk</button>
+        <button onclick="startTracking('commute')" class="bg-blue-600 px-3 py-2 rounded-lg hover:bg-blue-500 transition">🚗 Start GPS Commute</button>
         <button onclick="stopTracking()" class="bg-red-600 px-3 py-2 rounded-lg hover:bg-red-500 transition">⏹ Stop</button>
       </div>
       <p id="trackingStatus" class="text-xs mt-2 text-gray-200"></p>
@@ -110,10 +110,36 @@
       </div>
     </div>
 
-    <!-- NEW: Mileage Logging Section -->
+    <!-- NEW: Manual Workout Logging (Replaced Journal) -->
     <div class="bg-black/30 p-4 rounded-xl mb-4">
-        <h3 class="font-semibold mb-2 flex items-center gap-2">📍 Mileage Log</h3>
-        <p class="text-xs text-gray-400 mb-2">History of completed tracking sessions.</p>
+      <h3 class="font-semibold mb-3 flex items-center gap-2">💪 Manual Workout</h3>
+      <p class="text-xs text-gray-400 mb-2">Log a workout manually if GPS is unavailable or you exercised indoors.</p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end mb-4 p-3 bg-white/5 rounded-lg">
+        <div>
+            <label class="block text-xs text-gray-400 mb-1">Distance (mi)</label>
+            <input type="number" id="manualDistance" step="0.1" min="0.1" class="w-full bg-black/40 text-white rounded p-2 focus:outline-none focus:ring-1 focus:ring-green-500" placeholder="0.0">
+        </div>
+        <div>
+            <label class="block text-xs text-gray-400 mb-1">Mode</label>
+            <select id="manualMode" class="w-full bg-black/40 text-white rounded p-2 focus:outline-none focus:ring-1 focus:ring-green-500">
+                <option value="walk">🚶 Walking</option>
+                <option value="commute">🚗 Eco Commute</option>
+            </select>
+        </div>
+        <div class="md:col-span-2">
+            <label class="block text-xs text-gray-400 mb-1">Notes (Optional)</label>
+            <input type="text" id="manualNotes" class="w-full bg-black/40 text-white rounded p-2 focus:outline-none focus:ring-1 focus:ring-green-500" placeholder="Gym session, hike, etc.">
+        </div>
+      </div>
+      <div class="flex justify-end">
+          <button onclick="addManualWorkout()" class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg text-sm font-semibold">Log Workout</button>
+      </div>
+    </div>
+
+    <!-- Mileage Log (History) -->
+    <div class="bg-black/30 p-4 rounded-xl mb-4">
+        <h3 class="font-semibold mb-2 flex items-center gap-2">📍 Mileage History</h3>
         
         <div class="overflow-x-auto scrollbar-thin">
             <table class="w-full text-sm text-left text-gray-300">
@@ -122,33 +148,17 @@
                         <th scope="col" class="px-3 py-2">Date</th>
                         <th scope="col" class="px-3 py-2">Mode</th>
                         <th scope="col" class="px-3 py-2">Distance</th>
-                        <th scope="col" class="px-3 py-2">Chapters</th>
+                        <th scope="col" class="px-3 py-2">Source</th>
                     </tr>
                 </thead>
                 <tbody id="mileageTableBody">
                     <!-- Rows injected here -->
                     <tr class="border-b border-white/5">
-                        <td colspan="4" class="px-3 py-3 text-gray-500 italic text-center">No mileage recorded yet.</td>
+                        <td colspan="4" class="px-3 py-3 text-gray-500 italic text-center">No history recorded.</td>
                     </tr>
                 </tbody>
             </table>
         </div>
-    </div>
-
-    <!-- Journal / Reflections -->
-    <div class="bg-black/30 p-4 rounded-xl mb-4">
-      <h3 class="font-semibold mb-3 flex items-center gap-2">📝 Eco Journal</h3>
-      
-      <div class="mb-4 p-3 bg-white/5 rounded-lg">
-        <textarea id="journalInput" class="w-full bg-transparent text-white placeholder-gray-400 focus:outline-none min-h-[60px]" placeholder="How did your eco-journey feel today? Reflect on your travel or the chapter you just listened to..."></textarea>
-        <div class="flex justify-end mt-2">
-          <button onclick="addJournalEntry()" class="bg-indigo-600 hover:bg-indigo-500 px-4 py-1 rounded-lg text-sm">Save Entry</button>
-        </div>
-      </div>
-
-      <div id="journalList" class="scrollbar-thin max-h-48 overflow-y-auto space-y-3 pr-2">
-        <p class="text-gray-400 text-sm italic">No entries yet.</p>
-      </div>
     </div>
   </section>
 
@@ -181,11 +191,10 @@ const LIBRIVOX_LIBRARY = [
 
 let state = {
   books: [],
-  logs: [],       // Text reflections
-  mileageLog: [], // New: Tracking history
+  mileageLog: [], // { date, mode, distance, source }
   trackingMode: null,
   lastPosition: null, 
-  currentSessionDistance: 0, // Only active during tracking
+  currentSessionDistance: 0, // Only active during GPS tracking
   totalDistance: 0 
 };
 
@@ -197,8 +206,7 @@ localforage.config({ name: 'MyEcoJourney' });
 (async function init() {
   const saved = await localforage.getItem('state');
   if (saved) {
-    if (!saved.logs) saved.logs = [];
-    if (!saved.mileageLog) saved.mileageLog = []; // Ensure array exists
+    if (!saved.mileageLog) saved.mileageLog = [];
     state = saved;
     showDashboard();
   } else {
@@ -214,7 +222,6 @@ function showOnboarding() {
 function showDashboard() {
   document.getElementById('dashboard').classList.remove('hidden');
   renderDashboard();
-  renderJournal();
   renderMileage();
 }
 
@@ -293,7 +300,7 @@ function renderDashboard() {
   });
 }
 
-function unlockChapter(unlockedBookTitle) {
+function unlockChapter() {
   const eligible = state.books.filter(b => b.current < b.chapters);
   if (!eligible.length) return;
 
@@ -318,7 +325,7 @@ function unlockChapter(unlockedBookTitle) {
     } else if (typeof responsiveVoice !== 'undefined' && responsiveVoice.voiceSupport()) {
       responsiveVoice.speak(`Now playing ${book.title}, chapter ${book.current}`, 'UK English Male');
     } else {
-      alert('Audio stream not available via API. In a production app, this would link to LibriVox directly.');
+      alert('Audio stream not available via API.');
     }
   };
 
@@ -366,67 +373,96 @@ document.getElementById('readerModal').addEventListener('click', (e) => {
 });
 
 /*********************************
- * JOURNAL / LOGGING FEATURE
+ * CORE LOGIC: PROCESS DISTANCE
+ * Used by both GPS and Manual Entry
  *********************************/
-function renderJournal() {
-  const list = document.getElementById('journalList');
-  list.innerHTML = '';
+function processDistance(miles, mode, source = 'GPS') {
+  if (miles <= 0) return;
+
+  state.totalDistance += miles;
   
-  if (state.logs.length === 0) {
-    list.innerHTML = '<p class="text-gray-400 text-sm italic">No entries yet.</p>';
-    return;
+  // Add to Mileage History
+  const historyEntry = {
+    date: Date.now(),
+    mode: mode,
+    distance: miles,
+    source: source // 'GPS' or 'Manual'
+  };
+  state.mileageLog.push(historyEntry);
+
+  // Check for Chapter Unlocks
+  // We accumulate "overflow" miles from previous sessions to check against threshold
+  // To keep it simple for manual entry: we calculate how many whole intervals fit in the provided miles
+  const threshold = mode === 'walk' ? 1 : 5;
+  
+  // Check existing stored progress for this mode (simplified for demo: we use a temporary accumulator logic)
+  // For this demo, we will process unlocks based on the specific input amount
+  let milesToProcess = miles;
+  
+  // Check if we have pending progress in state (not fully implemented for cross-session persistent accumulators in this simple version)
+  // Instead, we just treat manual input as a burst.
+  
+  const unlocks = Math.floor(milesToProcess / threshold);
+  
+  if (unlocks > 0) {
+    for (let i = 0; i < unlocks; i++) {
+      unlockChapter();
+    }
+    // If there is remainder, we could save it to a persistent accumulator, 
+    // but for now we will just reset the progress bar to the remainder.
+    const remainder = milesToProcess % threshold;
+    
+    // Update visual progress bar based on remainder
+    const progress = Math.min((remainder / threshold) * 100, 100);
+    document.getElementById('distanceBar').style.width = progress + '%';
+    document.getElementById('distanceLabel').textContent = `${remainder.toFixed(2)} / ${threshold.toFixed(1)} mi`;
+    document.getElementById('liveDistance').textContent = "0.00"; // Reset live session counter
+  } else {
+    // Just update progress bar
+    const progress = Math.min((milesToProcess / threshold) * 100, 100);
+    document.getElementById('distanceBar').style.width = progress + '%';
+    document.getElementById('distanceLabel').textContent = `${milesToProcess.toFixed(2)} / ${threshold.toFixed(1)} mi`;
+    document.getElementById('liveDistance').textContent = "0.00";
   }
 
-  const sortedLogs = [...state.logs].sort((a, b) => b.date - a.date);
-
-  sortedLogs.forEach(log => {
-    const entry = document.createElement('div');
-    entry.className = 'bg-white/5 p-3 rounded-lg border-l-2 border-indigo-500';
-    
-    const date = new Date(log.date).toLocaleString();
-    entry.innerHTML = `
-      <div class="flex justify-between text-xs text-gray-400 mb-1">
-        <span>${date}</span>
-        <span class="text-indigo-300">${log.context || 'Reflection'}</span>
-      </div>
-      <p class="text-sm text-gray-200">${log.text}</p>
-    `;
-    list.appendChild(entry);
-  });
-}
-
-function addJournalEntry() {
-  const input = document.getElementById('journalInput');
-  const text = input.value.trim();
-  
-  if (!text) return alert('Please write something first!');
-
-  const entry = {
-    text: text,
-    date: Date.now(),
-    context: state.trackingMode || 'Manual Entry',
-    chapterInfo: state.books.find(b => b.current > 0) 
-                 ? `${state.books.find(b => b.current > 0).title}` 
-                 : null
-  };
-
-  state.logs.push(entry);
-  
+  // Save state
   localforage.setItem('state', JSON.parse(JSON.stringify(state))).then(() => {
-    input.value = '';
-    renderJournal();
+    renderMileage();
   });
 }
 
 /*********************************
- * MILEAGE LOGGING FEATURE
+ * MANUAL WORKOUT (NEW)
+ *********************************/
+function addManualWorkout() {
+  const distanceInput = document.getElementById('manualDistance');
+  const modeInput = document.getElementById('manualMode');
+  const notesInput = document.getElementById('manualNotes');
+
+  const distance = parseFloat(distanceInput.value);
+  const mode = modeInput.value;
+
+  if (!distance || distance <= 0) {
+    alert('Please enter a valid distance.');
+    return;
+  }
+
+  processDistance(distance, mode, 'Manual');
+  
+  // Clear inputs
+  distanceInput.value = '';
+  notesInput.value = '';
+}
+
+/*********************************
+ * MILEAGE LOGGING
  *********************************/
 function renderMileage() {
     const tbody = document.getElementById('mileageTableBody');
     tbody.innerHTML = '';
 
     if (state.mileageLog.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="px-3 py-3 text-gray-500 italic text-center">No mileage recorded yet.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="4" class="px-3 py-3 text-gray-500 italic text-center">No history recorded.</td></tr>`;
         return;
     }
 
@@ -439,33 +475,22 @@ function renderMileage() {
         
         const dateStr = new Date(row.date).toLocaleDateString();
         const modeIcon = row.mode === 'walk' ? '🚶' : '🚗';
+        const sourceBadge = row.source === 'GPS' 
+            ? '<span class="bg-blue-900 text-blue-200 text-xs px-1 rounded">GPS</span>' 
+            : '<span class="bg-purple-900 text-purple-200 text-xs px-1 rounded">Manual</span>';
         
         tr.innerHTML = `
             <td class="px-3 py-2 text-xs whitespace-nowrap">${dateStr}</td>
             <td class="px-3 py-2 text-xs">${modeIcon} ${row.mode}</td>
             <td class="px-3 py-2 text-xs font-bold text-green-400">${row.distance.toFixed(2)} mi</td>
-            <td class="px-3 py-2 text-xs text-gray-400">${row.unlockedCount || 0}</td>
+            <td class="px-3 py-2 text-xs">${sourceBadge}</td>
         `;
         tbody.appendChild(tr);
     });
 }
 
-function logMileageEntry(mode, distance, chaptersUnlocked) {
-    const entry = {
-        date: Date.now(),
-        mode: mode,
-        distance: distance,
-        unlockedCount: chaptersUnlocked
-    };
-
-    state.mileageLog.push(entry);
-    localforage.setItem('state', JSON.parse(JSON.stringify(state))).then(() => {
-        renderMileage();
-    });
-}
-
 /*********************************
- * TRACKING
+ * GPS TRACKING
  *********************************/
 let watchId = null;
 
@@ -475,51 +500,32 @@ function startTracking(mode) {
     return;
   }
 
-  // Reset session specific counters
   state.trackingMode = mode;
   state.lastPosition = null;
   state.currentSessionDistance = 0; 
   document.getElementById('trackingStatus').textContent = `Tracking started (${mode})`;
   document.getElementById('liveDistance').textContent = "0.00";
 
-  // Update threshold label immediately
-  updateDistanceUI();
-
   watchId = navigator.geolocation.watchPosition(pos => {
     if (state.lastPosition) {
       const d = smoothDistance(haversine(state.lastPosition, pos.coords));
       
-      // Accumulate for live display and threshold checking
       state.currentSessionDistance += d;
-      state.totalDistance += d;
       
       // Update live display
       document.getElementById('liveDistance').textContent = state.currentSessionDistance.toFixed(2);
-
+      
+      // Update progress bar logic (visual only for the session)
       const threshold = mode === 'walk' ? 1 : 5;
-      
-      // Check for chapter unlock
-      while (state.currentSessionDistance >= threshold) {
-        // Note: We subtract threshold but keep accumulating total distance
-        // For visual progress, we show 0 to threshold progress
-        // But the logic here is: every 1 mile (or 5) unlocks a chapter.
-        // We reset the accumulator relative to the threshold to show progress visually.
-        
-        // Logic: If we just passed 1.0, unlock one, now we are at 1.0 (effectively 0 for next).
-        // Let's simplify: Keep subtracting threshold to find "overflow" for unlocking.
-        state.currentSessionDistance -= threshold;
-        unlockChapter(); // Handles the UI update for the chapter
-      }
-      
-      updateDistanceUI(); // Updates the progress bar
+      const progress = Math.min((state.currentSessionDistance / threshold) * 100, 100);
+      document.getElementById('distanceBar').style.width = progress + '%';
+      document.getElementById('distanceLabel').textContent = `${state.currentSessionDistance.toFixed(2)} / ${threshold.toFixed(1)} mi`;
     }
 
     state.lastPosition = {
       latitude: pos.coords.latitude,
       longitude: pos.coords.longitude
     };
-    // Save state periodically
-    localforage.setItem('state', JSON.parse(JSON.stringify(state)));
   }, (err) => {
       document.getElementById('trackingStatus').textContent = `Error: ${err.message}`;
   }, {
@@ -531,17 +537,14 @@ function stopTracking() {
   if (watchId) navigator.geolocation.clearWatch(watchId);
   watchId = null;
   
-  // Log the session if distance > 0
   if (state.currentSessionDistance > 0) {
-      // Count how many chapters were unlocked in this session (approximate based on threshold)
-      // This is a bit tricky because currentSessionDistance is reset relative to threshold. 
-      // We'll log the raw distance and the fact that tracking occurred.
-      logMileageEntry(state.trackingMode, state.currentSessionDistance, 0); 
+    // Process the GPS session as a workout
+    processDistance(state.currentSessionDistance, state.trackingMode, 'GPS');
   }
 
   state.trackingMode = null;
-  document.getElementById('trackingStatus').textContent = 'Tracking stopped. Session saved.';
-  document.getElementById('liveDistance').textContent = "0.00";
+  state.currentSessionDistance = 0;
+  document.getElementById('trackingStatus').textContent = 'Tracking stopped.';
 }
 
 let lastDistances = [];
@@ -561,14 +564,6 @@ function haversine(a, b) {
 
   const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
   return 2 * R * Math.asin(Math.sqrt(h));
-}
-
-function updateDistanceUI() {
-  const threshold = state.trackingMode === 'commute' ? 5 : 1;
-  // Calculate progress based on currentSessionDistance relative to the next unlock threshold
-  const progress = Math.min((state.currentSessionDistance / threshold) * 100, 100);
-  document.getElementById('distanceBar').style.width = progress + '%';
-  document.getElementById('distanceLabel').textContent = `${state.currentSessionDistance.toFixed(2)} / ${threshold.toFixed(1)} mi`;
 }
 
 function shuffle(arr) {
