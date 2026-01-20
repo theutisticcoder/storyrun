@@ -25,13 +25,13 @@
 
   <header class="w-full max-w-4xl text-center mb-6">
     <h1 class="text-4xl font-bold text-green-300">🌍 MyEcoJourney</h1>
-    <p class="text-sm text-green-100 mt-2">Unlock free audiobooks by walking or choosing eco‑friendly travel</p>
+    <p class="text-sm text-green-100 mt-2">Unlock free audiobooks by walking or choosing eco-friendly travel</p>
   </header>
 
   <!-- Onboarding -->
   <section id="onboarding" class="w-full max-w-4xl bg-white/10 rounded-2xl p-6 shadow-xl hidden">
     <h2 class="text-2xl font-semibold mb-4">Choose Your First Adventures</h2>
-    <p class="text-sm mb-4 text-gray-200">Select up to 3 fast‑paced public‑domain audiobooks, or let us surprise you.</p>
+    <p class="text-sm mb-4 text-gray-200">Select up to 3 fast-paced public-domain audiobooks, or let us surprise you.</p>
 
     <div id="bookOptions" class="grid md:grid-cols-3 gap-4"></div>
 
@@ -212,7 +212,7 @@ function unlockChapter() {
 }
 
 /*********************************
- * TRACKING (SIMPLIFIED)
+ * TRACKING (FIXED)
  *********************************/
 let watchId = null;
 
@@ -233,11 +233,12 @@ function startTracking(mode) {
       state.distanceAccumulator += d;
 
       const threshold = mode === 'walk' ? 1 : 5;
-      if (state.distanceAccumulator >= threshold) {
-        state.distanceAccumulator = 0;
+      while (state.distanceAccumulator >= threshold) {
+        state.distanceAccumulator -= threshold;
         unlockChapter();
       }
     }
+
     state.lastPosition = pos.coords;
     localforage.setItem('state', state);
   });
