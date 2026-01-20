@@ -19,13 +19,24 @@
     body {
       background: linear-gradient(135deg, #0f172a, #064e3b);
     }
-    /* Reader Modal Styles */
     #readerModal::backdrop {
       background: rgba(0, 0, 0, 0.85);
     }
     .reader-text {
       line-height: 1.8;
       font-size: 1.1rem;
+    }
+    /* Journal scrollbar */
+    .journal-scroll::-webkit-scrollbar {
+      width: 8px;
+    }
+    .journal-scroll::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.2);
+      border-radius: 4px;
+    }
+    .journal-scroll::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.2);
+      border-radius: 4px;
     }
   </style>
 </head>
@@ -51,9 +62,11 @@
   <section id="dashboard" class="w-full max-w-4xl bg-white/10 rounded-2xl p-6 shadow-xl hidden">
     <h2 class="text-2xl font-semibold mb-4">Your Eco Progress</h2>
 
+    <!-- Active Books -->
     <div class="grid md:grid-cols-3 gap-4 mb-6" id="activeBooks"></div>
 
-    <div class="bg-black/30 p-4 rounded-xl mb-4">
+    <!-- Eco Tracking -->
+    <div class="bg-black/30 p-4 rounded-xl mb-6">
       <h3 class="font-semibold mb-2">Eco Tracking</h3>
       <div class="mb-3">
         <div class="flex justify-between text-xs text-gray-300 mb-1">
@@ -64,32 +77,49 @@
           <div id="distanceBar" class="h-full bg-green-500 transition-all duration-300" style="width:0%"></div>
         </div>
       </div>
-      <div class="flex flex-wrap gap-2">
+      <div class="flex flex-wrap gap-2 mb-2">
         <button onclick="startTracking('walk')" class="bg-green-600 px-3 py-2 rounded-lg hover:bg-green-500 transition">🚶 Start Walk</button>
-        <button onclick="startTracking('commute')" class="bg-blue-600 px-3 py-2 rounded-lg hover:bg-blue-500 transition">🚗 Start Eco Commute</button>
+        <button onclick="startTracking('commute')" class="bg-blue-600 px-3 py-2 rounded-lg hover:bg-blue-500 transition">🚗 Eco Commute</button>
         <button onclick="stopTracking()" class="bg-red-600 px-3 py-2 rounded-lg hover:bg-red-500 transition">⏹ Stop</button>
       </div>
       <p id="trackingStatus" class="text-xs mt-2 text-gray-200"></p>
     </div>
 
-    <!-- Updated Unlock Section: Now includes Audio and Written options -->
-    <div id="unlockedChapter" class="hidden bg-green-900/40 p-4 rounded-xl border border-green-500/30">
+    <!-- Unlocked Chapter Action -->
+    <div id="unlockedChapter" class="hidden bg-green-900/40 p-4 rounded-xl border border-green-500/30 mb-6">
       <h3 class="font-semibold">🎧 New Chapter Unlocked!</h3>
       <p id="chapterInfo" class="text-sm mt-1 mb-3"></p>
-      
       <div class="flex flex-wrap gap-2">
         <button id="playAudio" class="bg-green-600 px-4 py-2 rounded-lg hover:bg-green-500 transition flex items-center gap-2">
           <span>🔊 Play Audio</span>
         </button>
-        <!-- NEW: Written Chapter Button -->
         <button id="readChapter" class="bg-yellow-600 px-4 py-2 rounded-lg hover:bg-yellow-500 transition flex items-center gap-2">
           <span>📖 Read Chapter</span>
         </button>
       </div>
     </div>
+
+    <!-- NEW: Journal / Logging Section -->
+    <div class="bg-black/30 p-4 rounded-xl mb-4">
+      <h3 class="font-semibold mb-3 flex items-center gap-2">📝 Eco Journal</h3>
+      
+      <!-- Add Entry Form -->
+      <div class="mb-4 p-3 bg-white/5 rounded-lg">
+        <textarea id="journalInput" class="w-full bg-transparent text-white placeholder-gray-400 focus:outline-none min-h-[60px]" placeholder="How did your eco-journey feel today? Reflect on your travel or the chapter you just listened to..."></textarea>
+        <div class="flex justify-end mt-2">
+          <button onclick="addJournalEntry()" class="bg-indigo-600 hover:bg-indigo-500 px-4 py-1 rounded-lg text-sm">Save Entry</button>
+        </div>
+      </div>
+
+      <!-- Entries List -->
+      <div id="journalList" class="journal-scroll max-h-48 overflow-y-auto space-y-3 pr-2">
+        <!-- Entries injected here -->
+        <p class="text-gray-400 text-sm italic">No entries yet. Start tracking to unlock a chapter, then write your thoughts here.</p>
+      </div>
+    </div>
   </section>
 
-  <!-- Written Chapter Reader Modal (New Feature) -->
+  <!-- Written Chapter Reader Modal -->
   <dialog id="readerModal" class="w-full max-w-3xl bg-slate-900 text-gray-100 rounded-2xl p-0 shadow-2xl border border-slate-600">
     <div class="sticky top-0 bg-slate-800 p-4 flex justify-between items-center border-b border-slate-700 rounded-t-2xl z-10">
       <h3 id="readerTitle" class="font-bold text-lg text-yellow-400 truncate">Chapter Title</h3>
@@ -98,117 +128,27 @@
     <div id="readerContent" class="p-6 overflow-y-auto max-h-[70vh] reader-text">
       <!-- Text content will be injected here -->
     </div>
-    <div class="p-4 bg-slate-800 border-t border-slate-700 rounded-b-2xl text-center text-sm text-gray-400">
-      <button onclick="document.getElementById('readerModal').showModal()" class="text-yellow-400 underline">Need larger text?</button>
-    </div>
   </dialog>
 
 <script>
 /*********************************
- * CONFIG
- *********************************/
-const USE_RESPONSIVE_VOICE = typeof responsiveVoice !== 'undefined' && responsiveVoice.voiceSupport();
-
-/*********************************
  * LIBRIVOX METADATA
- * Note: In a real app, 'textSample' would be fetched via API. 
- * Here we include sample text for the Written Feature demonstration.
  *********************************/
 const LIBRIVOX_LIBRARY = [
-  { 
-    id: 1, 
-    title: "The Count of Monte Cristo", 
-    chapters: 3,
-    sampleText: [
-      "On the 24th of February, 1815, the look-out at Notre-Dame de la Garde signaled the three-master 'Pharaon' entering Marseilles.", 
-      "The young man's face was pale, and he held himself with a tense energy, his eyes flashing with a fire that seemed at odds with his apparent weakness.",
-      "Edmond Dantès stepped onto the dock, unaware that his life was about to change forever, entangled in a web of jealousy and betrayal."
-    ]
-  },
-  { 
-    id: 2, 
-    title: "Treasure Island", 
-    chapters: 3,
-    sampleText: [
-      "Squire Trelawney and Dr. Livesey had received a letter from Captain Billy Bones, requesting their presence.",
-      "The old sea dog told of a map, a mark on the back of a bill of lading, pointing to hidden treasure.",
-      "Young Jim Hawkins listened intently, the scent of salt and adventure filling the air of the Admiral Benbow inn."
-    ]
-  },
-  { 
-    id: 3, 
-    title: "Frankenstein", 
-    chapters: 3,
-    sampleText: [
-      "I am by birth a Genevese; and my family is one of the most distinguished of that republic.",
-      "My imagination was vivid, and my taste exquisite; I loved nature with a passion that bordered on madness.",
-      "The creation of life, once a subject of theoretical delight, now filled me with a dread that chilled my very bones."
-    ]
-  },
-  { 
-    id: 4, 
-    title: "Dracula", 
-    chapters: 3,
-    sampleText: [
-      "3 May. Bistritz. Left Munich at 8:35 P.M., on 1st May, arriving at Vienna early next morning.",
-      "The carriage was filled with a strange silence, broken only by the rhythm of the horses' hooves.",
-      "I saw no ashes, no earth, no grave—only the impression of a heavy body lying in the coffin."
-    ]
-  },
-  { 
-    id: 5, 
-    title: "Twenty Thousand Leagues Under the Seas", 
-    chapters: 3,
-    sampleText: [
-      "The year 1866 was marked by a bizarre incident, a strange phenomenon observed at sea.",
-      "A huge, elongated body, moving at great speed and emitting a phosphorescent light.",
-      "Captain Nemo stood motionless, watching the abyss with eyes that seemed to pierce the deepest secrets of the ocean."
-    ]
-  },
-  { 
-    id: 6, 
-    title: "The Three Musketeers", 
-    chapters: 3,
-    sampleText: [
-      "On the first Monday of the month of April, 1625, the market town of Meung was in an uproar.",
-      "D'Artagnan arrived in Paris with a heart full of ambition and a sword by his side.",
-      "Three for one! It was the motto of the Musketeers, and D'Artagnan was determined to join them."
-    ]
-  },
-  { 
-    id: 7, 
-    title: "The Invisible Man", 
-    chapters: 3,
-    sampleText: [
-      "The stranger came early in February, one wintry day, through a biting wind and a driving snow.",
-      "Bandages were wrapped around his head, hiding his features from the inquisitive eyes of the village.",
-      "Science had stripped him of visibility, but it had not stripped him of the misery that comes with it."
-    ]
-  },
-  { 
-    id: 8, 
-    title: "The Wendigo", 
-    chapters: 3,
-    sampleText: [
-      "The swamp was a place of silence, broken only by the drone of insects and the distant call of birds.",
-      "Demetris felt a chill that had nothing to do with the temperature, a sense of being watched.",
-      "The shape in the trees was not a bear, nor a man—something else entirely."
-    ]
-  },
-  { 
-    id: 9, 
-    title: "Journey to the Centre of the Earth", 
-    chapters: 3,
-    sampleText: [
-      "My uncle, Professor Lidenbrock, was a man of infinite activity and limited patience.",
-      "The manuscript, written in runes, led us to the Snæfellsjökull volcano.",
-      "Beyond the burning surface of the earth, a world of mystery awaited in the depths."
-    ]
-  }
+  { id: 1, title: "The Count of Monte Cristo", chapters: 3, sampleText: ["On the 24th of February, 1815...", "The young man's face was pale...", "Edmond Dantès stepped onto the dock..."] },
+  { id: 2, title: "Treasure Island", chapters: 3, sampleText: ["Squire Trelawney...", "The old sea dog told of a map...", "Young Jim Hawkins listened intently..."] },
+  { id: 3, title: "Frankenstein", chapters: 3, sampleText: ["I am by birth a Genevese...", "My imagination was vivid...", "The creation of life..."] },
+  { id: 4, title: "Dracula", chapters: 3, sampleText: ["3 May. Bistritz...", "The carriage was filled with a strange silence...", "I saw no ashes..."] },
+  { id: 5, title: "Twenty Thousand Leagues Under the Seas", chapters: 3, sampleText: ["The year 1866 was marked...", "A huge, elongated body...", "Captain Nemo stood motionless..."] },
+  { id: 6, title: "The Three Musketeers", chapters: 3, sampleText: ["On the first Monday of the month...", "D'Artagnan arrived in Paris...", "Three for one!..."] },
+  { id: 7, title: "The Invisible Man", chapters: 3, sampleText: ["The stranger came early...", "Bandages were wrapped...", "Science had stripped him..."] },
+  { id: 8, title: "The Wendigo", chapters: 3, sampleText: ["The swamp was a place...", "Demetris felt a chill...", "The shape in the trees..."] },
+  { id: 9, title: "Journey to the Centre of the Earth", chapters: 3, sampleText: ["My uncle, Professor...", "The manuscript, written in runes...", "Beyond the burning surface..."] }
 ];
 
 let state = {
   books: [],
+  logs: [], // New: Array for journal entries
   trackingMode: null,
   lastPosition: null, 
   distanceAccumulator: 0,
@@ -223,7 +163,8 @@ localforage.config({ name: 'MyEcoJourney' });
 (async function init() {
   const saved = await localforage.getItem('state');
   if (saved) {
-    // Merge saved state with potentially updated library structure
+    // Ensure logs array exists if updating from older version
+    if (!saved.logs) saved.logs = [];
     state = saved;
     showDashboard();
   } else {
@@ -239,6 +180,7 @@ function showOnboarding() {
 function showDashboard() {
   document.getElementById('dashboard').classList.remove('hidden');
   renderDashboard();
+  renderJournal();
 }
 
 /*********************************
@@ -320,17 +262,14 @@ function unlockChapter() {
   const eligible = state.books.filter(b => b.current < b.chapters);
   if (!eligible.length) return;
 
-  // Pick a random book from eligible ones
   const book = eligible[Math.floor(Math.random() * eligible.length)];
   book.current++;
   renderDashboard();
 
-  // Show unlocked section
   const unlockedDiv = document.getElementById('unlockedChapter');
   unlockedDiv.classList.remove('hidden');
   document.getElementById('chapterInfo').textContent = `${book.title} — Chapter ${book.current}`;
 
-  // Update Play Button
   const playBtn = document.getElementById('playAudio');
   playBtn.onclick = async () => {
     if (!book.chapterData) {
@@ -341,14 +280,13 @@ function unlockChapter() {
     const chapter = book.chapterData?.[book.current - 1];
     if (chapter?.audioUrl) {
       new Audio(chapter.audioUrl).play();
-    } else if (USE_RESPONSIVE_VOICE) {
+    } else if (typeof responsiveVoice !== 'undefined' && responsiveVoice.voiceSupport()) {
       responsiveVoice.speak(`Now playing ${book.title}, chapter ${book.current}`, 'UK English Male');
     } else {
       alert('Audio stream not available via API. In a production app, this would link to LibriVox directly.');
     }
   };
 
-  // NEW: Update Read Button
   const readBtn = document.getElementById('readChapter');
   readBtn.onclick = () => {
     openReader(book);
@@ -365,7 +303,6 @@ function openReader(book) {
 
   titleEl.textContent = `${book.title} - Chapter ${book.current}`;
   
-  // Use local sample text. In production, fetch this from an API
   const chapterIndex = book.current - 1;
   let text = "";
   
@@ -385,7 +322,6 @@ function closeReader() {
   document.getElementById('readerModal').close();
 }
 
-// Close modal if clicking outside the content
 document.getElementById('readerModal').addEventListener('click', (e) => {
   const rect = e.target.getBoundingClientRect();
   const isInDialog = (rect.top <= e.clientY && rect.bottom >= e.clientY && rect.left <= e.clientX && rect.right >= e.clientX);
@@ -393,6 +329,62 @@ document.getElementById('readerModal').addEventListener('click', (e) => {
     closeReader();
   }
 });
+
+/*********************************
+ * JOURNAL / LOGGING FEATURE
+ *********************************/
+function renderJournal() {
+  const list = document.getElementById('journalList');
+  list.innerHTML = '';
+  
+  if (state.logs.length === 0) {
+    list.innerHTML = '<p class="text-gray-400 text-sm italic">No entries yet. Start tracking to unlock a chapter, then write your thoughts here.</p>';
+    return;
+  }
+
+  // Sort by date descending
+  const sortedLogs = [...state.logs].sort((a, b) => b.date - a.date);
+
+  sortedLogs.forEach(log => {
+    const entry = document.createElement('div');
+    entry.className = 'bg-white/5 p-3 rounded-lg border-l-2 border-indigo-500';
+    
+    const date = new Date(log.date).toLocaleString();
+    entry.innerHTML = `
+      <div class="flex justify-between text-xs text-gray-400 mb-1">
+        <span>${date}</span>
+        <span class="text-indigo-300">${log.context || 'Reflection'}</span>
+      </div>
+      <p class="text-sm text-gray-200">${log.text}</p>
+    `;
+    list.appendChild(entry);
+  });
+}
+
+function addJournalEntry() {
+  const input = document.getElementById('journalInput');
+  const text = input.value.trim();
+  
+  if (!text) return alert('Please write something first!');
+
+  const entry = {
+    text: text,
+    date: Date.now(),
+    context: state.trackingMode || 'Manual Entry',
+    chapterInfo: state.books.find(b => b.current > 0) 
+                 ? `${state.books.find(b => b.current > 0).title}` 
+                 : null
+  };
+
+  // Add to state
+  state.logs.push(entry);
+  
+  // Persist
+  localforage.setItem('state', JSON.parse(JSON.stringify(state))).then(() => {
+    input.value = ''; // Clear input
+    renderJournal(); // Re-render list
+  });
+}
 
 /*********************************
  * TRACKING
@@ -407,7 +399,7 @@ function startTracking(mode) {
 
   state.trackingMode = mode;
   state.lastPosition = null;
-  state.distanceAccumulator = 0; // Reset current session accumulator
+  state.distanceAccumulator = 0; 
   document.getElementById('trackingStatus').textContent = `Tracking started (${mode})`;
 
   watchId = navigator.geolocation.watchPosition(pos => {
@@ -417,7 +409,6 @@ function startTracking(mode) {
       state.totalDistance += d;
       updateDistanceUI();
 
-      // Thresholds: Walk (1 mile), Commute (5 miles)
       const threshold = mode === 'walk' ? 1 : 5;
       
       while (state.distanceAccumulator >= threshold) {
@@ -442,7 +433,6 @@ function stopTracking() {
   if (watchId) navigator.geolocation.clearWatch(watchId);
   watchId = null;
   document.getElementById('trackingStatus').textContent = 'Tracking stopped';
-  // Note: we keep accumulated distance for the chapter unlock until next reset
 }
 
 let lastDistances = [];
