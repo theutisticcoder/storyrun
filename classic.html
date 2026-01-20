@@ -1,528 +1,520 @@
-<body>
-  <div id="output"></div>
 
-  <!-- Load Babel Standalone -->
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-  <!-- Your TSX code here -->
-  <script type="text/babel" data-presets="env,react,typescript">
-      import React, { useState, useEffect, useRef } from 'https://cdn.jsdelivr.net/npm/react@19.2.3/+esm';
-import { Leaf, Play, Plus, RotateCcw, Check, Pause, Volume2 } from 'lhttps://cdn.jsdelivr.net/npm/lucide-react@0.562.0/+esm';
-
-const MyEcoJourney = () => {
-  const audioRef = useRef(null);
-  const [appState, setAppState] = useState('loading');
-  const [books, setBooks] = useState([]);
-  const [selectedBooks, setSelectedBooks] = useState([]);
-  const [totalMiles, setTotalMiles] = useState(0);
-  const [unlockedChapters, setUnlockedChapters] = useState({});
-  const [currentlyPlaying, setCurrentlyPlaying] = useState(null);
-  const [currentChapter, setCurrentChapter] = useState(null);
-  const [mileEntry, setMileEntry] = useState('');
-  const [transportMode, setTransportMode] = useState('walking');
-  const [allBooks, setAllBooks] = useState([]);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [audioLoading, setAudioLoading] = useState(false);
-
-  const fastPacedBooks = [
-    { id: 1, title: 'The Great Gatsby', author: 'F. Scott Fitzgerald', chapters: 9, librivoxId: '4671' },
-    { id: 2, title: 'Rebecca', author: 'Daphne du Maurier', chapters: 39, librivoxId: '2218' },
-    { id: 3, title: 'Jane Eyre', author: 'Charlotte Brontë', chapters: 38, librivoxId: '1260' },
-    { id: 4, title: 'The Count of Monte Cristo', author: 'Alexandre Dumas', chapters: 117, librivoxId: '1184' },
-    { id: 5, title: 'The Invisible Man', author: 'H.G. Wells', chapters: 28, librivoxId: '5230' },
-    { id: 6, title: 'A Tale of Two Cities', author: 'Charles Dickens', chapters: 45, librivoxId: '98' },
-    { id: 7, title: 'The Picture of Dorian Gray', author: 'Oscar Wilde', chapters: 20, librivoxId: '174' },
-    { id: 8, title: 'Frankenstein', author: 'Mary Shelley', chapters: 24, librivoxId: '4085' },
-    { id: 9, title: 'The Strange Case of Dr. Jekyll and Mr. Hyde', author: 'Robert Louis Stevenson', chapters: 10, librivoxId: '42' },
-    { id: 10, title: 'Treasure Island', author: 'Robert Louis Stevenson', chapters: 34, librivoxId: '120' },
-  ];
-
-  // Load data from storage
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const savedBooks = await window.storage.get('ecojourney-books');
-        const savedMiles = await window.storage.get('ecojourney-miles');
-        const savedChapters = await window.storage.get('ecojourney-chapters');
-
-        if (savedBooks && savedBooks.value) {
-          setSelectedBooks(JSON.parse(savedBooks.value));
-          setTotalMiles(JSON.parse(savedMiles.value) || 0);
-          setUnlockedChapters(JSON.parse(savedChapters.value) || {});
-          setAppState('active');
-        } else {
-          setAppState('setup');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyEcoJourney - Audiobook Rewards</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .animate-spin {
+            animation: spin 1s linear infinite;
         }
-        setAllBooks(fastPacedBooks);
-      } catch (error) {
-        setAllBooks(fastPacedBooks);
-        setAppState('setup');
-      }
-    };
-    loadData();
-  }, []);
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-emerald-50 to-green-100 min-h-screen">
+    <div id="app"></div>
 
-  // Get random books
-  const getRandomBooks = () => {
-    const shuffled = [...fastPacedBooks].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, 3);
-  };
+    <script>
+        const fastPacedBooks = [
+            { id: 1, title: 'The Great Gatsby', author: 'F. Scott Fitzgerald', chapters: 9, librivoxId: '4671' },
+            { id: 2, title: 'Rebecca', author: 'Daphne du Maurier', chapters: 39, librivoxId: '2218' },
+            { id: 3, title: 'Jane Eyre', author: 'Charlotte Brontë', chapters: 38, librivoxId: '1260' },
+            { id: 4, title: 'The Count of Monte Cristo', author: 'Alexandre Dumas', chapters: 117, librivoxId: '1184' },
+            { id: 5, title: 'The Invisible Man', author: 'H.G. Wells', chapters: 28, librivoxId: '5230' },
+            { id: 6, title: 'A Tale of Two Cities', author: 'Charles Dickens', chapters: 45, librivoxId: '98' },
+            { id: 7, title: 'The Picture of Dorian Gray', author: 'Oscar Wilde', chapters: 20, librivoxId: '174' },
+            { id: 8, title: 'Frankenstein', author: 'Mary Shelley', chapters: 24, librivoxId: '4085' },
+            { id: 9, title: 'The Strange Case of Dr. Jekyll and Mr. Hyde', author: 'Robert Louis Stevenson', chapters: 10, librivoxId: '42' },
+            { id: 10, title: 'Treasure Island', author: 'Robert Louis Stevenson', chapters: 34, librivoxId: '120' },
+        ];
 
-  // Initialize with random books
-  const initializeWithRandom = async () => {
-    const randomBooks = getRandomBooks();
-    await initializeApp(randomBooks);
-  };
+        let appState = 'loading';
+        let selectedBooks = [];
+        let totalMiles = 0;
+        let unlockedChapters = {};
+        let currentlyPlaying = null;
+        let currentChapter = null;
+        let mileEntry = '';
+        let transportMode = 'walking';
+        let isPlaying = false;
 
-  const initializeApp = async (books) => {
-    if (books.length !== 3) return;
+        window.setState = function(key, value) {
+            if (key === 'appState') appState = value;
+            else if (key === 'mileEntry') mileEntry = value;
+            else if (key === 'transportMode') transportMode = value;
+            else if (key === 'currentlyPlaying') currentlyPlaying = value;
+            else if (key === 'isPlaying') isPlaying = value;
+            render();
+        };
 
-    const newUnlocked = {};
-    books.forEach(book => {
-      newUnlocked[book.id] = [1]; // Start with chapter 1 unlocked
-    });
-    
-    try {
-      await window.storage.set('ecojourney-books', JSON.stringify(books));
-      await window.storage.set('ecojourney-miles', JSON.stringify(0));
-      await window.storage.set('ecojourney-chapters', JSON.stringify(newUnlocked));
-    } catch (error) {
-      console.error('Storage error:', error);
-    }
-    
-    setSelectedBooks(books);
-    setTotalMiles(0);
-    setUnlockedChapters(newUnlocked);
-    setAppState('active');
-  };
+        window.selectBook = function(bookId) {
+            const book = fastPacedBooks.find(b => b.id === bookId);
+            const index = selectedBooks.findIndex(b => b.id === bookId);
+            if (index > -1) {
+                selectedBooks.splice(index, 1);
+            } else if (selectedBooks.length < 3) {
+                selectedBooks.push(book);
+            }
+            render();
+        };
 
-  const addMiles = async () => {
-    if (!mileEntry || isNaN(mileEntry) || mileEntry <= 0) return;
+        window.playChapter = function(bookId) {
+            currentlyPlaying = bookId;
+            const maxChapter = Math.max(...(unlockedChapters[bookId] || [1]));
+            currentChapter = maxChapter;
+            isPlaying = false;
+            render();
+            setTimeout(() => {
+                const audio = document.querySelector('audio');
+                if (audio) audio.play();
+            }, 100);
+        };
 
-    const miles = parseFloat(mileEntry);
-    const milesConverted = transportMode === 'walking' ? miles : miles / 5;
-    const newTotal = totalMiles + milesConverted;
+        window.togglePlayPause = function() {
+            const audio = document.querySelector('audio');
+            if (audio) {
+                if (isPlaying) {
+                    audio.pause();
+                } else {
+                    audio.play();
+                }
+                isPlaying = !isPlaying;
+                render();
+            }
+        };
 
-    // Check if new chapters should unlock
-    const chaptersToUnlock = Math.floor(newTotal) - Math.floor(totalMiles);
-    let newUnlocked = { ...unlockedChapters };
+        async function loadData() {
+            try {
+                const savedBooks = await window.storage.get('ecojourney-books');
+                const savedMiles = await window.storage.get('ecojourney-miles');
+                const savedChapters = await window.storage.get('ecojourney-chapters');
 
-    for (let i = 0; i < chaptersToUnlock; i++) {
-      const randomBook = selectedBooks[Math.floor(Math.random() * selectedBooks.length)];
-      const currentChapters = newUnlocked[randomBook.id] || [1];
-      const nextChapter = Math.max(...currentChapters) + 1;
-      
-      if (nextChapter <= randomBook.chapters) {
-        newUnlocked[randomBook.id] = [...new Set([...currentChapters, nextChapter])];
-      }
-    }
+                if (savedBooks && savedBooks.value) {
+                    selectedBooks = JSON.parse(savedBooks.value);
+                    totalMiles = JSON.parse(savedMiles.value) || 0;
+                    unlockedChapters = JSON.parse(savedChapters.value) || {};
+                    appState = 'active';
+                } else {
+                    appState = 'setup';
+                }
+            } catch (error) {
+                appState = 'setup';
+            }
+            render();
+        }
 
-    try {
-      await window.storage.set('ecojourney-miles', JSON.stringify(newTotal));
-      await window.storage.set('ecojourney-chapters', JSON.stringify(newUnlocked));
-    } catch (error) {
-      console.error('Storage error:', error);
-    }
+        function getRandomBooks() {
+            const shuffled = [...fastPacedBooks].sort(() => 0.5 - Math.random());
+            return shuffled.slice(0, 3);
+        }
 
-    setTotalMiles(newTotal);
-    setUnlockedChapters(newUnlocked);
-    setMileEntry('');
-  };
+        window.initializeWithRandom = async function() {
+            const randomBooks = getRandomBooks();
+            await initializeApp(randomBooks);
+        };
 
-  const replaceBook = async (bookId) => {
-    const currentIndex = selectedBooks.findIndex(b => b.id === bookId);
-    const available = fastPacedBooks.filter(fb => !selectedBooks.find(sb => sb.id === fb.id));
-    
-    if (available.length === 0) return;
+        async function initializeApp(books) {
+            if (books.length !== 3) return;
 
-    const newBook = available[Math.floor(Math.random() * available.length)];
-    const newBooks = [...selectedBooks];
-    newBooks[currentIndex] = newBook;
+            const newUnlocked = {};
+            books.forEach(book => {
+                newUnlocked[book.id] = [1];
+            });
 
-    const newUnlocked = { ...unlockedChapters };
-    newUnlocked[newBook.id] = [1];
+            try {
+                await window.storage.set('ecojourney-books', JSON.stringify(books));
+                await window.storage.set('ecojourney-miles', JSON.stringify(0));
+                await window.storage.set('ecojourney-chapters', JSON.stringify(newUnlocked));
+            } catch (error) {
+                console.error('Storage error:', error);
+            }
 
-    try {
-      await window.storage.set('ecojourney-books', JSON.stringify(newBooks));
-      await window.storage.set('ecojourney-chapters', JSON.stringify(newUnlocked));
-    } catch (error) {
-      console.error('Storage error:', error);
-    }
+            selectedBooks = books;
+            totalMiles = 0;
+            unlockedChapters = newUnlocked;
+            appState = 'active';
+            render();
+        }
 
-    setSelectedBooks(newBooks);
-    setUnlockedChapters(newUnlocked);
-  };
+        window.addMiles = async function() {
+            const input = document.getElementById('mileInput');
+            if (!input || !input.value || isNaN(input.value) || input.value <= 0) return;
 
-  const resetProgress = async () => {
-    if (window.confirm('Are you sure? This will reset all your progress.')) {
-      try {
-        await window.storage.delete('ecojourney-books');
-        await window.storage.delete('ecojourney-miles');
-        await window.storage.delete('ecojourney-chapters');
-      } catch (error) {
-        console.error('Storage error:', error);
-      }
-      setAppState('setup');
-      setSelectedBooks([]);
-      setTotalMiles(0);
-      setUnlockedChapters({});
-      setCurrentlyPlaying(null);
-    }
-  };
+            const miles = parseFloat(input.value);
+            const milesConverted = transportMode === 'walking' ? miles : miles / 5;
+            const newTotal = totalMiles + milesConverted;
 
-  const playChapter = (bookId) => {
-    setCurrentlyPlaying(bookId);
-    const maxChapter = Math.max(...(unlockedChapters[bookId] || [1]));
-    setCurrentChapter(maxChapter);
-    setIsPlaying(true);
-    setAudioLoading(true);
-  };
+            const chaptersToUnlock = Math.floor(newTotal) - Math.floor(totalMiles);
+            let newUnlocked = JSON.parse(JSON.stringify(unlockedChapters));
 
-  const togglePlayPause = () => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-      } else {
-        audioRef.current.play();
-      }
-      setIsPlaying(!isPlaying);
-    }
-  };
+            for (let i = 0; i < chaptersToUnlock; i++) {
+                const randomBook = selectedBooks[Math.floor(Math.random() * selectedBooks.length)];
+                const currentChapters = newUnlocked[randomBook.id] || [1];
+                const nextChapter = Math.max(...currentChapters) + 1;
 
-  if (appState === 'loading') {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-green-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-emerald-700 text-lg">Loading MyEcoJourney...</p>
-        </div>
-      </div>
-    );
-  }
+                if (nextChapter <= randomBook.chapters) {
+                    newUnlocked[randomBook.id] = [...new Set([...currentChapters, nextChapter])];
+                }
+            }
 
-  if (appState === 'setup') {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-green-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
-          <div className="flex items-center justify-center mb-6">
-            <Leaf className="w-10 h-10 text-emerald-600 mr-3" />
-            <h1 className="text-3xl font-bold text-emerald-900">MyEcoJourney</h1>
-          </div>
-          <p className="text-gray-600 text-center mb-8">
-            Unlock audiobook chapters by walking or carpooling. Every mile counts!
-          </p>
-          <button
-            onClick={initializeWithRandom}
-            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-lg mb-3 transition"
-          >
-            Get Random Books
-          </button>
-          <p className="text-center text-gray-500 my-4">or</p>
-          <button
-            onClick={() => setAppState('choose')}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition"
-          >
-            Choose Your Books
-          </button>
-        </div>
-      </div>
-    );
-  }
+            try {
+                await window.storage.set('ecojourney-miles', JSON.stringify(newTotal));
+                await window.storage.set('ecojourney-chapters', JSON.stringify(newUnlocked));
+            } catch (error) {
+                console.error('Storage error:', error);
+            }
 
-  if (appState === 'choose') {
-    const booksToShow = allBooks.filter(b => !selectedBooks.find(sb => sb.id === b.id));
-    const needMore = 3 - selectedBooks.length;
+            totalMiles = newTotal;
+            unlockedChapters = newUnlocked;
+            mileEntry = '';
+            render();
+        };
 
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-green-100 p-4">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold text-emerald-900 mb-2 flex items-center">
-            <Leaf className="w-8 h-8 mr-2" />
-            Choose Your Books
-          </h1>
-          <p className="text-gray-600 mb-8">Select {needMore} more book{needMore !== 1 ? 's' : ''}</p>
+        window.replaceBook = async function(bookId) {
+            const currentIndex = selectedBooks.findIndex(b => b.id === bookId);
+            const available = fastPacedBooks.filter(fb => !selectedBooks.find(sb => sb.id === fb.id));
 
-          {selectedBooks.length > 0 && (
-            <div className="bg-emerald-50 rounded-lg p-4 mb-8 border-2 border-emerald-300">
-              <p className="font-semibold text-emerald-900 mb-3">Your Selected Books ({selectedBooks.length}/3):</p>
-              <div className="space-y-2">
-                {selectedBooks.map(book => (
-                  <div key={book.id} className="bg-white p-3 rounded flex justify-between items-center">
-                    <div>
-                      <p className="font-semibold text-gray-800">{book.title}</p>
-                      <p className="text-sm text-gray-600">{book.author}</p>
+            if (available.length === 0) return;
+
+            const newBook = available[Math.floor(Math.random() * available.length)];
+            const newBooks = [...selectedBooks];
+            newBooks[currentIndex] = newBook;
+
+            const newUnlocked = JSON.parse(JSON.stringify(unlockedChapters));
+            newUnlocked[newBook.id] = [1];
+
+            try {
+                await window.storage.set('ecojourney-books', JSON.stringify(newBooks));
+                await window.storage.set('ecojourney-chapters', JSON.stringify(newUnlocked));
+            } catch (error) {
+                console.error('Storage error:', error);
+            }
+
+            selectedBooks = newBooks;
+            unlockedChapters = newUnlocked;
+            render();
+        };
+
+        window.resetProgress = async function() {
+            if (window.confirm('Are you sure? This will reset all your progress.')) {
+                try {
+                    await window.storage.delete('ecojourney-books');
+                    await window.storage.delete('ecojourney-miles');
+                    await window.storage.delete('ecojourney-chapters');
+                } catch (error) {
+                    console.error('Storage error:', error);
+                }
+                appState = 'setup';
+                selectedBooks = [];
+                totalMiles = 0;
+                unlockedChapters = {};
+                currentlyPlaying = null;
+                render();
+            }
+        };
+
+        function renderLoadingState() {
+            return `
+                <div class="min-h-screen bg-gradient-to-br from-emerald-50 to-green-100 flex items-center justify-center">
+                    <div class="text-center">
+                        <div class="w-12 h-12 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                        <p class="text-emerald-700 text-lg">Loading MyEcoJourney...</p>
                     </div>
-                    <button
-                      onClick={() => setSelectedBooks(selectedBooks.filter(b => b.id !== book.id))}
-                      className="text-red-600 hover:text-red-800 font-bold"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Available Books:</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-            {booksToShow.map(book => (
-              <button
-                key={book.id}
-                onClick={() => {
-                  if (selectedBooks.length < 3) {
-                    setSelectedBooks([...selectedBooks, book]);
-                  }
-                }}
-                disabled={selectedBooks.length >= 3}
-                className={`p-4 rounded-lg shadow hover:shadow-lg transition text-left ${
-                  selectedBooks.length >= 3 ? 'bg-gray-100 opacity-50 cursor-not-allowed' : 'bg-white hover:bg-emerald-50'
-                }`}
-              >
-                <h3 className="font-bold text-gray-800">{book.title}</h3>
-                <p className="text-sm text-gray-600">{book.author}</p>
-                <p className="text-xs text-gray-500 mt-2">{book.chapters} chapters</p>
-              </button>
-            ))}
-          </div>
-
-          {selectedBooks.length === 3 ? (
-            <button
-              onClick={() => {
-                initializeApp(selectedBooks);
-              }}
-              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-lg transition"
-            >
-              Start My Journey
-            </button>
-          ) : (
-            <button
-              onClick={() => setAppState('setup')}
-              className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg"
-            >
-              Back
-            </button>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-green-100 p-4">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center">
-              <Leaf className="w-10 h-10 text-emerald-600 mr-3" />
-              <div>
-                <h1 className="text-4xl font-bold text-emerald-900">MyEcoJourney</h1>
-                <p className="text-gray-600">Reading for the Planet</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="text-3xl font-bold text-emerald-600">{Math.floor(totalMiles)}</p>
-              <p className="text-gray-600">Miles Traveled</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Miles Entry */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Log Your Journey</h2>
-          <div className="flex gap-3 flex-wrap">
-            <input
-              type="number"
-              value={mileEntry}
-              onChange={(e) => setMileEntry(e.target.value)}
-              placeholder="Enter miles"
-              className="flex-1 min-w-32 px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-emerald-500 outline-none"
-              step="0.1"
-            />
-            <select
-              value={transportMode}
-              onChange={(e) => setTransportMode(e.target.value)}
-              className="px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-emerald-500 outline-none"
-            >
-              <option value="walking">Walking (1:1)</option>
-              <option value="carpool">Carpool (5:1)</option>
-            </select>
-            <button
-              onClick={addMiles}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-6 rounded-lg transition"
-            >
-              <Plus className="w-5 h-5 inline mr-2" />
-              Add Miles
-            </button>
-          </div>
-          <p className="text-sm text-gray-500 mt-3">
-            💚 Walking: 1 mile = 1 chapter | 🚗 Carpooling: 5 miles = 1 chapter
-          </p>
-        </div>
-
-        {/* Books */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {selectedBooks.map((book) => {
-            const chapters = unlockedChapters[book.id] || [1];
-            const maxChapter = Math.max(...chapters);
-            const progress = (maxChapter / book.chapters) * 100;
-
-            return (
-              <div key={book.id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition">
-                <div className="bg-gradient-to-r from-emerald-500 to-green-600 p-6 text-white">
-                  <h3 className="font-bold text-lg mb-1">{book.title}</h3>
-                  <p className="text-emerald-100 text-sm">{book.author}</p>
                 </div>
-                <div className="p-6">
-                  <div className="mb-4">
-                    <div className="flex justify-between text-sm text-gray-600 mb-2">
-                      <span>Chapter {maxChapter}</span>
-                      <span>{book.chapters}</span>
+            `;
+        }
+
+        function renderSetupState() {
+            return `
+                <div class="min-h-screen bg-gradient-to-br from-emerald-50 to-green-100 flex items-center justify-center p-4">
+                    <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
+                        <div class="flex items-center justify-center mb-6">
+                            <svg class="w-10 h-10 text-emerald-600 mr-3" fill="currentColor" viewBox="0 0 20 20"><path d="M2 11a1 1 0 011-1h2.464a1 1 0 01.894.553l.812 1.62a1 1 0 00.894.553h4.472a1 1 0 00.894-.553l.812-1.62A1 1 0 0114.464 10H16a1 1 0 011 1v5a2 2 0 01-2 2H4a2 2 0 01-2-2v-5z"></path></svg>
+                            <h1 class="text-3xl font-bold text-emerald-900">MyEcoJourney</h1>
+                        </div>
+                        <p class="text-gray-600 text-center mb-8">
+                            Unlock audiobook chapters by walking or carpooling. Every mile counts!
+                        </p>
+                        <button onclick="window.initializeWithRandom()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-lg mb-3 transition">
+                            Get Random Books
+                        </button>
+                        <p class="text-center text-gray-500 my-4">or</p>
+                        <button onclick="window.setState('appState', 'choose')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition">
+                            Choose Your Books
+                        </button>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-3">
-                      <div
-                        className="bg-emerald-600 h-3 rounded-full transition-all"
-                        style={{ width: `${progress}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                  <div className="mb-4 bg-gray-50 rounded p-3 max-h-24 overflow-y-auto">
-                    <p className="text-xs text-gray-600 mb-2 font-semibold">Unlocked Chapters:</p>
-                    <div className="flex flex-wrap gap-1">
-                      {chapters.sort((a, b) => a - b).map(ch => (
-                        <span key={ch} className="bg-emerald-100 text-emerald-800 text-xs px-2 py-1 rounded">
-                          {ch}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  {maxChapter === book.chapters ? (
-                    <button
-                      onClick={() => replaceBook(book.id)}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition flex items-center justify-center"
-                    >
-                      <Check className="w-4 h-4 mr-2" />
-                      Book Complete - Get New One
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => playChapter(book.id)}
-                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg transition flex items-center justify-center"
-                    >
-                      <Play className="w-4 h-4 mr-2" />
-                      Listen to Chapter {maxChapter}
-                    </button>
-                  )}
                 </div>
-              </div>
-            );
-          })}
-        </div>
+            `;
+        }
 
-        {/* Footer */}
-        <div className="bg-white rounded-xl shadow-lg p-6 text-center">
-          <button
-            onClick={resetProgress}
-            className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-lg transition"
-          >
-            <RotateCcw className="w-4 h-4 inline mr-2" />
-            Reset Progress
-          </button>
-          <p className="text-gray-600 text-sm mt-4">
-            Every step you take helps the planet. Keep reading! 🌍
-          </p>
-        </div>
-      </div>
+        function renderChooseState() {
+            const booksToShow = fastPacedBooks.filter(b => !selectedBooks.find(sb => sb.id === b.id));
+            const needMore = 3 - selectedBooks.length;
 
-      {/* Audio Player Modal */}
-      {currentlyPlaying && currentChapter && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-2xl p-8 max-w-2xl w-full">
-            {(() => {
-              const book = selectedBooks.find(b => b.id === currentlyPlaying);
-              // LibriVox URL format: https://librivox.org/api/cache/book/{id}/chapters.json
-              const audioUrl = `https://archive.org/download/lib_${book.librivoxId}/lib_${book.librivoxId}_${String(currentChapter).padStart(2, '0')}_unknown.mp3`;
-              
-              return (
-                <>
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h2 className="text-2xl font-bold text-gray-800">{book.title}</h2>
-                      <p className="text-gray-600">{book.author}</p>
+            let html = `
+                <div class="min-h-screen bg-gradient-to-br from-emerald-50 to-green-100 p-4">
+                    <div class="max-w-4xl mx-auto">
+                        <h1 class="text-3xl font-bold text-emerald-900 mb-2 flex items-center">
+                            <svg class="w-8 h-8 mr-2" fill="currentColor" viewBox="0 0 20 20"><path d="M2 11a1 1 0 011-1h2.464a1 1 0 01.894.553l.812 1.62a1 1 0 00.894.553h4.472a1 1 0 00.894-.553l.812-1.62A1 1 0 0114.464 10H16a1 1 0 011 1v5a2 2 0 01-2 2H4a2 2 0 01-2-2v-5z"></path></svg>
+                            Choose Your Books
+                        </h1>
+                        <p class="text-gray-600 mb-8">Select ${needMore} more book${needMore !== 1 ? 's' : ''}</p>
+            `;
+
+            if (selectedBooks.length > 0) {
+                html += `
+                    <div class="bg-emerald-50 rounded-lg p-4 mb-8 border-2 border-emerald-300">
+                        <p class="font-semibold text-emerald-900 mb-3">Your Selected Books (${selectedBooks.length}/3):</p>
+                        <div class="space-y-2">
+                `;
+                selectedBooks.forEach(book => {
+                    html += `
+                        <div class="bg-white p-3 rounded flex justify-between items-center">
+                            <div>
+                                <p class="font-semibold text-gray-800">${book.title}</p>
+                                <p class="text-sm text-gray-600">${book.author}</p>
+                            </div>
+                            <button onclick="window.selectBook(${book.id})" class="text-red-600 hover:text-red-800 font-bold">×</button>
+                        </div>
+                    `;
+                });
+                html += `
+                        </div>
                     </div>
-                    <button
-                      onClick={() => {
-                        setCurrentlyPlaying(null);
-                        setIsPlaying(false);
-                        if (audioRef.current) audioRef.current.pause();
-                      }}
-                      className="text-gray-400 hover:text-gray-600 text-2xl"
-                    >
-                      ✕
+                `;
+            }
+
+            html += `
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">Available Books:</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            `;
+
+            booksToShow.forEach(book => {
+                const isDisabled = selectedBooks.length >= 3;
+                html += `
+                    <button onclick="window.selectBook(${book.id})" ${isDisabled ? 'disabled' : ''} class="p-4 rounded-lg shadow hover:shadow-lg transition text-left ${isDisabled ? 'bg-gray-100 opacity-50 cursor-not-allowed' : 'bg-white hover:bg-emerald-50'}">
+                        <h3 class="font-bold text-gray-800">${book.title}</h3>
+                        <p class="text-sm text-gray-600">${book.author}</p>
+                        <p class="text-xs text-gray-500 mt-2">${book.chapters} chapters</p>
                     </button>
-                  </div>
+                `;
+            });
 
-                  <div className="bg-gradient-to-br from-emerald-100 to-green-100 rounded-lg p-12 mb-6 text-center">
-                    <Volume2 className="w-20 h-20 text-emerald-600 mx-auto animate-pulse" />
-                  </div>
+            html += `
+                        </div>
+            `;
 
-                  <div className="mb-6 bg-gray-50 p-4 rounded">
-                    <p className="text-lg font-semibold text-gray-800 mb-2">Chapter {currentChapter}</p>
-                    <p className="text-gray-600">Now playing from LibriVox</p>
-                  </div>
-
-                  <audio
-                    ref={audioRef}
-                    onLoadedData={() => setAudioLoading(false)}
-                    onEnded={() => setIsPlaying(false)}
-                    onPlay={() => setIsPlaying(true)}
-                    onPause={() => setIsPlaying(false)}
-                    controls
-                    className="w-full mb-6"
-                  >
-                    <source src={audioUrl} type="audio/mpeg" />
-                    Your browser does not support the audio element.
-                  </audio>
-
-                  <div className="flex gap-3">
-                    <button
-                      onClick={togglePlayPause}
-                      className={`flex-1 ${isPlaying ? 'bg-red-600 hover:bg-red-700' : 'bg-emerald-600 hover:bg-emerald-700'} text-white font-bold py-3 px-4 rounded-lg transition flex items-center justify-center`}
-                    >
-                      {isPlaying ? (
-                        <>
-                          <Pause className="w-5 h-5 mr-2" />
-                          Pause
-                        </>
-                      ) : (
-                        <>
-                          <Play className="w-5 h-5 mr-2" />
-                          Play
-                        </>
-                      )}
+            if (selectedBooks.length === 3) {
+                html += `
+                    <button onclick="window.startJourney()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-lg transition">
+                        Start My Journey
                     </button>
-                    <button
-                      onClick={() => {
-                        setCurrentlyPlaying(null);
-                        setIsPlaying(false);
-                        if (audioRef.current) audioRef.current.pause();
-                      }}
-                      className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded-lg transition"
-                    >
-                      Close
+                `;
+            } else {
+                html += `
+                    <button onclick="window.setState('appState', 'setup')" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">
+                        Back
                     </button>
-                  </div>
-                </>
-              );
-            })()}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
+                `;
+            }
 
+            html += `
+                    </div>
+                </div>
+            `;
 
-  </script>
+            return html;
+        }
+
+        window.startJourney = async function() {
+            await initializeApp(selectedBooks);
+        };
+
+        function renderActiveState() {
+            let html = `
+                <div class="p-4">
+                    <div class="max-w-6xl mx-auto">
+                        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+                            <div class="flex items-center justify-between flex-wrap gap-4">
+                                <div class="flex items-center">
+                                    <svg class="w-10 h-10 text-emerald-600 mr-3" fill="currentColor" viewBox="0 0 20 20"><path d="M2 11a1 1 0 011-1h2.464a1 1 0 01.894.553l.812 1.62a1 1 0 00.894.553h4.472a1 1 0 00.894-.553l.812-1.62A1 1 0 0114.464 10H16a1 1 0 011 1v5a2 2 0 01-2 2H4a2 2 0 01-2-2v-5z"></path></svg>
+                                    <div>
+                                        <h1 class="text-4xl font-bold text-emerald-900">MyEcoJourney</h1>
+                                        <p class="text-gray-600">Reading for the Planet</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-3xl font-bold text-emerald-600">${Math.floor(totalMiles)}</p>
+                                    <p class="text-gray-600">Miles Traveled</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+                            <h2 class="text-xl font-bold text-gray-800 mb-4">Log Your Journey</h2>
+                            <div class="flex gap-3 flex-wrap">
+                                <input type="number" id="mileInput" value="${mileEntry}" onchange="mileEntry = this.value" placeholder="Enter miles" class="flex-1 min-w-32 px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-emerald-500 outline-none" step="0.1">
+                                <select id="transportSelect" onchange="transportMode = this.value" class="px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-emerald-500 outline-none">
+                                    <option value="walking" ${transportMode === 'walking' ? 'selected' : ''}>Walking (1:1)</option>
+                                    <option value="carpool" ${transportMode === 'carpool' ? 'selected' : ''}>Carpool (5:1)</option>
+                                </select>
+                                <button onclick="window.addMiles()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-6 rounded-lg transition">
+                                    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                    Add Miles
+                                </button>
+                            </div>
+                            <p class="text-sm text-gray-500 mt-3">💚 Walking: 1 mile = 1 chapter | 🚗 Carpooling: 5 miles = 1 chapter</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            `;
+
+            selectedBooks.forEach((book) => {
+                const chapters = unlockedChapters[book.id] || [1];
+                const maxChapter = Math.max(...chapters);
+                const progress = (maxChapter / book.chapters) * 100;
+
+                html += `
+                    <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition">
+                        <div class="bg-gradient-to-r from-emerald-500 to-green-600 p-6 text-white">
+                            <h3 class="font-bold text-lg mb-1">${book.title}</h3>
+                            <p class="text-emerald-100 text-sm">${book.author}</p>
+                        </div>
+                        <div class="p-6">
+                            <div class="mb-4">
+                                <div class="flex justify-between text-sm text-gray-600 mb-2">
+                                    <span>Chapter ${maxChapter}</span>
+                                    <span>${book.chapters}</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-3">
+                                    <div class="bg-emerald-600 h-3 rounded-full transition-all" style="width: ${progress}%"></div>
+                                </div>
+                            </div>
+                            <div class="mb-4 bg-gray-50 rounded p-3 max-h-24 overflow-y-auto">
+                                <p class="text-xs text-gray-600 mb-2 font-semibold">Unlocked Chapters:</p>
+                                <div class="flex flex-wrap gap-1">
+                `;
+
+                chapters.sort((a, b) => a - b).forEach(ch => {
+                    html += `<span class="bg-emerald-100 text-emerald-800 text-xs px-2 py-1 rounded">${ch}</span>`;
+                });
+
+                html += `
+                                </div>
+                            </div>
+                `;
+
+                if (maxChapter === book.chapters) {
+                    html += `
+                        <button onclick="window.replaceBook(${book.id})" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition flex items-center justify-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            Book Complete - Get New One
+                        </button>
+                    `;
+                } else {
+                    html += `
+                        <button onclick="window.playChapter(${book.id})" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg transition flex items-center justify-center">
+                            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"></path></svg>
+                            Listen to Chapter ${maxChapter}
+                        </button>
+                    `;
+                }
+
+                html += `
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `
+                        </div>
+
+                        <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+                            <button onclick="window.resetProgress()" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-lg transition">
+                                <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                Reset Progress
+                            </button>
+                            <p class="text-gray-600 text-sm mt-4">Every step you take helps the planet. Keep reading! 🌍</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (currentlyPlaying && currentChapter) {
+                const book = selectedBooks.find(b => b.id === currentlyPlaying);
+                const audioUrl = `https://archive.org/download/lib_${book.librivoxId}/lib_${book.librivoxId}_${String(currentChapter).padStart(2, '0')}_unknown.mp3`;
+
+                html += `
+                    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                        <div class="bg-white rounded-xl shadow-2xl p-8 max-w-2xl w-full">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h2 class="text-2xl font-bold text-gray-800">${book.title}</h2>
+                                    <p class="text-gray-600">${book.author}</p>
+                                </div>
+                                <button onclick="window.setState('currentlyPlaying', null)" class="text-gray-400 hover:text-gray-600 text-2xl">×</button>
+                            </div>
+
+                            <div class="bg-gradient-to-br from-emerald-100 to-green-100 rounded-lg p-12 mb-6 text-center">
+                                <svg class="w-20 h-20 text-emerald-600 mx-auto animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728m-.9-1.9a7 7 0 010-9.528M5.586 15.364a2 2 0 001.414.586H7a2 2 0 002-2v-1a2 2 0 00-2-2h-.414a2 2 0 00-1.414.586m0-4.172a2 2 0 00-1.414-.586H7a2 2 0 00-2 2v1a2 2 0 002 2h.414a2 2 0 001.414-.586m0-4.172L9 7.172M9 16.172l.586.586"></path></svg>
+                            </div>
+
+                            <div class="mb-6 bg-gray-50 p-4 rounded">
+                                <p class="text-lg font-semibold text-gray-800 mb-2">Chapter ${currentChapter}</p>
+                                <p class="text-gray-600">Now playing from LibriVox</p>
+                            </div>
+
+                            <audio id="audioPlayer" onloadeddata="render()" onended="isPlaying=false; render()" onplay="isPlaying=true; render()" onpause="isPlaying=false; render()" controls style="width: 100%; margin-bottom: 1.5rem;">
+                                <source src="${audioUrl}" type="audio/mpeg">
+                                Your browser does not support the audio element.
+                            </audio>
+
+                            <div class="flex gap-3">
+                                <button onclick="window.togglePlayPause()" class="flex-1 ${isPlaying ? 'bg-red-600 hover:bg-red-700' : 'bg-emerald-600 hover:bg-emerald-700'} text-white font-bold py-3 px-4 rounded-lg transition flex items-center justify-center">
+                                    ${isPlaying ? `
+                                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 11-2 0 1 1 0 012 0zM7 12a1 1 0 11-2 0 1 1 0 012 0zm7-4a1 1 0 11-2 0 1 1 0 012 0zm0 4a1 1 0 11-2 0 1 1 0 012 0z" clip-rule="evenodd"></path></svg>
+                                        Pause
+                                    ` : `
+                                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"></path></svg>
+                                        Play
+                                    `}
+                                </button>
+                                <button onclick="window.setState('currentlyPlaying', null)" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded-lg transition">
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            return html;
+        }
+
+        function render() {
+            const app = document.getElementById('app');
+            
+            if (appState === 'loading') {
+                app.innerHTML = renderLoadingState();
+            } else if (appState === 'active') {
+                app.innerHTML = renderActiveState();
+            }
+        }
+
+        // Initialize
+        loadData();
+    </script>
 </body>
+</html> 
