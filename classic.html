@@ -47,6 +47,16 @@
 
     <div class="bg-black/30 p-4 rounded-xl mb-4">
       <h3 class="font-semibold mb-2">Eco Tracking</h3>
+      <div class="mb-3">
+        <div class="flex justify-between text-xs text-gray-300 mb-1">
+          <span>Distance Progress</span>
+          <span id="distanceLabel">0.00 mi</span>
+        </div>
+        <div class="w-full bg-black/40 rounded-full h-3 overflow-hidden">
+          <div id="distanceBar" class="h-full bg-green-500 transition-all duration-300" style="width:0%"></div>
+        </div>
+      </div>
+      <h3 class="font-semibold mb-2">Eco Tracking</h3>
       <div class="flex flex-wrap gap-2">
         <button onclick="startTracking('walk')" class="bg-green-600 px-3 py-2 rounded-lg">🚶 Start Walk</button>
         <button onclick="startTracking('commute')" class="bg-blue-600 px-3 py-2 rounded-lg">🚗 Start Eco Commute</button>
@@ -87,7 +97,8 @@ let state = {
   books: [],
   trackingMode: null,
   lastPosition: null, // { latitude, longitude }
-  distanceAccumulator: 0
+  distanceAccumulator: 0,
+  totalDistance: 0 // persisted lifetime distance
 };
 
 localforage.config({ name: 'MyEcoJourney' });
@@ -198,7 +209,7 @@ function unlockChapter() {
   playAudio.onclick = async () => {
     if (!book.chapterData) {
       book.chapterData = await fetchLibrivoxChapters(book.title);
-      localforage.setItem('state', state);
+          localforage.setItem('state', JSON.parse(JSON.stringify(state)));
     }
 
     const chapter = book.chapterData?.[book.current - 1];
@@ -225,13 +236,14 @@ function startTracking(mode) {
 
   state.trackingMode = mode;
   state.lastPosition = null;
-  state.distanceAccumulator = 0;
   trackingStatus.textContent = `Tracking started (${mode})`;
 
   watchId = navigator.geolocation.watchPosition(pos => {
     if (state.lastPosition) {
-      const d = haversine(state.lastPosition, pos.coords);
-      state.distanceAccumulator += d;
+            const d = smoothDistance(haversine(state.lastPosition, pos.coords));
+            state.distanceAccumulator += d;
+      state.totalDistance += d;
+      updateDistanceUI();
 
       const threshold = mode === 'walk' ? 1 : 5;
       while (state.distanceAccumulator >= threshold) {
@@ -253,6 +265,15 @@ function stopTracking() {
   if (watchId) navigator.geolocation.clearWatch(watchId);
   watchId = null;
   trackingStatus.textContent = 'Tracking stopped';
+  updateDistanceUI();
+}
+
+let lastDistances = [];
+function smoothDistance(d) {
+  if (d > 0.1) return 0; // GPS spike rejection
+  lastDistances.push(d);
+  if (lastDistances.length > 5) lastDistances.shift();
+  return lastDistances.reduce((a,b)=>a+b,0) / lastDistances.length;
 }
 
 function haversine(a, b) {
@@ -269,6 +290,13 @@ function haversine(a, b) {
 /*********************************
  * UTILS
  *********************************/
+function updateDistanceUI() {
+  const threshold = state.trackingMode === 'commute' ? 5 : 1;
+  const progress = Math.min((state.distanceAccumulator / threshold) * 100, 100);
+  distanceBar.style.width = progress + '%';
+  distanceLabel.textContent = state.distanceAccumulator.toFixed(2) + ' mi';
+}
+
 function shuffle(arr) {
   return arr.sort(() => Math.random() - 0.5);
 }
