@@ -25,13 +25,13 @@
 
   <header class="w-full max-w-4xl text-center mb-6">
     <h1 class="text-4xl font-bold text-green-300">🌍 MyEcoJourney</h1>
-    <p class="text-sm text-green-100 mt-2">Unlock free audiobooks by walking or choosing eco-friendly travel</p>
+    <p class="text-sm text-green-100 mt-2">Unlock free audiobooks by walking or choosing eco‑friendly travel</p>
   </header>
 
   <!-- Onboarding -->
   <section id="onboarding" class="w-full max-w-4xl bg-white/10 rounded-2xl p-6 shadow-xl hidden">
     <h2 class="text-2xl font-semibold mb-4">Choose Your First Adventures</h2>
-    <p class="text-sm mb-4 text-gray-200">Select up to 3 fast-paced public-domain audiobooks, or let us surprise you.</p>
+    <p class="text-sm mb-4 text-gray-200">Select up to 3 fast‑paced public‑domain audiobooks, or let us surprise you.</p>
 
     <div id="bookOptions" class="grid md:grid-cols-3 gap-4"></div>
 
@@ -86,7 +86,7 @@ const LIBRIVOX_LIBRARY = [
 let state = {
   books: [],
   trackingMode: null,
-  lastPosition: null,
+  lastPosition: null, // { latitude, longitude }
   distanceAccumulator: 0
 };
 
@@ -147,7 +147,8 @@ startJourney.onclick = () => {
 };
 
 function saveAndStart() {
-  localforage.setItem('state', state);
+      // Persist serializable state only
+    localforage.setItem('state', JSON.parse(JSON.stringify(state)));
   onboarding.classList.add('hidden');
   showDashboard();
 }
@@ -239,7 +240,11 @@ function startTracking(mode) {
       }
     }
 
-    state.lastPosition = pos.coords;
+        // Store only serializable data (avoid GeolocationCoordinates object)
+    state.lastPosition = {
+      latitude: pos.coords.latitude,
+      longitude: pos.coords.longitude
+    };
     localforage.setItem('state', state);
   });
 }
