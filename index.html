@@ -1,574 +1,788 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MyEcoJourney</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MyEcoJourney: AI Run-Narrator</title>
 
-  <!-- Tailwind CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/jszip/dist/jszip.min.js"></script>
+    <script src="https://unpkg.com/ejs/ejs.min.js"></script>
 
-  <!-- localForage -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+    <!-- Third-party libs (localForage for storage, JSZip for EPUB generation) -->
+    <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jepub/dist/jepub.js"></script>
 
-  <!-- ResponsiveVoice (requires API key) -->
-  <!-- IMPORTANT: Replace YOUR_API_KEY_HERE with your own key from https://responsivevoice.org/register -->
-  <script src="https://code.responsivevoice.org/responsivevoice.js?key=YOUR_API_KEY_HERE"></script>
 
-  <style>
-    body {
-      background: linear-gradient(135deg, #0f172a, #064e3b);
-    }
-    #readerModal::backdrop {
-      background: rgba(0, 0, 0, 0.85);
-    }
-    .reader-text {
-      line-height: 1.8;
-      font-size: 1.1rem;
-    }
-    .scrollbar-thin::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    .scrollbar-thin::-webkit-scrollbar-track {
-      background: rgba(0,0,0,0.2);
-      border-radius: 3px;
-    }
-    .scrollbar-thin::-webkit-scrollbar-thumb {
-      background: rgba(255,255,255,0.2);
-      border-radius: 3px;
-    }
-    .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-      background: rgba(255,255,255,0.3);
-    }
-  </style>
+    <!-- EdgeTTS -->
+
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=Lora:ital,wght@0,400;1,400&display=swap');
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .prose-font {
+            font-family: 'Lora', serif;
+        }
+
+        .speed-glow {
+            transition: text-shadow 0.3s ease;
+        }
+
+        .speed-high {
+            text-shadow: 0 0 20px #ef4444;
+            color: #ef4444;
+        }
+
+        .speed-med {
+            text-shadow: 0 0 20px #f59e0b;
+            color: #f59e0b;
+        }
+
+        .speed-low {
+            text-shadow: 0 0 20px #10b981;
+            color: #10b981;
+        }
+
+        .loading-shimmer {
+            background: linear-gradient(90deg, #1f2937 25%, #374151 50%, #1f2937 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
+        }
+    </style>
 </head>
-<body class="min-h-screen text-gray-100 flex flex-col items-center p-4">
 
-  <header class="w-full max-w-4xl text-center mb-6">
-    <h1 class="text-4xl font-bold text-green-300">🌍 MyEcoJourney</h1>
-    <p class="text-sm text-green-100 mt-2">Unlock free audiobooks by walking or choosing eco‑friendly travel</p>
-  </header>
+<body class="bg-gray-950 text-gray-100 min-h-screen flex flex-col">
 
-  <!-- Onboarding -->
-  <section id="onboarding" class="w-full max-w-4xl bg-white/10 rounded-2xl p-6 shadow-xl hidden">
-    <h2 class="text-2xl font-semibold mb-4">Choose Your First Adventures</h2>
-    <p class="text-sm mb-4 text-gray-200">Select up to 3 fast‑paced public‑domain audiobooks, or let us surprise you.</p>
+    <!-- Header & Dashboard -->
+    <header class="p-6 border-b border-gray-800 bg-gray-900/50 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <h1 class="text-2xl font-bold tracking-tighter italic">MYECO<span class="text-red-500">JOURNEY</span></h1>
 
-    <div id="bookOptions" class="grid md:grid-cols-3 gap-4"></div>
+            <!-- Dashboard Metrics -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 items-center w-full md:w-auto">
+                <div class="text-center md:text-right border-r border-gray-800 pr-4 last:border-0 last:pr-0">
+                    <p class="text-[10px] uppercase text-gray-400 tracking-wider">Speed</p>
+                    <p id="speed-display" class="text-2xl font-bold speed-low">0.0 <span
+                            class="text-xs font-normal text-gray-500">mph</span></p>
+                </div>
 
-    <button id="randomPick" class="mt-4 bg-green-600 hover:bg-green-700 px-4 py-2 rounded-xl">🎲 Random Picks</button>
-    <button id="startJourney" class="mt-4 ml-2 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-xl">Start My Journey</button>
-  </section>
+                <div class="text-center md:text-right border-r border-gray-800 pr-4 last:border-0 last:pr-0">
+                    <p class="text-[10px] uppercase text-gray-400 tracking-wider">Distance</p>
+                    <p id="distance-display" class="text-2xl font-bold text-gray-200">0.00 <span
+                            class="text-xs font-normal text-gray-500">mi</span></p>
+                </div>
 
-  <!-- Dashboard -->
-  <section id="dashboard" class="w-full max-w-4xl bg-white/10 rounded-2xl p-6 shadow-xl hidden">
-    <h2 class="text-2xl font-semibold mb-4">Your Eco Progress</h2>
+                <div class="text-center md:text-right border-r border-gray-800 pr-4 last:border-0 last:pr-0">
+                    <p class="text-[10px] uppercase text-gray-400 tracking-wider">CO₂ Saved</p>
+                    <p id="emissions-display" class="text-2xl font-bold text-green-400">0.00 <span
+                            class="text-xs font-normal text-green-700">lb</span></p>
+                </div>
 
-    <!-- Active Books -->
-    <div class="grid md:grid-cols-3 gap-4 mb-6" id="activeBooks"></div>
-
-    <!-- Tracking Status Display -->
-    <div class="bg-black/30 p-4 rounded-xl mb-6">
-      <div class="flex justify-between items-center mb-2">
-        <h3 class="font-semibold">Eco Tracking</h3>
-        <div class="text-right">
-            <span id="liveDistance" class="text-2xl font-bold text-green-400">0.00</span>
-            <span class="text-xs text-gray-400">mi session</span>
+                <div class="text-center md:text-right">
+                    <p class="text-[10px] uppercase text-gray-400 tracking-wider">Intensity</p>
+                    <p id="intensity-display"
+                        class="text-xs font-medium text-gray-300 italic max-w-[100px] md:max-w-[150px] truncate">
+                        Waiting...</p>
+                </div>
+            </div>
         </div>
-      </div>
-      
-      <div class="mb-3">
-        <div class="flex justify-between text-xs text-gray-300 mb-1">
-          <span>Unlock Progress (Next Chapter)</span>
-          <span id="distanceLabel">0.00 / 1.00 mi</span>
-        </div>
-        <div class="w-full bg-black/40 rounded-full h-3 overflow-hidden">
-          <div id="distanceBar" class="h-full bg-green-500 transition-all duration-300" style="width:0%"></div>
-        </div>
-      </div>
+    </header>
 
-      <div class="flex flex-wrap gap-2 mb-2">
-        <button onclick="startTracking('walk')" class="bg-green-600 px-3 py-2 rounded-lg hover:bg-green-500 transition">🚶 Start GPS Walk</button>
-        <button onclick="startTracking('commute')" class="bg-blue-600 px-3 py-2 rounded-lg hover:bg-blue-500 transition">🚗 Start GPS Commute</button>
-        <button onclick="stopTracking()" class="bg-red-600 px-3 py-2 rounded-lg hover:bg-red-500 transition">⏹ Stop</button>
-      </div>
-      <p id="trackingStatus" class="text-xs mt-2 text-gray-200"></p>
-    </div>
+    <main class="flex-grow p-4 md:p-8 max-w-4xl mx-auto w-full">
+        <!-- Error Toast -->
+        <div id="error-toast"
+            class="hidden bg-red-900/80 border border-red-500 p-4 rounded-xl mb-6 text-sm text-red-200"></div>
 
-    <!-- Unlocked Chapter Action -->
-    <div id="unlockedChapter" class="hidden bg-green-900/40 p-4 rounded-xl border border-green-500/30 mb-6">
-      <h3 class="font-semibold">🎧 New Chapter Unlocked!</h3>
-      <p id="chapterInfo" class="text-sm mt-1 mb-3"></p>
-      <div class="flex flex-wrap gap-2">
-        <button id="playAudio" class="bg-green-600 px-4 py-2 rounded-lg hover:bg-green-500 transition flex items-center gap-2">
-          <span>🔊 Play Audio</span>
+        <!-- Setup Form -->
+        <section id="setup-panel" class="bg-gray-900 p-6 rounded-2xl border border-gray-800 shadow-2xl">
+            <h2 class="text-xl font-semibold mb-4">Initialize Adventure</h2>
+            <div class="space-y-4">
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Genre</label>
+                        <select id="genre"
+                            class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 outline-none">
+                            <option value="Fantasy Adventure">Fantasy Adventure</option>
+                            <option value="Sci-Fi Thriller">Sci-Fi Thriller</option>
+                            <option value="Mystery Detective">Mystery Detective</option>
+                            <option value="Horror Survival">Horror Survival</option>
+                            <option value="Horror Gothic">Horror Gothic</option>
+                            <option value="Horror Psychological">Horror Physchological</option>
+                            <option value="Romance Comedy">Romance Comedy</option>
+                            <option value="Historical Fiction">Historical Fiction</option>
+                            <option value="Superhero Action">Superhero Action</option>
+                            <option value="Dystopian Future">Dystopian Future</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Custom Plot Hook</label>
+                        <input type="text" id="plot" placeholder="e.g. A heist on a moon base..."
+                            class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 outline-none">
+                    </div>
+                </div>
+
+                <div class="p-3 bg-gray-800/50 rounded-lg text-xs text-gray-400">
+                    <p>Note: Speed tracking requires a GPS-enabled device and an HTTPS connection. If GPS is unavailable
+                        or stationary, use the simulator in the control bar below.</p>
+                </div>
+
+                <button id="start-btn"
+                    class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-4 rounded-xl transition-all transform hover:scale-[1.02] active:scale-95">
+                    START WORKOUT & GENERATE
+                </button>
+
+                <!-- Saved Stories -->
+                <div id="saved-stories-section" class="mt-4">
+                    <h3 class="text-sm text-gray-400 mb-2 uppercase">Saved Stories</h3>
+                    <div id="saved-list" class="space-y-2 text-sm text-gray-300"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Story Display -->
+        <section id="story-panel" class="hidden mt-8 space-y-8 pb-24">
+            <div id="loading-indicator" class="hidden space-y-3">
+                <div class="h-4 w-3/4 loading-shimmer rounded"></div>
+                <div class="h-4 w-full loading-shimmer rounded"></div>
+                <div class="h-4 w-5/6 loading-shimmer rounded"></div>
+                <p class="text-xs text-gray-500 animate-pulse text-center pt-2">The AI is observing your pace to set the
+                    narrative tone...</p>
+            </div>
+
+            <div id="chapters-container" class="space-y-12">
+                <!-- Chapters injected here -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Controls Overlay -->
+    <div id="player-controls"
+        class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 border border-gray-800 px-6 py-4 rounded-full shadow-2xl flex items-center gap-4 z-50 w-max max-w-[95vw]">
+        <button id="tts-toggle" class="p-2 hover:bg-gray-800 rounded-full text-red-500 flex-shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" id="tts-icon" class="h-8 w-8" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <!-- Speaker (sound-on) icon -->
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M11.05 4.99 6.3 8.49H3.75A.75.75 0 0 0 3 9.24v5.52c0 .414.336.75.75.75h2.55l4.75 3.5c.412.304 1.025.01 1.025-.58V5.57c0-.59-.613-.884-1.025-.58z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15.536 8.464a5 5 0 010 7.072" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M19.364 4.636a9 9 0 010 12.728" />
+            </svg>
         </button>
-        <button id="readChapter" class="bg-yellow-600 px-4 py-2 rounded-lg hover:bg-yellow-500 transition flex items-center gap-2">
-          <span>📖 Read Chapter</span>
-        </button>
-      </div>
-    </div>
 
-    <!-- NEW: Manual Workout Logging (Replaced Journal) -->
-    <div class="bg-black/30 p-4 rounded-xl mb-4">
-      <h3 class="font-semibold mb-3 flex items-center gap-2">💪 Manual Workout</h3>
-      <p class="text-xs text-gray-400 mb-2">Log a workout manually if GPS is unavailable or you exercised indoors.</p>
-      
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end mb-4 p-3 bg-white/5 rounded-lg">
-        <div>
-            <label class="block text-xs text-gray-400 mb-1">Distance (mi)</label>
-            <input type="number" id="manualDistance" step="0.1" min="0.1" class="w-full bg-black/40 text-white rounded p-2 focus:outline-none focus:ring-1 focus:ring-green-500" placeholder="0.0">
+        <div class="h-8 w-[1px] bg-gray-700 hidden sm:block"></div>
+        <div id="workout-timer" class="font-mono text-xl tabular-nums hidden sm:block">00:00</div>
+        <div class="h-8 w-[1px] bg-gray-700" id="manual-speed-divider"></div>
+        <div id="manual-speed-ctrl" class="flex items-center gap-2">
+            <!-- Updated simulator slider for MPH -->
+            <input type="range" id="speed-slider" min="0" max="15" step="0.5" value="0"
+                class="w-24 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-red-500">
+            <span class="text-xs text-gray-400">MPH SIM</span>
         </div>
-        <div>
-            <label class="block text-xs text-gray-400 mb-1">Mode</label>
-            <select id="manualMode" class="w-full bg-black/40 text-white rounded p-2 focus:outline-none focus:ring-1 focus:ring-green-500">
-                <option value="walk">🚶 Walking</option>
-                <option value="commute">🚗 Eco Commute</option>
-            </select>
+
+        <!-- End Run button -->
+        <button id="end-run-btn"
+            class="ml-4 bg-gray-800 hover:bg-gray-700 text-gray-200 px-3 py-2 rounded-md text-sm whitespace-nowrap">End
+            Run</button>
+    </div>
+
+    <script type="module">
+        import { EdgeTTSClient, ProsodyOptions, OUTPUT_FORMAT } from 'https://cdn.jsdelivr.net/npm/edge-tts-client@1.0.2/+esm';
+        window.EdgeTTS = EdgeTTSClient;
+        // --- State ---
+        let state = {
+            active: false,
+            apiKey: '',
+            genre: '',
+            plot: '',
+            currentSpeed: 0, // Always stored as m/s internally for consistency
+            totalDistance: 0, // Always stored as meters internally
+            startTime: null,
+            timerId: null,
+            chapters: [],
+            fullStoryContext: '',
+            isGenerating: false,
+            ttsEnabled: true,
+            currentAudio: null,
+            usingSimulatedSpeed: true,
+            lastPos: null,
+            watchId: null,
+            sessionId: null,
+            audio: []
+        };
+
+        const elements = {
+            speed: document.getElementById('speed-display'),
+            distance: document.getElementById('distance-display'),
+            emissions: document.getElementById('emissions-display'),
+            intensity: document.getElementById('intensity-display'),
+            setup: document.getElementById('setup-panel'),
+            story: document.getElementById('story-panel'),
+            loading: document.getElementById('loading-indicator'),
+            container: document.getElementById('chapters-container'),
+            timer: document.getElementById('workout-timer'),
+            controls: document.getElementById('player-controls'),
+            startBtn: document.getElementById('start-btn'),
+            ttsBtn: document.getElementById('tts-toggle'),
+            ttsIcon: document.getElementById('tts-icon'),
+            error: document.getElementById('error-toast'),
+            simSlider: document.getElementById('speed-slider'),
+            savedList: document.getElementById('saved-list'),
+            endRunBtn: document.getElementById('end-run-btn')
+        };
+        import { Mistral } from 'https://cdn.jsdelivr.net/npm/@mistralai/mistralai/+esm';
+
+        // localForage config
+        localforage.config({
+            name: 'pacepulse',
+            storeName: 'stories' // table/collection name
+        });
+
+        function showError(msg) {
+            elements.error.innerText = msg;
+            elements.error.classList.remove('hidden');
+            console.error("PacePulse Error:", msg);
+            setTimeout(() => elements.error.classList.add('hidden'), 8000);
+        }
+
+        // Haversine distance (meters)
+        function haversineDistanceMeters(lat1, lon1, lat2, lon2) {
+            const toRad = (deg) => deg * Math.PI / 180;
+            const R = 6371000;
+            const dLat = toRad(lat2 - lat1);
+            const dLon = toRad(lon2 - lon1);
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+
+        // --- Tracking setup ---
+        function setupTracking() {
+            if (!("geolocation" in navigator)) {
+                showError("Geolocation not supported in this browser. Use manual simulator.");
+                return;
+            }
+
+            const options = { enableHighAccuracy: true, maximumAge: 1000, timeout: 15000 };
+
+            if (navigator.permissions && navigator.permissions.query) {
+                navigator.permissions.query({ name: 'geolocation' })
+                    .then((perm) => {
+                        if (perm.state === 'denied') {
+                            showError("Geolocation permission denied. Using manual simulator.");
+                            state.usingSimulatedSpeed = true;
+                        }
+                        startWatch();
+                    })
+                    .catch(() => startWatch());
+            } else {
+                startWatch();
+            }
+
+            function startWatch() {
+                if (state.watchId !== null) {
+                    try { navigator.geolocation.clearWatch(state.watchId); } catch (e) { }
+                    state.watchId = null;
+                }
+
+                state.watchId = navigator.geolocation.watchPosition(
+                    (pos) => {
+                        // auto-switch to GPS when valid updates come in, unless user touches slider (explicit)
+                        state.usingSimulatedSpeed = false;
+
+                        const reported = pos.coords.speed; // This is always m/s from browser
+                        let distDelta = 0;
+
+                        // Calculate distance from previous point if available
+                        if (state.lastPos) {
+                            const d = haversineDistanceMeters(
+                                state.lastPos.lat, state.lastPos.lon,
+                                pos.coords.latitude, pos.coords.longitude
+                            );
+
+                            // Only count if accuracy is reasonable to prevent jumping
+                            if (pos.coords.accuracy < 100) {
+                                distDelta = d;
+                            }
+
+                            // Fallback speed calculation if native speed is null
+                            const dt = (pos.timestamp - state.lastPos.timestamp) / 1000;
+                            if (reported === null || isNaN(reported)) {
+                                if (dt > 0.1 && d > 0) {
+                                    const computed = d / dt;
+                                    // Basic filter for impossible speeds (e.g., GPS drift > 15m/s for running)
+                                    if (!isNaN(computed) && computed >= 0 && computed < 15) {
+                                        state.currentSpeed = computed;
+                                    }
+                                }
+                            } else {
+                                state.currentSpeed = reported;
+                            }
+                        } else if (reported !== null && !isNaN(reported)) {
+                            state.currentSpeed = reported;
+                        }
+
+                        // Accumulate Distance if not simulating
+                        if (!state.usingSimulatedSpeed && distDelta > 0) {
+                            state.totalDistance += distDelta;
+                        }
+
+                        state.lastPos = { lat: pos.coords.latitude, lon: pos.coords.longitude, timestamp: pos.timestamp };
+                        updateUI();
+                    },
+                    (err) => {
+                        console.warn("Geolocation error:", err);
+                        // Errors handled gracefully by falling back to simulation logic implicitly 
+                        // via the 'usingSimulatedSpeed' flag
+                        state.usingSimulatedSpeed = true;
+                    },
+                    options
+                );
+            }
+        }
+
+        elements.simSlider.addEventListener('input', (e) => {
+            state.usingSimulatedSpeed = true;
+            // Slider is now in MPH. Convert to m/s for internal logic
+            // 1 mph = 0.44704 m/s
+            const mph = parseFloat(e.target.value);
+            state.currentSpeed = mph * 0.44704;
+            updateUI();
+        });
+
+        function updateUI() {
+            // Speed Update (Internal m/s -> Display MPH)
+            const s_ms = state.currentSpeed || 0;
+            const s_mph = s_ms * 2.23694;
+
+            elements.speed.innerText = s_mph.toFixed(1) + " ";
+            if (!elements.speed.querySelector('span')) {
+                const unit = document.createElement('span');
+                unit.className = 'text-sm font-normal text-gray-500';
+                unit.innerText = 'mph';
+                elements.speed.appendChild(unit);
+            }
+
+            // Distance Update (Internal Meters -> Display Miles)
+            // 1 meter = 0.000621371 miles
+            const distMiles = state.totalDistance * 0.000621371;
+            elements.distance.innerHTML = `${distMiles.toFixed(2)} <span class="text-xs font-normal text-gray-500">mi</span>`;
+
+            // CO2 Emissions Saved Update
+            // Avg passenger vehicle ~404 grams CO2 per mile ~ 0.89 lbs per mile.
+            // Let's use 0.9 lbs per mile for estimation.
+            const savedLbs = distMiles * 0.9;
+            elements.emissions.innerHTML = `${savedLbs.toFixed(2)} <span class="text-xs font-normal text-green-700">lb</span>`;
+
+
+            // Styling based on speed (still using m/s thresholds)
+            elements.speed.classList.remove('speed-low', 'speed-med', 'speed-high');
+            if (s_ms > 4.5) { // ~10mph
+                elements.speed.classList.add('speed-high');
+                elements.intensity.innerText = "CLIMAX - High Tension";
+            } else if (s_ms > 2.5) { // ~5.6mph
+                elements.speed.classList.add('speed-med');
+                elements.intensity.innerText = "RISING ACTION - Moderate";
+            } else {
+                elements.speed.classList.add('speed-low');
+                elements.intensity.innerText = s_ms > 0.1 ? "EXPOSITION - Calm" : "STATIONARY";
+            }
+        }
+
+        // --- Timer ---
+        function startTimer() {
+            state.startTime = Date.now();
+            if (state.timerId) clearInterval(state.timerId);
+            state.timerId = setInterval(() => {
+                if (!state.active) return;
+
+                // Timer Logic
+                const elapsed = Math.floor((Date.now() - state.startTime) / 1000);
+                const mins = Math.floor(elapsed / 60).toString().padStart(2, '0');
+                const secs = (elapsed % 60).toString().padStart(2, '0');
+                elements.timer.innerText = `${mins}:${secs}`;
+
+                // Simulator Distance Integration
+                // If using slider, we must accumulate distance manually based on time
+                if (state.usingSimulatedSpeed) {
+                    // add speed (m/s) * 1 second
+                    state.totalDistance += state.currentSpeed;
+                    updateUI(); // Refresh UI for the distance change
+                }
+
+                // AI Chapter Trigger
+                if (elapsed > 0 && elapsed % 600 === 0 && !state.isGenerating) {
+                    generateNewChapter();
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (state.timerId) { clearInterval(state.timerId); state.timerId = null; }
+        }
+
+        // --- AI generation (unchanged majorly) ---
+        async function generateNewChapter() {
+            if (state.isGenerating) return;
+            state.isGenerating = true;
+            elements.loading.classList.remove('hidden');
+
+            const speed = state.currentSpeed;
+            let stylisticInstruction = "";
+            if (speed > 4.5) {
+                stylisticInstruction = "The story must reach a fever pitch of adrenaline. Use short, punchy sentences. Focus on urgent action, racing hearts, and immediate threats. The tension should be immediate and visceral.";
+            } else if (speed > 2.5) {
+                stylisticInstruction = "The story should build tension steadily. Use rhythmic prose with rising stakes. Focus on the momentum of the plot and the characters' forward progress.";
+            } else {
+                stylisticInstruction = "The story should be atmospheric, descriptive, and introspective. Use longer, more complex sentences. Focus on world-building, sensory details, and character background.";
+            }
+
+            const prompt = `
+                Genre: ${state.genre}. 
+                Core Plot: ${state.plot}.
+                
+                WRITING STYLE MANDATE: 
+                ${stylisticInstruction}
+                
+                IMPORTANT: DO NOT mention that the user is running, working out, or mention their "speed", "meters per second", or "pace" literally. This is a fictional story.
+                
+                Task: Write Chapter ${state.chapters.length + 1}. 
+                Context: Continue the ongoing story based on these previous themes: ${state.fullStoryContext.slice(-1500)}.
+                Requirement: Write a very long, at least 20 paragraphs, stay under 8 minutes of normal speed text to speech, high-quality chapter that is not cut off mid sentence, use second person and only return plain text, not markdown.
+            `;
+
+            const chapterText = await fetchGemini(prompt);
+            state.fullStoryContext += `\n\nChapter ${state.chapters.length + 1}\n${chapterText}`;
+            state.chapters.push(chapterText);
+            renderChapter(chapterText);
+
+            // Save after each new chapter
+            await saveCurrentSessionToStorage();
+
+            if (state.ttsEnabled) {
+                speakText(chapterText.toString()); // 2. Then start audio generation
+            }
+            state.isGenerating = false;
+            elements.loading.classList.add('hidden');
+
+        }
+
+        async function fetchGemini(prompt) {
+            console.log(state.apiKey)
+            const mistral = new Mistral({ apiKey: state.apiKey});
+
+            const data = await mistral.chat.complete({
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                "model": "mistral-small-latest"
+            });
+            return data.choices[0].message.content
+        }
+
+        function renderChapter(text) {
+            const chapterNum = state.chapters.length;
+            const div = document.createElement('div');
+            div.id = `chapter-wrapper-${chapterNum}`; // Add ID for targeting
+            div.className = "bg-gray-900/40 p-8 rounded-3xl border border-gray-800 shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-1000";
+            div.innerHTML = `
+        <div class="flex justify-between items-start mb-4">
+            <h3 class="text-red-500 font-bold uppercase tracking-widest text-sm">Chapter ${chapterNum}</h3>
+            <div id="audio-container-${chapterNum}" class="w-1/2 flex flex-col items-end">
+                <div id="audio-status-${chapterNum}" class="text-[10px] text-gray-500 uppercase mb-1">Waiting for Voice...</div>
+                <div class="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden hidden" id="progress-bar-bg-${chapterNum}">
+                    <div id="progress-bar-fill-${chapterNum}" class="bg-red-600 h-full w-0 transition-all duration-600"></div>
+                </div>
+            </div>
         </div>
-        <div class="md:col-span-2">
-            <label class="block text-xs text-gray-400 mb-1">Notes (Optional)</label>
-            <input type="text" id="manualNotes" class="w-full bg-black/40 text-white rounded p-2 focus:outline-none focus:ring-1 focus:ring-green-500" placeholder="Gym session, hike, etc.">
+        <div class="prose-font text-lg text-gray-300 leading-relaxed first-letter:text-5xl first-letter:font-bold first-letter:mr-3 first-letter:float-left">
+            ${text.replace(/\n/g, '<br>')}
         </div>
-      </div>
-      <div class="flex justify-end">
-          <button onclick="addManualWorkout()" class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg text-sm font-semibold">Log Workout</button>
-      </div>
-    </div>
-
-    <!-- Mileage Log (History) -->
-    <div class="bg-black/30 p-4 rounded-xl mb-4">
-        <h3 class="font-semibold mb-2 flex items-center gap-2">📍 Mileage History</h3>
-        
-        <div class="overflow-x-auto scrollbar-thin">
-            <table class="w-full text-sm text-left text-gray-300">
-                <thead class="text-xs text-gray-400 uppercase bg-white/5">
-                    <tr>
-                        <th scope="col" class="px-3 py-2">Date</th>
-                        <th scope="col" class="px-3 py-2">Mode</th>
-                        <th scope="col" class="px-3 py-2">Distance</th>
-                        <th scope="col" class="px-3 py-2">Source</th>
-                    </tr>
-                </thead>
-                <tbody id="mileageTableBody">
-                    <!-- Rows injected here -->
-                    <tr class="border-b border-white/5">
-                        <td colspan="4" class="px-3 py-3 text-gray-500 italic text-center">No history recorded.</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-  </section>
-
-  <!-- Written Chapter Reader Modal -->
-  <dialog id="readerModal" class="w-full max-w-3xl bg-slate-900 text-gray-100 rounded-2xl p-0 shadow-2xl border border-slate-600">
-    <div class="sticky top-0 bg-slate-800 p-4 flex justify-between items-center border-b border-slate-700 rounded-t-2xl z-10">
-      <h3 id="readerTitle" class="font-bold text-lg text-yellow-400 truncate">Chapter Title</h3>
-      <button onclick="closeReader()" class="bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded-full text-sm">Close</button>
-    </div>
-    <div id="readerContent" class="p-6 overflow-y-auto max-h-[70vh] reader-text">
-      <!-- Text content will be injected here -->
-    </div>
-  </dialog>
-
-<script>
-/*********************************
- * LIBRIVOX METADATA
- *********************************/
-const LIBRIVOX_LIBRARY = [
-  { id: 1, title: "The Count of Monte Cristo", chapters: 3, sampleText: ["On the 24th of February, 1815...", "The young man's face was pale...", "Edmond Dantès stepped onto the dock..."] },
-  { id: 2, title: "Treasure Island", chapters: 3, sampleText: ["Squire Trelawney...", "The old sea dog told of a map...", "Young Jim Hawkins listened intently..."] },
-  { id: 3, title: "Frankenstein", chapters: 3, sampleText: ["I am by birth a Genevese...", "My imagination was vivid...", "The creation of life..."] },
-  { id: 4, title: "Dracula", chapters: 3, sampleText: ["3 May. Bistritz...", "The carriage was filled with a strange silence...", "I saw no ashes..."] },
-  { id: 5, title: "Twenty Thousand Leagues Under the Seas", chapters: 3, sampleText: ["The year 1866 was marked...", "A huge, elongated body...", "Captain Nemo stood motionless..."] },
-  { id: 6, title: "The Three Musketeers", chapters: 3, sampleText: ["On the first Monday of the month...", "D'Artagnan arrived in Paris...", "Three for one!..."] },
-  { id: 7, title: "The Invisible Man", chapters: 3, sampleText: ["The stranger came early...", "Bandages were wrapped...", "Science had stripped him..."] },
-  { id: 8, title: "The Wendigo", chapters: 3, sampleText: ["The swamp was a place...", "Demetris felt a chill...", "The shape in the trees..."] },
-  { id: 9, title: "Journey to the Centre of the Earth", chapters: 3, sampleText: ["My uncle, Professor...", "The manuscript, written in runes...", "Beyond the burning surface..."] }
-];
-
-let state = {
-  books: [],
-  mileageLog: [], // { date, mode, distance, source }
-  trackingMode: null,
-  lastPosition: null, 
-  currentSessionDistance: 0, // Only active during GPS tracking
-  totalDistance: 0 
-};
-
-localforage.config({ name: 'MyEcoJourney' });
-
-/*********************************
- * INIT
- *********************************/
-(async function init() {
-  const saved = await localforage.getItem('state');
-  if (saved) {
-    if (!saved.mileageLog) saved.mileageLog = [];
-    state = saved;
-    showDashboard();
-  } else {
-    showOnboarding();
-  }
-})();
-
-function showOnboarding() {
-  document.getElementById('onboarding').classList.remove('hidden');
-  renderBookOptions();
-}
-
-function showDashboard() {
-  document.getElementById('dashboard').classList.remove('hidden');
-  renderDashboard();
-  renderMileage();
-}
-
-/*********************************
- * ONBOARDING
- *********************************/
-function renderBookOptions() {
-  const container = document.getElementById('bookOptions');
-  container.innerHTML = '';
-  LIBRIVOX_LIBRARY.forEach(book => {
-    const div = document.createElement('div');
-    div.className = 'bg-black/30 p-4 rounded-xl';
-    div.innerHTML = `
-      <h3 class="font-semibold">${book.title}</h3>
-      <p class="text-xs">${book.chapters} chapters</p>
-      <input type="checkbox" value="${book.id}" class="mt-2" />
     `;
-    container.appendChild(div);
-  });
-}
+            if (state.audio.length > 0) {
+                var au = new Audio();
+                au.src = URL.createObjectURL(state.audio[chapterNum-1])
+                au.controls = true;
+                div.prepend(au);
+            }
+            elements.container.append(div);
+        }
 
-document.getElementById('randomPick').onclick = () => {
-  state.books = shuffle([...LIBRIVOX_LIBRARY]).slice(0, 3).map(b => ({ ...b, current: 0 }));
-  saveAndStart();
-};
+        // --- TTS ---
+        async function speakText(text) {
+            const chapterIdx = state.chapters.length;
+            const statusText = document.getElementById(`audio-status-${chapterIdx}`);
+            const barBg = document.getElementById(`progress-bar-bg-${chapterIdx}`);
+            const barFill = document.getElementById(`progress-bar-fill-${chapterIdx}`);
+            const audioContainer = document.getElementById(`audio-container-${chapterIdx}`);
 
-document.getElementById('startJourney').onclick = () => {
-  const checked = [...document.querySelectorAll('#bookOptions input:checked')]
-    .map(c => LIBRIVOX_LIBRARY.find(b => b.id == c.value));
 
-  if (!checked.length) return alert('Pick at least one book!');
-  state.books = shuffle(checked).slice(0, 3).map(b => ({ ...b, current: 0 }));
-  saveAndStart();
-};
+            statusText.innerText = "Synthesizing Audio...";
+            barBg.classList.remove('hidden');
 
-function saveAndStart() {
-    localforage.setItem('state', JSON.parse(JSON.stringify(state)));
-  document.getElementById('onboarding').classList.add('hidden');
-  showDashboard();
-}
+            const ttsClient = new window.EdgeTTS();
+            await ttsClient.setMetadata('en-US-AndrewMultilingualNeural', OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
 
-/*********************************
- * LIBRIVOX FETCH
- *********************************/
-async function fetchLibrivoxChapters(title) {
-  try {
-    const url = `https://librivox.org/api/feed/audiobooks?format=json&title=${encodeURIComponent(title)}`;
-    const res = await fetch(url);
-    const data = await res.json();
-    if (!data.books?.length) return [];
+            const options = new ProsodyOptions();
+            options.pitch = 'medium';
+            options.rate = 1.0;
 
-    return data.books[0].sections.map(sec => ({
-      title: sec.title,
-      audioUrl: sec.listen_url
-    }));
-  } catch (e) {
-    console.error("Fetch error", e);
-    return [];
-  }
-}
+            const stream = ttsClient.toStream(text, options);
+            let chunks = [];
+            let receivedBytes = 0;
+            stream.on('data', (audioChunk) => {
+                chunks.push(audioChunk);
+                receivedBytes += audioChunk.byteLength;
 
-/*********************************
- * DASHBOARD
- *********************************/
-function renderDashboard() {
-  const container = document.getElementById('activeBooks');
-  container.innerHTML = '';
-  state.books.forEach(book => {
-    const div = document.createElement('div');
-    div.className = 'bg-black/30 p-4 rounded-xl';
-    div.innerHTML = `
-      <h3 class="font-semibold">${book.title}</h3>
-      <p class="text-sm">Chapter ${book.current} / ${book.chapters}</p>
-    `;
-    container.appendChild(div);
-  });
-}
+                // Artificial progress simulation since total stream length isn't always known immediately
+                // We increase the bar as chunks arrive
+                const progress = Math.min((chunks.length / (text.length / 10)) * 100, 95);
+                barFill.style.width = `${progress}%`;
+                console.log(audioChunk)
+            });
 
-function unlockChapter() {
-  const eligible = state.books.filter(b => b.current < b.chapters);
-  if (!eligible.length) return;
+            stream.on('end', () => {
+                barFill.style.width = `100%`;
+                statusText.innerText = "Audio Ready";
+                var blob = new Blob(chunks, { type: "audio/mp3" })
+                state.audio.push(blob);
+                const url = URL.createObjectURL(blob);
 
-  const book = eligible[Math.floor(Math.random() * eligible.length)];
-  book.current++;
-  renderDashboard();
+                // Create the audio element
+                const audioEl = document.createElement('audio');
+                audioEl.controls = true;
+                audioEl.src = url;
+                audioEl.className = "h-8 mt-2 w-full accent-red-500 opacity-80 hover:opacity-100 transition-opacity";
 
-  const unlockedDiv = document.getElementById('unlockedChapter');
-  unlockedDiv.classList.remove('hidden');
-  document.getElementById('chapterInfo').textContent = `${book.title} — Chapter ${book.current}`;
+                // Replace progress bar with audio player
+                setTimeout(async () => {
+                    barBg.classList.add('hidden');
+                    audioContainer.appendChild(audioEl);
+                    await saveCurrentSessionToStorage();
 
-  const playBtn = document.getElementById('playAudio');
-  playBtn.onclick = async () => {
-    if (!book.chapterData) {
-      book.chapterData = await fetchLibrivoxChapters(book.title);
-      localforage.setItem('state', JSON.parse(JSON.stringify(state)));
-    }
+                }, 500);
+            });
 
-    const chapter = book.chapterData?.[book.current - 1];
-    if (chapter?.audioUrl) {
-      new Audio(chapter.audioUrl).play();
-    } else if (typeof responsiveVoice !== 'undefined' && responsiveVoice.voiceSupport()) {
-      responsiveVoice.speak(`Now playing ${book.title}, chapter ${book.current}`, 'UK English Male');
-    } else {
-      alert('Audio stream not available via API.');
-    }
-  };
+        }
+        // --- Storage (localForage) ---
+        async function saveCurrentSessionToStorage() {
+            // create a lightweight session object
+            if (!state.sessionId) state.sessionId = `session-${Date.now()}`;
+            const item = {
+                id: state.sessionId,
+                title: `${state.genre || 'Untitled'} - ${new Date().toISOString()}`,
+                genre: state.genre,
+                plot: state.plot,
+                audio: state.audio,
+                created_at: new Date().toISOString(),
+                chapters: state.chapters,
+                fullStoryContext: state.fullStoryContext
+            };
 
-  const readBtn = document.getElementById('readChapter');
-  readBtn.onclick = () => {
-    openReader(book);
-  };
-}
+            try {
+                const saved = (await localforage.getItem('savedStories')) || [];
+                // replace existing by id or push new
+                const idx = saved.findIndex(s => s.id === item.id);
+                if (idx >= 0) saved[idx] = item;
+                else saved.push(item);
+                await localforage.setItem('savedStories', saved);
+                await displaySavedList();
+            } catch (e) {
+                console.error("save error", e);
+            }
+        }
 
-/*********************************
- * WRITTEN CHAPTER FEATURE
- *********************************/
-function openReader(book) {
-  const modal = document.getElementById('readerModal');
-  const titleEl = document.getElementById('readerTitle');
-  const contentEl = document.getElementById('readerContent');
+        async function displaySavedList() {
+            const saved = (await localforage.getItem('savedStories')) || [];
+            elements.savedList.innerHTML = '';
+            if (saved.length === 0) {
+                elements.savedList.innerHTML = `<div class="text-xs text-gray-500">No saved stories yet.</div>`;
+                return;
+            }
 
-  titleEl.textContent = `${book.title} - Chapter ${book.current}`;
-  
-  const chapterIndex = book.current - 1;
-  let text = "";
-  
-  if (book.sampleText && book.sampleText[chapterIndex]) {
-    text = book.sampleText[chapterIndex];
-  } else if (book.current === 1) {
-    text = "This is the beginning of your journey. Since we don't have the full text of this public domain book embedded for this demo, here is a placeholder describing the setting. Enjoy the readability!";
-  } else {
-    text = "This chapter text would normally be loaded from the server. Thank you for reading with MyEcoJourney.";
-  }
+            saved.slice().reverse().forEach(s => {
+                const row = document.createElement('div');
+                row.className = 'flex items-center justify-between gap-2 bg-gray-800/30 p-2 rounded';
+                row.innerHTML = `
+                    <div class="truncate text-xs">
+                        <div class="font-medium text-gray-200">${escapeHtml(s.title)}</div>
+                        <div class="text-xs text-gray-400 truncate">${escapeHtml(s.plot || '')}</div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button data-id="${s.id}" class="load-btn bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded text-xs">Load</button>
+                        <button data-id="${s.id}" class="del-btn bg-red-700 hover:bg-red-600 px-2 py-1 rounded text-xs">Delete</button>
+                    </div>
+                `;
+                elements.savedList.appendChild(row);
+            });
 
-  contentEl.innerHTML = `<p class="mb-4">${text}</p><p class="text-gray-400 italic text-sm">... (End of sample text) ...</p>`;
-  modal.showModal();
-}
+            // attach listeners
+            elements.savedList.querySelectorAll('.load-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const id = e.currentTarget.dataset.id;
+                    await restoreSavedStory(id);
+                });
+            });
+            elements.savedList.querySelectorAll('.del-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const id = e.currentTarget.dataset.id;
+                    await deleteSavedStory(id);
+                });
+            });
+        }
 
-function closeReader() {
-  document.getElementById('readerModal').close();
-}
+        async function restoreSavedStory(id) {
+            const saved = (await localforage.getItem('savedStories')) || [];
+            const s = saved.find(x => x.id === id);
+            if (!s) return showError("Saved story not found.");
+            // populate state and render
+            state.sessionId = s.id;
+            state.genre = s.genre;
+            state.plot = s.plot;
+            state.chapters = s.chapters || [];
+            state.fullStoryContext = s.fullStoryContext || '';
+            if (s.audio) state.audio = s.audio
+            // show story panel and render chapters
+            elements.setup.classList.add('hidden');
+            elements.story.classList.remove('hidden');
+            elements.controls.classList.remove('hidden');
+            elements.container.innerHTML = '';
+            state.chapters.forEach((c) => renderChapter(c));
+        }
 
-document.getElementById('readerModal').addEventListener('click', (e) => {
-  const rect = e.target.getBoundingClientRect();
-  const isInDialog = (rect.top <= e.clientY && rect.bottom >= e.clientY && rect.left <= e.clientX && rect.right >= e.clientX);
-  if (!isInDialog) {
-    closeReader();
-  }
-});
+        async function deleteSavedStory(id) {
+            const saved = (await localforage.getItem('savedStories')) || [];
+            const filtered = saved.filter(s => s.id !== id);
+            await localforage.setItem('savedStories', filtered);
+            await displaySavedList();
+        }
 
-/*********************************
- * CORE LOGIC: PROCESS DISTANCE
- * Used by both GPS and Manual Entry
- *********************************/
-function processDistance(miles, mode, source = 'GPS') {
-  if (miles <= 0) return;
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+        }
 
-  state.totalDistance += miles;
-  
-  // Add to Mileage History
-  const historyEntry = {
-    date: Date.now(),
-    mode: mode,
-    distance: miles,
-    source: source // 'GPS' or 'Manual'
-  };
-  state.mileageLog.push(historyEntry);
+        // --- EPUB generation using JSZip ---
+        // --- EPUB generation using jepub ---
+        async function createEpub() {
+            const chapters = state.chapters.slice();
+            if (!chapters || chapters.length === 0) {
+                showError("No chapters to export.");
+                return;
+            }
+            const filename = `${(state.genre || 'story').replace(/\s+/g, '_')}`;
+            console.log(filename)
+            const jepub = new jEpub();
+            jepub.init({
+                i18n: 'en',
+                title: filename,
+                author: 'JourneyAI',
+                publisher: 'n/a',
+                description: 'a running story',
+                tags: ['epub', 'tag'],
+            });
+            var num = 0
+            chapters.forEach(t => {
+                num++;
+                jepub.add("Chapter " + num, t)
+            })
 
-  // Check for Chapter Unlocks
-  // We accumulate "overflow" miles from previous sessions to check against threshold
-  // To keep it simple for manual entry: we calculate how many whole intervals fit in the provided miles
-  const threshold = mode === 'walk' ? 1 : 5;
-  
-  // Check existing stored progress for this mode (simplified for demo: we use a temporary accumulator logic)
-  // For this demo, we will process unlocks based on the specific input amount
-  let milesToProcess = miles;
-  
-  // Check if we have pending progress in state (not fully implemented for cross-session persistent accumulators in this simple version)
-  // Instead, we just treat manual input as a burst.
-  
-  const unlocks = Math.floor(milesToProcess / threshold);
-  
-  if (unlocks > 0) {
-    for (let i = 0; i < unlocks; i++) {
-      unlockChapter();
-    }
-    // If there is remainder, we could save it to a persistent accumulator, 
-    // but for now we will just reset the progress bar to the remainder.
-    const remainder = milesToProcess % threshold;
-    
-    // Update visual progress bar based on remainder
-    const progress = Math.min((remainder / threshold) * 100, 100);
-    document.getElementById('distanceBar').style.width = progress + '%';
-    document.getElementById('distanceLabel').textContent = `${remainder.toFixed(2)} / ${threshold.toFixed(1)} mi`;
-    document.getElementById('liveDistance').textContent = "0.00"; // Reset live session counter
-  } else {
-    // Just update progress bar
-    const progress = Math.min((milesToProcess / threshold) * 100, 100);
-    document.getElementById('distanceBar').style.width = progress + '%';
-    document.getElementById('distanceLabel').textContent = `${milesToProcess.toFixed(2)} / ${threshold.toFixed(1)} mi`;
-    document.getElementById('liveDistance').textContent = "0.00";
-  }
+            const blob = await jepub.generate();
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
 
-  // Save state
-  localforage.setItem('state', JSON.parse(JSON.stringify(state))).then(() => {
-    renderMileage();
-  });
-}
+            link.href = url;
+            link.download = filename;
 
-/*********************************
- * MANUAL WORKOUT (NEW)
- *********************************/
-function addManualWorkout() {
-  const distanceInput = document.getElementById('manualDistance');
-  const modeInput = document.getElementById('manualMode');
-  const notesInput = document.getElementById('manualNotes');
+            link.click();
+            window.URL.revokeObjectURL(url);
 
-  const distance = parseFloat(distanceInput.value);
-  const mode = modeInput.value;
+        }
 
-  if (!distance || distance <= 0) {
-    alert('Please enter a valid distance.');
-    return;
-  }
 
-  processDistance(distance, mode, 'Manual');
-  
-  // Clear inputs
-  distanceInput.value = '';
-  notesInput.value = '';
-}
+        // --- End run behavior ---
 
-/*********************************
- * MILEAGE LOGGING
- *********************************/
-function renderMileage() {
-    const tbody = document.getElementById('mileageTableBody');
-    tbody.innerHTML = '';
 
-    if (state.mileageLog.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="px-3 py-3 text-gray-500 italic text-center">No history recorded.</td></tr>`;
-        return;
-    }
+        // --- Utilities & initialization ---
+        elements.startBtn.addEventListener('click', () => {
+            const key = "nUANEOGN4al5gS7pKPtu391tBxnVkfUQ"
 
-    // Sort by date descending
-    const sortedMiles = [...state.mileageLog].sort((a, b) => b.date - a.date);
+            // init new session
+            state.apiKey = key;
+            state.genre = document.getElementById('genre').value;
+            state.plot = document.getElementById('plot').value || "An unexpected journey begins.";
+            state.active = true;
+            state.chapters = [];
+            state.fullStoryContext = '';
+            state.totalDistance = 0; // reset
+            state.sessionId = `session-${Date.now()}`;
 
-    sortedMiles.forEach(row => {
-        const tr = document.createElement('tr');
-        tr.className = "border-b border-white/5 hover:bg-white/5 transition";
-        
-        const dateStr = new Date(row.date).toLocaleDateString();
-        const modeIcon = row.mode === 'walk' ? '🚶' : '🚗';
-        const sourceBadge = row.source === 'GPS' 
-            ? '<span class="bg-blue-900 text-blue-200 text-xs px-1 rounded">GPS</span>' 
-            : '<span class="bg-purple-900 text-purple-200 text-xs px-1 rounded">Manual</span>';
-        
-        tr.innerHTML = `
-            <td class="px-3 py-2 text-xs whitespace-nowrap">${dateStr}</td>
-            <td class="px-3 py-2 text-xs">${modeIcon} ${row.mode}</td>
-            <td class="px-3 py-2 text-xs font-bold text-green-400">${row.distance.toFixed(2)} mi</td>
-            <td class="px-3 py-2 text-xs">${sourceBadge}</td>
-        `;
-        tbody.appendChild(tr);
-    });
-}
+            elements.setup.classList.add('hidden');
+            elements.story.classList.remove('hidden');
+            elements.controls.classList.remove('hidden');
+            elements.container.innerHTML = '';
 
-/*********************************
- * GPS TRACKING
- *********************************/
-let watchId = null;
+            // start with simulator until GPS available
+            state.usingSimulatedSpeed = true;
+            setupTracking();
+            startTimer();
+            generateNewChapter();
+            updateUI(); // immediate UI init
+        });
 
-function startTracking(mode) {
-  if (!navigator.geolocation) {
-    alert('Geolocation not supported by your browser.');
-    return;
-  }
+        elements.ttsBtn.addEventListener('click', () => {
+            state.ttsEnabled = !state.ttsEnabled;
+            if (!state.ttsEnabled) {
+                if (state.currentAudio) state.currentAudio.pause();
+                elements.ttsIcon.innerHTML = `
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.05 4.99 6.3 8.49H3.75A.75.75 0 0 0 3 9.24v5.52c0 .414.336.75.75.75h2.55l4.75 3.5c.412.304 1.025.01 1.025-.58V5.57c0-.59-.613-.884-1.025-.58z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 9l6 6"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 9l-6 6"/>
+                `;
+                elements.ttsBtn.classList.replace('text-red-500', 'text-gray-500');
+            } else {
+                elements.ttsIcon.innerHTML = `
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.05 4.99 6.3 8.49H3.75A.75.75 0 0 0 3 9.24v5.52c0 .414.336.75.75.75h2.55l4.75 3.5c.412.304 1.025.01 1.025-.58V5.57c0-.59-.613-.884-1.025-.58z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.364 4.636a9 9 0 010 12.728"/>
+                `;
+                elements.ttsBtn.classList.replace('text-gray-500', 'text-red-500');
+            }
+        });
 
-  state.trackingMode = mode;
-  state.lastPosition = null;
-  state.currentSessionDistance = 0; 
-  document.getElementById('trackingStatus').textContent = `Tracking started (${mode})`;
-  document.getElementById('liveDistance').textContent = "0.00";
+        elements.endRunBtn.addEventListener('click', () => {
+            createEpub();
+        });
 
-  watchId = navigator.geolocation.watchPosition(pos => {
-    if (state.lastPosition) {
-      const d = smoothDistance(haversine(state.lastPosition, pos.coords));
-      
-      state.currentSessionDistance += d;
-      
-      // Update live display
-      document.getElementById('liveDistance').textContent = state.currentSessionDistance.toFixed(2);
-      
-      // Update progress bar logic (visual only for the session)
-      const threshold = mode === 'walk' ? 1 : 5;
-      const progress = Math.min((state.currentSessionDistance / threshold) * 100, 100);
-      document.getElementById('distanceBar').style.width = progress + '%';
-      document.getElementById('distanceLabel').textContent = `${state.currentSessionDistance.toFixed(2)} / ${threshold.toFixed(1)} mi`;
-    }
+        // load saved stories list on startup
+        (async function init() {
+            await displaySavedList();
+        })();
 
-    state.lastPosition = {
-      latitude: pos.coords.latitude,
-      longitude: pos.coords.longitude
-    };
-  }, (err) => {
-      document.getElementById('trackingStatus').textContent = `Error: ${err.message}`;
-  }, {
-      enableHighAccuracy: true
-  });
-}
-
-function stopTracking() {
-  if (watchId) navigator.geolocation.clearWatch(watchId);
-  watchId = null;
-  
-  if (state.currentSessionDistance > 0) {
-    // Process the GPS session as a workout
-    processDistance(state.currentSessionDistance, state.trackingMode, 'GPS');
-  }
-
-  state.trackingMode = null;
-  state.currentSessionDistance = 0;
-  document.getElementById('trackingStatus').textContent = 'Tracking stopped.';
-}
-
-let lastDistances = [];
-function smoothDistance(d) {
-  if (d > 0.1) return 0; // GPS spike rejection
-  lastDistances.push(d);
-  if (lastDistances.length > 5) lastDistances.shift();
-  return lastDistances.reduce((a,b)=>a+b,0) / lastDistances.length;
-}
-
-function haversine(a, b) {
-  const R = 3958.8; // miles
-  const dLat = (b.latitude - a.latitude) * Math.PI / 180;
-  const dLon = (b.longitude - a.longitude) * Math.PI / 180;
-  const lat1 = a.latitude * Math.PI / 180;
-  const lat2 = b.latitude * Math.PI / 180;
-
-  const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(h));
-}
-
-function shuffle(arr) {
-  return arr.sort(() => Math.random() - 0.5);
-}
-</script>
+    </script>
 </body>
+
 </html>
